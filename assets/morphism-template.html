@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morphism Mapper - 跨域创新分析模板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --domain-a: #2D5B88;      /* 问题域 - 深蓝 */
+            --domain-b: #6B5B95;      /* 映射域 - 紫色 */
+            --functor: #D49256;       /* 函子 - 橙色 */
+            --solution: #10B981;      /* 解决方案 - 绿色 */
+            --paper: #F8F6F3;
+            --ink: #2C2C2C;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--paper);
+        }
+        
+        .font-serif {
+            font-family: 'Noto Serif SC', serif;
+        }
+        
+        .panel {
+            background: white;
+            border: 3px solid var(--ink);
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .label-pill {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .domain-a-bg { background: linear-gradient(135deg, var(--domain-a) 0%, #1a3a5c 100%); color: white; }
+        .domain-b-bg { background: linear-gradient(135deg, var(--domain-b) 0%, #4a4060 100%); color: white; }
+        .functor-bg { background: linear-gradient(135deg, var(--functor) 0%, #b87a45 100%); color: white; }
+        .solution-bg { background: linear-gradient(135deg, var(--solution) 0%, #059669 100%); color: white; }
+        
+        /* Morphism 专用 4×3 网格 */
+        .morphism-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 1fr 1fr;
+            grid-template-rows: 280px 240px 280px;
+            gap: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 箭头指示器 */
+        .arrow-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--functor);
+        }
+        
+        @media (max-width: 1024px) {
+            .morphism-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .morphism-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 范畴论符号样式 */
+        .category-symbol {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <!-- 下载按钮 -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="downloadPNG()" class="bg-[#2C2C2C] text-white px-6 py-3 rounded-full font-medium hover:bg-[#6B5B95] transition-colors shadow-lg flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            下载 4K PNG
+        </button>
+    </div>
+
+    <div id="infographic" class="max-w-7xl mx-auto">
+        <!-- 标题区 -->
+        <header class="text-center mb-10">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <span class="text-4xl">🔀</span>
+                <h1 class="font-serif text-4xl font-bold text-[#2C2C2C]">Morphism Mapper</h1>
+            </div>
+            <p class="text-xl text-[#6B5B95] font-medium mb-2">{{TOPIC}}</p>
+            <p class="text-sm text-gray-500">跨域创新分析 | {{DOMAIN_A}} × {{DOMAIN_B}}</p>
+        </header>
+
+        <!-- Morphism 分析网格 -->
+        <div class="morphism-grid">
+            
+            <!-- 第1行：Phase 1 - 范畴提取 -->
+            <!-- Panel 1: Domain A 问题域 (大) -->
+            <div class="panel p-6 domain-a-bg" style="grid-row: span 2;">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="label-pill bg-white/20">Phase 1</span>
+                    <span class="category-symbol text-2xl">Domain A</span>
+                </div>
+                <h2 class="font-serif text-2xl font-bold mb-4">{{DOMAIN_A_NAME}}</h2>
+                <div class="space-y-3 text-sm">
+                    <div class="bg-white/10 p-3 rounded-lg">
+                        <p class="font-bold mb-1">📦 Objects (对象)</p>
+                        <p class="opacity-90">{{OBJECTS}}</p>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-lg">
+                        <p class="font-bold mb-1">🔗 Morphisms (态射)</p>
+                        <p class="opacity-90">{{MORPHISMS}}</p>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-lg">
+                        <p class="font-bold mb-1">⚡ Identity (恒等)</p>
+                        <p class="opacity-90">{{IDENTITY}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 箭头 -->
+            <div class="arrow-right">
+                <span>→</span>
+            </div>
+
+            <!-- Panel 2: Domain B 映射域 -->
+            <div class="panel p-5 domain-b-bg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="label-pill bg-white/20">Phase 2</span>
+                    <span class="category-symbol text-xl">Domain B</span>
+                </div>
+                <h3 class="font-serif text-xl font-bold mb-3">{{DOMAIN_B_NAME}}</h3>
+                <p class="text-sm opacity-90 mb-3">{{DOMAIN_B_REASON}}</p>
+                <div class="bg-white/10 p-2 rounded text-xs">
+                    <p class="font-bold">理论基础：</p>
+                    <p>{{DOMAIN_B_THEORY}}</p>
+                </div>
+            </div>
+
+            <!-- Panel 3: 核心定理 -->
+            <div class="panel p-5 bg-white border-l-4 border-l-[#6B5B95]">
+                <span class="label-pill bg-[#6B5B95] text-white mb-3">核心定理</span>
+                <blockquote class="font-serif text-lg italic text-[#2C2C2C] mb-3">
+                    "{{THEOREM}}"
+                </blockquote>
+                <p class="text-xs text-gray-500">— {{THEOREM_SOURCE}}</p>
+            </div>
+
+            <!-- 第2行：Phase 3 - 函子映射 -->
+            <!-- Panel 4: 映射矩阵 (宽) -->
+            <div class="panel p-5 functor-bg" style="grid-column: span 2;">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="label-pill bg-white/20">Phase 3</span>
+                    <span class="category-symbol text-xl">F: A → B</span>
+                    <span class="ml-auto text-sm opacity-75">函子映射</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                    <div class="bg-white/10 p-3 rounded-lg">
+                        <p class="font-bold mb-2">Domain A</p>
+                        <p class="text-xs opacity-90">{{MAP_A1}}</p>
+                        <p class="text-xs opacity-90 mt-1">{{MAP_A2}}</p>
+                        <p class="text-xs opacity-90 mt-1">{{MAP_A3}}</p>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-3xl mb-1">⇄</div>
+                            <p class="text-xs">结构保持</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-lg">
+                        <p class="font-bold mb-2">Domain B</p>
+                        <p class="text-xs opacity-90">{{MAP_B1}}</p>
+                        <p class="text-xs opacity-90 mt-1">{{MAP_B2}}</p>
+                        <p class="text-xs opacity-90 mt-1">{{MAP_B3}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 5: 函子性质验证 -->
+            <div class="panel p-4 bg-white">
+                <span class="label-pill bg-[#D49256] text-white mb-2">函子性质</span>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-start gap-2">
+                        <span class="text-[#D49256] font-bold">✓</span>
+                        <div>
+                            <p class="font-bold">恒等保持</p>
+                            <p class="text-gray-600">F(id<sub>A</sub>) = id<sub>B</sub></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-[#D49256] font-bold">✓</span>
+                        <div>
+                            <p class="font-bold">复合保持</p>
+                            <p class="text-gray-600">F(f ∘ g) = F(f) ∘ F(g)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第3行：Phase 4 - 拉回与解决方案 -->
+            <!-- Panel 6: 解决方案1 -->
+            <div class="panel p-5 solution-bg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="label-pill bg-white/20">Phase 4</span>
+                    <span class="text-2xl">💡</span>
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">{{SOLUTION_1_TITLE}}</h3>
+                <p class="text-sm opacity-90 mb-3">{{SOLUTION_1_CORE}}</p>
+                <div class="bg-white/10 p-2 rounded text-xs">
+                    <p class="font-bold">实施：</p>
+                    <p>{{SOLUTION_1_IMPL}}</p>
+                </div>            </div>
+
+            <!-- Panel 7: 解决方案2 -->
+            <div class="panel p-5 solution-bg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="label-pill bg-white/20">方案 2</span>
+                    <span class="text-2xl">🎯</span>
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">{{SOLUTION_2_TITLE}}</h3>
+                <p class="text-sm opacity-90 mb-3">{{SOLUTION_2_CORE}}</p>
+                <div class="bg-white/10 p-2 rounded text-xs">
+                    <p class="font-bold">实施：</p>
+                    <p>{{SOLUTION_2_IMPL}}</p>
+                </div>
+            </div>
+
+            <!-- Panel 8: 解决方案3 -->
+            <div class="panel p-5 solution-bg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="label-pill bg-white/20">方案 3</span>
+                    <span class="text-2xl">🚀</span>
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">{{SOLUTION_3_TITLE}}</h3>
+                <p class="text-sm opacity-90 mb-3">{{SOLUTION_3_CORE}}</p>
+                <div class="bg-white/10 p-2 rounded text-xs">
+                    <p class="font-bold">实施：</p>
+                    <p>{{SOLUTION_3_IMPL}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部流程图 -->
+        <div class="mt-8 panel p-6 bg-white">
+            <div class="flex items-center justify-between">
+                <div class="text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-[#2D5B88] text-white flex items-center justify-center mx-auto mb-2 text-2xl">1</div>
+                    <p class="font-bold text-sm">提取</p>
+                    <p class="text-xs text-gray-500">范畴结构</p>
+                </div>
+                <div class="text-2xl text-gray-300">→</div>
+                <div class="text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-[#6B5B95] text-white flex items-center justify-center mx-auto mb-2 text-2xl">2</div>
+                    <p class="font-bold text-sm">选择</p>
+                    <p class="text-xs text-gray-500">映射域B</p>
+                </div>
+                <div class="text-2xl text-gray-300">→</div>
+                <div class="text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-[#D49256] text-white flex items-center justify-center mx-auto mb-2 text-2xl">3</div>
+                    <p class="font-bold text-sm">映射</p>
+                    <p class="text-xs text-gray-500">函子F</p>
+                </div>
+                <div class="text-2xl text-gray-300">→</div>
+                <div class="text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-[#10B981] text-white flex items-center justify-center mx-auto mb-2 text-2xl">4</div>
+                    <p class="font-bold text-sm">拉回</p>
+                    <p class="text-xs text-gray-500">解决方案</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="mt-8 text-center text-gray-500 text-sm">
+            <p>Morphism Mapper | 跨域创新框架 | 范畴论 × 实际问题</p>
+        </footer>
+    </div>
+
+    <script>
+        async function downloadPNG() {
+            const element = document.getElementById('infographic');
+            const button = document.querySelector('button[onclick="downloadPNG()"]');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '⏳ 生成中...';
+            button.disabled = true;
+            
+            try {
+                if (document.fonts) {
+                    await document.fonts.ready;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const canvas = await html2canvas(element, {
+                    scale: 4,
+                    useCORS: true,
+                    backgroundColor: '#F8F6F3',
+                    logging: false
+                });
+                
+                const link = document.createElement('a');
+                link.download = 'morphism-mapper-{{TOPIC}}.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error('导出失败:', err);
+                alert('导出失败，请重试');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
