@@ -10,6 +10,36 @@
 
 ---
 
+## 🤖 这是一个 Claude Code / OpenCode Skill
+
+Morphism Mapper 是一个为 **Claude Code** 和 **OpenCode** 设计的智能体技能 (Agent Skill)。它通过结构化的提示词和领域知识库，让 AI 能够系统化地进行跨域思维映射。
+
+### 安装方法
+
+#### Claude Code 环境
+
+```bash
+# 克隆到 Claude Code 的 skills 目录
+cd ~/.claude/skills
+git clone https://github.com/pinren/morphism-mapper.git
+
+# 重启 Claude Code 即可使用
+```
+
+#### OpenCode 环境
+
+```bash
+# 克隆到 OpenCode 的 skills 目录
+cd ~/.config/opencode/skills
+git clone https://github.com/pinren/morphism-mapper.git
+
+# 重启 OpenCode 即可使用
+```
+
+> **提示**: 安装完成后，在对话中直接描述问题即可触发 Morphism Mapper。例如："帮我分析一下这个商业模式"、"如何用庄子哲学看待创业困境？"
+
+---
+
 ## 📖 这是什么？
 
 Morphism Mapper 是一个基于**范畴论 (Category Theory)** 的跨域思维工具。
