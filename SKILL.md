@@ -365,6 +365,7 @@ Constraint Detection:
 |------|----------|------|
 | `yoneda_probe` | 信息不透明/模糊 | 通过关系网反推对象本质 |
 | `natural_transformation` | 环境变化/策略失效/视角冲突 | 平滑迁移策略逻辑 |
+| `monad_risk_container` | 【强制执行】输出前 | 风险识别与标注（法律/成本/信任） |
 | `adjoint_balancer` | 【强制执行】输出前 | 可行性校验与优化 |
 | `limits_colimits` | 多域交叉验证后 | 提取跨域元逻辑 |
 | `kan_extension` | 需要扩展/泛化/尺度变换 | 最优扩展与泛化构造 |
@@ -376,6 +377,7 @@ Constraint Detection:
 |----------------|----------|----------|
 | "环境变了"、"风向调了" | 结构性失效 | Natural Transformation |
 | "看不穿"、"查不到"、"黑盒" | 信息不对称 | Yoneda Probe |
+| "合规吗"、"有风险吗"、"合法吗" | 风险识别需求 | Monad Risk Container |
 | "太难了"、"没资源"、"怎么落地" | 复杂度超载 | Adjoint Balancer |
 | "这几个领域有什么共同点？" | 缺乏通用底层 | Limits/Colimits |
 | "如何扩展"、"能否泛化"、"放大/缩小" | 尺度变换需求 | Kan Extension |
@@ -393,6 +395,10 @@ Constraint Detection:
 - **Natural Transformation**: 当用户输入包含**时间/状态变化**相关词汇时
   - 关键词: "环境变了"、"风向调了"、"策略失效"、"视角冲突"、"颗粒度"
   - **语义边界**: 处理的是"从 A 状态平滑过渡到 B 状态"，不是空间扩展
+
+- **Monad Risk Container**: 每次生成【推演提案】前自动执行（在 Phase 4.1 之后，adjoint_balancer 之前）
+  - 关键词: "合规吗"、"风险"、"合法吗"、"可以吗"
+  - **作用**: 自动识别方案的 [🛡️ 法律熵] [💸 隐性债] [❤️ 信任能] 风险
 
 - **Adjoint Balancer**: 每次生成【推演提案】前自动执行
 
@@ -414,6 +420,8 @@ Constraint Detection:
 - `/morphism-pivot` - 强制启动策略演化分析 (Mode C)
 - `/morphism-view` - 强制启动视角对齐 (Mode A)
 - `/morphism-zoom` - 强制启动颗粒度缩放 (Mode B)
+- `/morphism-risk` - 强制启动风险识别 (Monad Risk Container) ⭐ **v2.7 新增**
+- `/morphism-monad` - 强制启动风险识别 (别名)
 - `/morphism-balance` - 强制启动可行性校验
 - `/morphism-limit` - 提取跨域共同核心
 - `/morphism-colimit` - 整合互补洞察
@@ -423,14 +431,15 @@ Constraint Detection:
 
 ### 模块链式调用
 支持多模块顺序执行，默认优先级：
-`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `adjoint_balancer`
+`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `monad_risk_container` → `adjoint_balancer`
 
 **逻辑解释**:
 1. **Yoneda Probe**: 补全信息，明确问题结构
 2. **Natural Transformation**: 处理视角对齐或环境变化
 3. **Limits/Colimits**: 多域交叉验证，提取共同核心
-4. **Kan Extension**: 将验证成功的局部方案扩展到全局（需要放在 limits_colimits 之后，因为扩展通常基于多域整合后的洞察；放在 adjoint_balancer 之前，因为扩展策略也需要可行性检查）
-5. **Adjoint Balancer**: 最终可行性校验（强制执行）
+4. **Kan Extension**: 将验证成功的局部方案扩展到全局
+5. **Monad Risk Container**: 识别并标注法律/成本/信任风险 ⚠️ **v2.7 新增**
+6. **Adjoint Balancer**: 最终可行性校验（强制执行）
 
 ## 输出格式
 
@@ -467,6 +476,12 @@ Constraint Detection:
 
 #### 【跨域元逻辑】（若挂载 limits_colimits）
 多 Domain B 的共同核心与互补整合...
+
+#### 【风险容器检查】（强制执行 monad_risk_container）
+识别并标注法律/成本/信任风险：
+- [🛡️ 法律熵] 合规性检查...
+- [💸 隐性债] 隐性成本识别...
+- [❤️ 信任能] 信任消耗评估...
 
 #### 【伴随解】（强制执行 adjoint_balancer）
 成本-结构最优落地方标注...
