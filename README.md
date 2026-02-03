@@ -5,7 +5,7 @@
 > 将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v2.5-green.svg)](https://github.com/pinren/morphism-mapper/releases)
+[![Version](https://img.shields.io/badge/version-v2.6-green.svg)](https://github.com/pinren/morphism-mapper/releases)
 [![Domains](https://img.shields.io/badge/domains-27+-orange.svg)](#built-in-domains)
 
 ---
@@ -83,6 +83,7 @@ Morphism Mapper 的工作方式是：
 | `/morphism-domains` | 列出所有可用领域 |
 | `/morphism-map <domain>` | 执行到指定领域的映射 |
 | `/morphism-synthesize` | 拉回合成生成提案 |
+| `/morphism-scale` | **全息缩放** - 局部成功如何全局复制 (Kan Extension) |
 
 ### 模式三：新增自定义领域
 
@@ -209,6 +210,38 @@ Morphism Mapper 基于三个核心原理：
 | **Natural Transformation** | 环境变化/策略失效 | 平滑迁移策略逻辑 |
 | **Adjoint Balancer** | 【强制执行】输出前 | 可行性校验与优化 |
 | **Limits/Colimits** | 多域交叉验证后 | 提取跨域元逻辑 |
+| **Kan Extension** ⭐v2.6新增 | 局部成功→全局复制 | 全息缩放：激进/保守扩展策略 |
+
+#### Kan Extension 详解
+
+**解决什么问题？**
+
+当你在一线城市/美国市场/ToB业务验证成功后，想扩展到下沉市场/欧洲/ToC时：
+- 直接复制？可能失败（市场差异大）
+- 完全重做？太慢（错失窗口期）
+
+Kan Extension 提供**两种极端策略**帮助你做出理性决策：
+
+**Left Kan Extension (激进扩展)**
+- 假设：新市场与源市场**结构相似**
+- 策略：最大化复制成功要素（80%+）
+- 风险：高（假设可能不成立）
+- 收益：高（如果成功，指数级增长）
+- 适用：市场相似度高、窗口期短
+
+**Right Kan Extension (保守扩展)**
+- 假设：新市场存在**未知约束**
+- 策略：最大化本地适配（80%+）
+- 风险：低（基于已知约束）
+- 收益：中等（稳健但可能错失机会）
+- 适用：市场差异大、资源有限
+
+**触发方式**：
+- 自动触发：当 Adjoint Balancer 检测到"核心定理无法落地"时
+- 手动触发：`/morphism-scale`
+- 关键词："复制到XX市场"、"如何规模化"、"下沉市场"
+
+**完整示例**：参见 [`examples/kan_extension_example.md`](examples/kan_extension_example.md)
 
 ---
 
