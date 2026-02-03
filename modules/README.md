@@ -10,7 +10,7 @@
 |----------|------|----------|----------|----------|
 | `adjoint_balancer.md` | V4 | 伴随函子 | 可行性平衡 | **是** |
 | `yoneda_probe.md` | V3 | 米田引理 | 信息补全 | 否 |
-| `natural_transformation.md` | V2 | 自然变换 | 策略演化 | 否 |
+| `natural_transformation.md` | **V3** | 自然变换 | 视角对齐/颗粒度缩放/策略演化 | 否 |
 | `limits_colimits.md` | V5 | 极限/余极限 | 元逻辑提取 | 否 |
 | `koan_break.md` | V1 | 初始对象 | 问题重构 | 否 |
 
@@ -18,7 +18,9 @@
 
 | 用户话术关键词 | 潜在困境 | 挂载模块 |
 |----------------|----------|----------|
-| "环境变了"、"风向调了" | 结构性失效 | Natural Transformation |
+| "环境变了"、"风向调了" | 结构性失效 | Natural Transformation (Mode C) |
+| "技术和业务打架"、"KPI不一致" | 视角冲突 | Natural Transformation (Mode A) |
+| "战略宏大落地零碎"、"动作变形" | 颗粒度断裂 | Natural Transformation (Mode B) |
 | "看不穿"、"查不到"、"黑盒" | 信息不对称 | Yoneda Probe |
 | "太难了"、"没资源"、"怎么落地" | 复杂度超载 | Adjoint Balancer |
 | "这几个领域有什么共同点？" | 缺乏通用底层 | Limits/Colimits |
