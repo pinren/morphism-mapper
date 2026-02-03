@@ -12,6 +12,7 @@
 | `yoneda_probe.md` | V3 | 米田引理 | 信息补全 | 否 |
 | `natural_transformation.md` | V2 | 自然变换 | 策略演化 | 否 |
 | `limits_colimits.md` | V5 | 极限/余极限 | 元逻辑提取 | 否 |
+| `koan_break.md` | V1 | 初始对象 | 问题重构 | 否 |
 
 ## 触发映射速查
 
@@ -21,6 +22,9 @@
 | "看不穿"、"查不到"、"黑盒" | 信息不对称 | Yoneda Probe |
 | "太难了"、"没资源"、"怎么落地" | 复杂度超载 | Adjoint Balancer |
 | "这几个领域有什么共同点？" | 缺乏通用底层 | Limits/Colimits |
+| "圆的方"、"万能的石头"、"无解" | 逻辑悖论/范畴错误 | Koan Break |
+| 遍历所有 Domain B 均无法映射 | 结构不匹配 | Koan Break |
+| 连续多次验证失败 | 问题本身需重构 | Koan Break |
 
 ## 模块接口标准
 
@@ -64,8 +68,14 @@ description: [一句话描述]
 yoneda_probe → natural_transformation → limits_colimits → adjoint_balancer
 ```
 
+特殊情况（逻辑僵局时）：
+```
+koan_break → [用户重构问题后重新进入主流程]
+```
+
 ## 扩展计划
 
 - **Kan Extensions**: 域扩展保持结构
 - **Functor Categories**: 反事实推理
 - **Higher Category Theory**: 多层结构处理
+- **Koan Break Variants**: 针对不同类型悖论的专业重构模块（逻辑型、情感型、价值型）
