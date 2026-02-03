@@ -384,13 +384,30 @@ Constraint Detection:
 | "增加XX领域"、"新增领域" | 扩展知识库 | 新增领域工作流 |
 
 ### 自动触发规则
+
+**⚠️ 触发词边界说明**: 不同模块的触发词有明确的语义边界，避免冲突
+
 - **Yoneda Probe**: 当 Domain A 中关键对象属性缺失 >30% 时
-- **Natural Transformation**: 当用户输入包含"变化"、"转型"、"市场切换"、"策略调整"、"视角冲突"、"颗粒度"等关键词时
+  - 关键词: "看不穿"、"查不到"、"黑盒"、"信息不足"
+
+- **Natural Transformation**: 当用户输入包含**时间/状态变化**相关词汇时
+  - 关键词: "环境变了"、"风向调了"、"策略失效"、"视角冲突"、"颗粒度"
+  - **语义边界**: 处理的是"从 A 状态平滑过渡到 B 状态"，不是空间扩展
+
 - **Adjoint Balancer**: 每次生成【推演提案】前自动执行
+
 - **Limits/Colimits**: 当使用 3+ 个 Domain B 或用户要求"交叉验证"时
-- **Kan Extension**: 当用户需要扩展方案适用范围、进行尺度变换、或寻找最优泛化构造时
+
+- **Kan Extension**: 当用户输入包含**空间/规模复制**相关词汇时 ⭐
+  - 关键词: "复制到XX市场"、"如何规模化"、"下沉市场"、"推广到全国"、"从1到N"、"泛化"
+  - **语义边界**: 处理的是"把已验证的模式 S 复制到新的空间 C"，不是时间变化
+  - **与 NT 的区别**: 
+    - NT: "业务从 A 模式转型到 B 模式"（时间维度，替换）
+    - Kan: "把 A 模式的成功复制到 B 市场"（空间维度，扩展）
+
 - **Koan Break**: 当遍历所有 Domain B 均无法映射、或 Phase 4.1 Commutativity Check 连续失败 3 次、或用户问题存在逻辑悖论时
-- **新增领域工作流**: 当用户输入包含"增加"、"新增"、"添加"、"扩展" + "领域"时
+
+- **新增领域工作流**: 当用户输入包含"增加"、"新增"、"添加"、"扩展" + "领域"时（注意：这里的"扩展"指的是扩展知识库，不是业务扩展）
 
 ### 手动触发命令
 - `/morphism-yoneda` - 强制启动米田探针
@@ -406,7 +423,14 @@ Constraint Detection:
 
 ### 模块链式调用
 支持多模块顺序执行，默认优先级：
-`yoneda_probe` → `natural_transformation` → `limits_colimits` → `adjoint_balancer`
+`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `adjoint_balancer`
+
+**逻辑解释**:
+1. **Yoneda Probe**: 补全信息，明确问题结构
+2. **Natural Transformation**: 处理视角对齐或环境变化
+3. **Limits/Colimits**: 多域交叉验证，提取共同核心
+4. **Kan Extension**: 将验证成功的局部方案扩展到全局（需要放在 limits_colimits 之后，因为扩展通常基于多域整合后的洞察；放在 adjoint_balancer 之前，因为扩展策略也需要可行性检查）
+5. **Adjoint Balancer**: 最终可行性校验（强制执行）
 
 ## 输出格式
 
