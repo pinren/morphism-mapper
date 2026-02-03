@@ -1,13 +1,13 @@
 ---
 name: morphism-mapper
-description: Category Theory Morphism Mapper v2.5 - 基于范畴论的跨领域结构映射工具，将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。当用户需要解决复杂问题、寻找创新思路、突破思维定势、进行跨学科类比、或新增/扩展领域知识时使用。支持基础四阶段流程（提取范畴骨架→选择异构域→执行结构映射→拉回合成提案）、高级按需挂载模块（Yoneda Probe、Natural Transformation、Adjoint Balancer、Limits/Colimits）、以及领域知识管理（新增自定义领域、升级领域版本）。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"、"升级领域知识"等。
+description: Category Theory Morphism Mapper v2.6 - 基于范畴论的跨领域结构映射工具，将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。当用户需要解决复杂问题、寻找创新思路、突破思维定势、进行跨学科类比、或新增/扩展领域知识时使用。支持基础四阶段流程（提取范畴骨架→选择异构域→执行结构映射→拉回合成提案）、高级按需挂载模块（Yoneda Probe、Natural Transformation、Adjoint Balancer、Limits/Colimits）、以及领域知识管理（新增自定义领域、升级领域版本）。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"、"升级领域知识"等。
 ---
 
-# Category Theory Morphism Mapper v2.5
+# Category Theory Morphism Mapper v2.6
 
 基于范畴论的函子映射逻辑，将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成创新方案。
 
-**版本**: v2.5  
+**版本**: v2.6  
 **更新日期**: 2025-02  
 **领域数量**: 27个内置领域（24个原有 + 3个新增）  
 **领域版本**: V2（100基本基石 + 14 Objects + 14 Morphisms + 18 Theorems）
@@ -367,6 +367,7 @@ Constraint Detection:
 | `natural_transformation` | 环境变化/策略失效/视角冲突 | 平滑迁移策略逻辑 |
 | `adjoint_balancer` | 【强制执行】输出前 | 可行性校验与优化 |
 | `limits_colimits` | 多域交叉验证后 | 提取跨域元逻辑 |
+| `kan_extension` | 需要扩展/泛化/尺度变换 | 最优扩展与泛化构造 |
 | `koan_break` | 逻辑悖论/无解/所有Domain B映射失败 | 禅宗式打断，重构问题本身 |
 
 ### 触发映射速查
@@ -377,6 +378,7 @@ Constraint Detection:
 | "看不穿"、"查不到"、"黑盒" | 信息不对称 | Yoneda Probe |
 | "太难了"、"没资源"、"怎么落地" | 复杂度超载 | Adjoint Balancer |
 | "这几个领域有什么共同点？" | 缺乏通用底层 | Limits/Colimits |
+| "如何扩展"、"能否泛化"、"放大/缩小" | 尺度变换需求 | Kan Extension |
 | "圆的方"、"无解"、"走不通" | 逻辑悖论/范畴错误 | Koan Break |
 | 遍历所有Domain B均无法映射 | 结构不匹配 | Koan Break |
 | "增加XX领域"、"新增领域" | 扩展知识库 | 新增领域工作流 |
@@ -386,6 +388,7 @@ Constraint Detection:
 - **Natural Transformation**: 当用户输入包含"变化"、"转型"、"市场切换"、"策略调整"、"视角冲突"、"颗粒度"等关键词时
 - **Adjoint Balancer**: 每次生成【推演提案】前自动执行
 - **Limits/Colimits**: 当使用 3+ 个 Domain B 或用户要求"交叉验证"时
+- **Kan Extension**: 当用户需要扩展方案适用范围、进行尺度变换、或寻找最优泛化构造时
 - **Koan Break**: 当遍历所有 Domain B 均无法映射、或 Phase 4.1 Commutativity Check 连续失败 3 次、或用户问题存在逻辑悖论时
 - **新增领域工作流**: 当用户输入包含"增加"、"新增"、"添加"、"扩展" + "领域"时
 
@@ -397,6 +400,7 @@ Constraint Detection:
 - `/morphism-balance` - 强制启动可行性校验
 - `/morphism-limit` - 提取跨域共同核心
 - `/morphism-colimit` - 整合互补洞察
+- `/morphism-scale` - 强制启动尺度变换 (Kan Extension)
 - `/morphism-koan` - 强制启动问题重构 (Koan Break)
 - `/morphism-add-domain "领域名"` - 新增自定义领域
 
