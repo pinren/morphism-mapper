@@ -364,9 +364,10 @@ Constraint Detection:
 | 模块 | 触发条件 | 功能 |
 |------|----------|------|
 | `yoneda_probe` | 信息不透明/模糊 | 通过关系网反推对象本质 |
-| `natural_transformation` | 环境变化/策略失效 | 平滑迁移策略逻辑 |
+| `natural_transformation` | 环境变化/策略失效/视角冲突 | 平滑迁移策略逻辑 |
 | `adjoint_balancer` | 【强制执行】输出前 | 可行性校验与优化 |
 | `limits_colimits` | 多域交叉验证后 | 提取跨域元逻辑 |
+| `koan_break` | 逻辑悖论/无解/所有Domain B映射失败 | 禅宗式打断，重构问题本身 |
 
 ### 触发映射速查
 
@@ -376,21 +377,27 @@ Constraint Detection:
 | "看不穿"、"查不到"、"黑盒" | 信息不对称 | Yoneda Probe |
 | "太难了"、"没资源"、"怎么落地" | 复杂度超载 | Adjoint Balancer |
 | "这几个领域有什么共同点？" | 缺乏通用底层 | Limits/Colimits |
+| "圆的方"、"无解"、"走不通" | 逻辑悖论/范畴错误 | Koan Break |
+| 遍历所有Domain B均无法映射 | 结构不匹配 | Koan Break |
 | "增加XX领域"、"新增领域" | 扩展知识库 | 新增领域工作流 |
 
 ### 自动触发规则
 - **Yoneda Probe**: 当 Domain A 中关键对象属性缺失 >30% 时
-- **Natural Transformation**: 当用户输入包含"变化"、"转型"、"市场切换"、"策略调整"等关键词时
+- **Natural Transformation**: 当用户输入包含"变化"、"转型"、"市场切换"、"策略调整"、"视角冲突"、"颗粒度"等关键词时
 - **Adjoint Balancer**: 每次生成【推演提案】前自动执行
 - **Limits/Colimits**: 当使用 3+ 个 Domain B 或用户要求"交叉验证"时
+- **Koan Break**: 当遍历所有 Domain B 均无法映射、或 Phase 4.1 Commutativity Check 连续失败 3 次、或用户问题存在逻辑悖论时
 - **新增领域工作流**: 当用户输入包含"增加"、"新增"、"添加"、"扩展" + "领域"时
 
 ### 手动触发命令
 - `/morphism-yoneda` - 强制启动米田探针
-- `/morphism-pivot` - 强制启动策略演化分析
+- `/morphism-pivot` - 强制启动策略演化分析 (Mode C)
+- `/morphism-view` - 强制启动视角对齐 (Mode A)
+- `/morphism-zoom` - 强制启动颗粒度缩放 (Mode B)
 - `/morphism-balance` - 强制启动可行性校验
 - `/morphism-limit` - 提取跨域共同核心
 - `/morphism-colimit` - 整合互补洞察
+- `/morphism-koan` - 强制启动问题重构 (Koan Break)
 - `/morphism-add-domain "领域名"` - 新增自定义领域
 
 ### 模块链式调用
