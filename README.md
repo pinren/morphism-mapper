@@ -259,7 +259,7 @@ Kan Extension 提供**两种极端策略**帮助你做出理性决策：
 - 手动触发：`/morphism-scale`
 - 关键词："复制到XX市场"、"如何规模化"、"下沉市场"
 
-**完整示例**：参见 [`examples/kan_extension_example.md`](examples/kan_extension_example.md)
+**完整示例**：参见 [`assets/examples/kan_extension_example.md`](assets/examples/kan_extension_example.md)
 
 ---
 
@@ -299,24 +299,37 @@ Kan Extension 提供**两种极端策略**帮助你做出理性决策：
 ```
 morphism-mapper/
 ├── SKILL.md                    # 核心技能文档
-├── commands/                   # 快捷命令定义
-│   ├── extract.md             # 范畴提取
-│   ├── map.md                 # 结构映射
-│   ├── synthesize.md          # 合成提案
-│   ├── add-domain.md          # 新增领域
-│   └── config.md              # 配置管理
-├── modules/                    # 高级模块
-│   ├── yoneda_probe.md        # 米田探针
-│   ├── natural_transformation.md  # 自然变换
-│   ├── adjoint_balancer.md    # 伴随平衡器
-│   └── limits_colimits.md     # 极限/余极限
+├── scripts/                    # 脚本和模块
+│   ├── domain_selector.py     # 智能领域选择器 (v3.0)
+│   ├── enhance_annotations.py # 标注增强工具
+│   ├── update_morphism_db.py  # 数据库更新工具
+│   ├── commands/              # 快捷命令定义
+│   │   ├── extract.md         # 范畴提取
+│   │   ├── map.md             # 结构映射
+│   │   ├── synthesize.md      # 合成提案
+│   │   ├── add-domain.md      # 新增领域
+│   │   └── config.md          # 配置管理
+│   └── modules/               # 高级模块
+│       ├── yoneda_probe.md    # 米田探针
+│       ├── natural_transformation.md  # 自然变换
+│       ├── adjoint_balancer.md # 伴随平衡器
+│       ├── limits_colimits.md # 极限/余极限
+│       ├── monad_risk_container.md    # 风险容器
+│       ├── kan_extension.md   # 全息缩放 (Kan Extension)
+│       ├── koan_break.md      # 禅宗打断
+│       └── README.md          # 模块说明
 ├── references/                 # 领域知识库
 │   ├── *_v2.md                # V2标准领域 (100+14+14+18)
 │   ├── custom/                # 自定义领域
 │   └── v1_backup/             # V1版本备份
-├── examples/                   # 使用示例
-│   └── few_shot_prompts.md
 └── assets/                     # 资源文件
+    ├── morphism_tags.json     # 16种核心动态标签 (v3.0)
+    ├── morphism-template.html # HTML模板
+    ├── templates/             # 模板目录
+    └── examples/              # 使用示例
+        ├── few_shot_prompts.md
+        ├── kan_extension_example.md
+        └── ...
 ```
 
 ---
