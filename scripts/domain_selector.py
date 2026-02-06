@@ -40,9 +40,9 @@ class DomainSelector:
             tags_file: morphism_tags.json文件路径，默认为脚本所在目录
         """
         if tags_file is None:
-            # 默认从data目录加载
+            # 默认从assets目录加载
             script_dir = Path(__file__).parent.parent
-            tags_file = str(script_dir / "data" / "morphism_tags.json")
+            tags_file = str(script_dir / "assets" / "morphism_tags.json")
         
         self.tags_data = self._load_tags(tags_file)
         self.tags = self._parse_tags()

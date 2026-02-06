@@ -173,7 +173,7 @@ Constraint Detection:
 
 ### Phase 2: Domain Selection (v3.0 - 基于Morphism结构匹配) 【强制执行】⚙️
 
-**核心改进**：从Objects名称匹配转向**Morphism结构匹配**，通过 `scripts/domain_selector.py` 实现智能选择。数据文件位于 `data/morphism_tags.json`。
+**核心改进**：从Objects名称匹配转向**Morphism结构匹配**，通过 `scripts/domain_selector.py` 实现智能选择。数据文件位于 `assets/morphism_tags.json`。
 
 **【强制执行】** 完成 Phase 1 后，必须执行以下步骤：
 
@@ -219,7 +219,7 @@ print(f"推荐领域: {[d['domain'] for d in selected_domains['selected_domains'
 
 **由 domain_selector.py 自动提取**，无需手动操作。提取逻辑：
 - 遍历每个 Morphism 的 dynamics 描述
-- 匹配 `data/morphism_tags.json` 中的 indicators 关键词
+- 匹配 `assets/morphism_tags.json` 中的 indicators 关键词
 - 返回匹配的标签列表
 
 **示例**：
@@ -254,7 +254,7 @@ user_tags = ["flow_exchange", "feedback_regulation", "learning_adaptation"]
 
 #### Phase 2.2: 结构相似度计算
 
-**算法逻辑**（无需LLM，基于 `data/morphism_tags.json`）：
+**算法逻辑**（无需LLM，基于 `assets/morphism_tags.json`）：
 
 ```python
 for each domain in database:
