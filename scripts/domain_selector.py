@@ -1,335 +1,391 @@
 #!/usr/bin/env python3
 """
-Domain Selector for Morphism-Mapper v3.0
-基于Morphism结构匹配的领域选择器
-
-Usage:
-    python domain_selector.py --problem user_problem.json
-    python domain_selector.py --interactive
+Domain Selector - 智能领域选择器 (v3.0)
+基于Morphism结构匹配的智能领域选择算法
 """
 
 import json
-import argparse
-from typing import List, Dict, Tuple, Set
+import os
+from typing import Dict, List, Tuple, Any, Optional
+from dataclasses import dataclass
 from pathlib import Path
 
+@dataclass
+class MorphismTag:
+    """Morphism标签定义"""
+    name: str
+    description: str
+    indicators: List[str]
+    related_tags: List[str]
+    opposite_tags: List[str]
+    example_domains: List[str]
+    weight: float = 1.0
+
+@dataclass
+class DomainMatch:
+    """领域匹配结果"""
+    domain: str
+    score: float
+    best_matches: List[Dict[str, Any]]
+    reasoning: str
 
 class DomainSelector:
-    """基于Morphism结构匹配的领域选择器"""
+    """智能领域选择器"""
     
-    # 标签关联关系（相关但不完全相同）
-    RELATED_TAGS = {
-        "feedback_regulation": ["feedforward_anticipation", "stabilization_equilibrium", "learning_adaptation"],
-        "feedforward_anticipation": ["feedback_regulation", "optimization_search", "information_processing"],
-        "learning_adaptation": ["evolution_development", "exploration_exploitation", "feedback_regulation"],
-        "evolution_development": ["learning_adaptation", "transformation_conversion", "emergence_generation"],
-        "competition_selection": ["cooperation_symbiosis", "optimization_search", "exploration_exploitation"],
-        "cooperation_symbiosis": ["competition_selection", "structural_organization", "flow_exchange"],
-        "information_processing": ["flow_exchange", "feedback_regulation", "feedforward_anticipation"],
-        "stabilization_equilibrium": ["feedback_regulation", "oscillation_fluctuation", "structural_organization"],
-        "flow_exchange": ["information_processing", "diffusion_propagation", "cooperation_symbiosis"],
-        "structural_organization": ["stabilization_equilibrium", "emergence_generation", "cooperation_symbiosis"],
-        "optimization_search": ["competition_selection", "learning_adaptation", "feedforward_anticipation"],
-        "diffusion_propagation": ["flow_exchange", "exploration_exploitation", "emergence_generation"],
-        "transformation_conversion": ["evolution_development", "emergence_generation", "exploration_exploitation"],
-        "emergence_generation": ["transformation_conversion", "structural_organization", "evolution_development"],
-        "exploration_exploitation": ["learning_adaptation", "competition_selection", "diffusion_propagation"],
-        "oscillation_fluctuation": ["stabilization_equilibrium", "feedback_regulation", "flow_exchange"]
-    }
-    
-    def __init__(self, db_path: str = None):
-        """初始化选择器"""
-        if db_path is None:
-            # 默认路径：脚本所在目录的上一级/data/
-            script_dir = Path(__file__).parent
-            db_path_final: str = str(script_dir.parent / "data" / "morphism_tags.json")
-        else:
-            db_path_final = db_path
-        
-        with open(db_path_final, 'r', encoding='utf-8') as f:
-            self.db = json.load(f)
-        
-        self.tag_defs = self.db['tag_definitions']
-        self.domains = self.db['domains']
-    
-    def extract_user_morphism_tags(self, M_a: List[Dict]) -> Set[str]:
+    def __init__(self, tags_file: Optional[str] = None):
         """
-        从用户问题的M_a中提取标签
+        初始化领域选择器
         
         Args:
-            M_a: List of dict with keys: 'from', 'to', 'dynamics'
-                 Example: [{"from": "A", "to": "B", "dynamics": "反馈调节"}]
+            tags_file: morphism_tags.json文件路径，默认为脚本所在目录
+        """
+        if tags_file is None:
+            # 默认从data目录加载
+            script_dir = Path(__file__).parent.parent
+            tags_file = str(script_dir / "data" / "morphism_tags.json")
+        
+        self.tags_data = self._load_tags(tags_file)
+        self.tags = self._parse_tags()
+        self.domain_tag_mapping = self.tags_data.get("tag_relationships", {}).get("domain_tag_mapping", {})
+        self.scoring_rules = self.tags_data.get("scoring_rules", {})
+        self.complexity_thresholds = self.tags_data.get("complexity_thresholds", {})
+    
+    def _load_tags(self, tags_file: str) -> Dict:
+        """加载标签定义文件"""
+        with open(tags_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    
+    def _parse_tags(self) -> Dict[str, MorphismTag]:
+        """解析标签定义"""
+        tags = {}
+        for tag_id, tag_data in self.tags_data.get("tags", {}).items():
+            tags[tag_id] = MorphismTag(
+                name=tag_data["name"],
+                description=tag_data["description"],
+                indicators=tag_data["indicators"],
+                related_tags=tag_data["related_tags"],
+                opposite_tags=tag_data["opposite_tags"],
+                example_domains=tag_data["example_domains"],
+                weight=tag_data.get("weight", 1.0)
+            )
+        return tags
+    
+    def extract_user_tags(self, morphisms: Optional[List[Dict[str, str]]]) -> List[str]:
+        """
+        从用户Morphism中提取标签
+        
+        Args:
+            morphisms: 用户问题的Morphism列表
+                [{"from": "A", "to": "B", "dynamics": "描述"}, ...]
         
         Returns:
-            Set of tag keys
+            提取的标签列表
         """
+        if morphisms is None:
+            return []
+            
         user_tags = set()
         
-        for m in M_a:
-            dynamics = m.get('dynamics', '')
+        for morphism in morphisms:
+            dynamics = morphism.get("dynamics", "").lower()
             
-            # 基于关键词匹配标签
-            for tag_key, tag_def in self.tag_defs.items():
-                keywords = tag_def.get('keywords', [])
-                if any(kw in dynamics for kw in keywords):
-                    user_tags.add(tag_key)
+            for tag_id, tag in self.tags.items():
+                # 检查指标词匹配
+                for indicator in tag.indicators:
+                    if indicator.lower() in dynamics:
+                        user_tags.add(tag_id)
+                        break
         
-        return user_tags
+        return list(user_tags)
     
-    def are_related_tags(self, tag1: str, tag2: str) -> bool:
-        """判断两个标签是否相关"""
-        if tag1 == tag2:
-            return True
-        return tag2 in self.RELATED_TAGS.get(tag1, [])
-    
-    def calculate_morphism_match_score(self, user_tags: Set[str], morphism_tags: List[str], verbose: bool = False) -> int:
+    def calculate_domain_score(
+        self, 
+        domain: str, 
+        user_tags: List[str],
+        user_profile: Optional[str] = None
+    ) -> Tuple[float, List[Dict], str]:
         """
-        计算用户标签与单个Morphism的匹配分数
+        计算领域匹配分数
+        
+        Args:
+            domain: 领域名称
+            user_tags: 用户标签列表
+            user_profile: 用户画像类型
         
         Returns:
-            匹配分数 (0-100 per match)
+            (分数, 最佳匹配列表, 推理说明)
         """
-        score = 0
-        match_details = []
+        domain_tags = self.domain_tag_mapping.get(domain, [])
+        if not domain_tags:
+            return 0.0, [], f"领域 {domain} 无标签定义"
         
-        for user_tag in user_tags:
-            for morph_tag in morphism_tags:
-                if user_tag == morph_tag:
-                    # 完全匹配
-                    score += 100
-                    match_details.append(f"  {user_tag} == {morph_tag}: +100")
-                elif self.are_related_tags(user_tag, morph_tag):
-                    # 相关匹配
-                    score += 50
-                    match_details.append(f"  {user_tag} ~ {morph_tag}: +50 (相关)")
+        total_score = 0
+        best_matches = []
         
-        if verbose and match_details:
-            print(f"    匹配详情:")
-            for detail in match_details:
-                print(f"      {detail}")
-            print(f"    小计: {score}")
+        # 计算标签匹配分数
+        for domain_tag in domain_tags:
+            if domain_tag in user_tags:
+                # 完全匹配
+                score = self.scoring_rules.get("exact_match", 100)
+                total_score += score
+                best_matches.append({
+                    "tag": domain_tag,
+                    "score": score,
+                    "type": "exact"
+                })
+            else:
+                # 检查相关标签
+                tag_obj = self.tags.get(domain_tag)
+                if tag_obj:
+                    for related in tag_obj.related_tags:
+                        if related in user_tags:
+                            score = self.scoring_rules.get("related_match", 50)
+                            total_score += score
+                            best_matches.append({
+                                "tag": domain_tag,
+                                "related_to": related,
+                                "score": score,
+                                "type": "related"
+                            })
+                            break
+                    
+                    # 检查对立标签（惩罚）
+                    for opposite in tag_obj.opposite_tags:
+                        if opposite in user_tags:
+                            score = self.scoring_rules.get("opposite_match", -20)
+                            total_score += score
+                            break
+        
+        # 归一化分数
+        max_possible = len(domain_tags) * self.scoring_rules.get("exact_match", 100)
+        normalized_score = total_score / max_possible if max_possible > 0 else 0
+        
+        # 用户画像加权
+        if user_profile:
+            profile_bonus = self._apply_user_profile_bonus(domain, user_profile)
+            normalized_score *= (1 + profile_bonus)
+        
+        # 生成推理说明
+        reasoning = self._generate_reasoning(domain, best_matches, user_tags)
+        
+        return normalized_score, best_matches, reasoning
+    
+    def _apply_user_profile_bonus(self, domain: str, user_profile: str) -> float:
+        """应用用户画像加权"""
+        profile_rules = self.scoring_rules.get("user_profile_bonus", {})
+        profile = profile_rules.get(user_profile, {})
+        
+        if domain in profile.get("preferred", []):
+            return profile.get("bonus", 0.2)
+        elif domain in profile.get("avoid", []):
+            return -profile.get("bonus", 0.2)
+        
+        return 0.0
+    
+    def _generate_reasoning(
+        self, 
+        domain: str, 
+        best_matches: List[Dict], 
+        user_tags: List[str]
+    ) -> str:
+        """生成推理说明"""
+        if not best_matches:
+            return f"领域 {domain} 与用户标签匹配度较低"
+        
+        exact_matches = [m for m in best_matches if m["type"] == "exact"]
+        if exact_matches:
+            tags_str = ", ".join([m["tag"] for m in exact_matches[:3]])
+            return f"用户问题的{tags_str}等动态特征与{domain}高度匹配"
+        else:
+            return f"用户问题与{domain}存在相关特征匹配"
+    
+    def select_domains(
+        self,
+        objects: Optional[List[str]],
+        morphisms: Optional[List[Dict[str, str]]],
+        user_profile: Optional[str] = None,
+        exclude_domains: Optional[List[str]] = None,
+        history_domains: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        选择最适合的领域
+        
+        Args:
+            objects: 用户问题的Objects列表
+            morphisms: 用户问题的Morphisms列表
+            user_profile: 用户画像类型
+            exclude_domains: 要排除的领域列表
+            history_domains: 历史使用领域列表（用于熵值衰减）
+        
+        Returns:
+            选择结果字典
+        """
+        # 处理None值
+        objects = objects or []
+        morphisms = morphisms or []
+        
+        # 提取用户标签
+        user_tags = self.extract_user_tags(morphisms)
+        
+        # 计算复杂度
+        complexity_level = self._determine_complexity(objects, morphisms)
+        
+        # 计算所有领域分数
+        domain_scores = []
+        for domain in self.domain_tag_mapping.keys():
+            # 排除指定领域
+            if exclude_domains and domain in exclude_domains:
+                continue
+            
+            score, matches, reasoning = self.calculate_domain_score(
+                domain, user_tags, user_profile
+            )
+            
+            # 应用熵值衰减
+            if history_domains:
+                score = self._apply_entropy_decay(domain, score, history_domains)
+            
+            domain_scores.append({
+                "domain": domain,
+                "score": score,
+                "best_matches": matches,
+                "reasoning": reasoning
+            })
+        
+        # 排序并选择Top N
+        domain_scores.sort(key=lambda x: x["score"], reverse=True)
+        
+        if complexity_level == "simple":
+            selected = domain_scores[:1]
+        else:
+            selected = domain_scores[:5]
+        
+        return {
+            "selected_domains": selected,
+            "user_tags": user_tags,
+            "complexity_level": complexity_level,
+            "recommendation": f"建议使用 {selected[0]['domain']} 作为主映射域" if selected else "未找到匹配领域"
+        }
+    
+    def _determine_complexity(
+        self, 
+        objects: List[str], 
+        morphisms: List[Dict]
+    ) -> str:
+        """判定问题复杂度"""
+        simple_threshold = self.complexity_thresholds.get("simple", {})
+        max_objects = simple_threshold.get("max_objects", 5)
+        max_morphisms = simple_threshold.get("max_morphisms", 7)
+        
+        if len(objects) <= max_objects and len(morphisms) <= max_morphisms:
+            return "simple"
+        return "complex"
+    
+    def _apply_entropy_decay(
+        self, 
+        domain: str, 
+        score: float, 
+        history: List[str]
+    ) -> float:
+        """应用熵值衰减"""
+        entropy_rules = self.scoring_rules.get("entropy_decay", {})
+        window_size = entropy_rules.get("window_size", 10)
+        threshold = entropy_rules.get("threshold", 3)
+        penalty = entropy_rules.get("penalty", 0.5)
+        
+        # 统计最近window_size次中该领域使用次数
+        recent_history = history[-window_size:] if len(history) > window_size else history
+        usage_count = recent_history.count(domain)
+        
+        if usage_count > threshold:
+            return score * penalty
         
         return score
     
-    def calculate_domain_match(self, user_tags: Set[str], domain_name: str, verbose: bool = False) -> Tuple[float, List[Dict]]:
-        """
-        计算用户标签与整个领域的匹配度
-        
-        Returns:
-            (匹配分数 0-1, 最佳匹配的Morphism列表)
-        """
-        if domain_name not in self.domains:
-            return 0.0, []
-        
-        domain_data = self.domains[domain_name]
-        morphisms = domain_data.get('morphisms', [])
-        
-        if not morphisms:
-            return 0.0, []
-        
-        if verbose:
-            print(f"\n  领域: {domain_name}")
-            print(f"  用户标签: {user_tags}")
-            print(f"  总Morphism数: {len(morphisms)}")
-        
-        total_score = 0
-        matched_morphisms = []
-        
-        for morphism in morphisms:
-            morph_tags = morphism.get('tags', [])
-            if not morph_tags:
-                continue
-            
-            if verbose:
-                print(f"\n    Morphism: {morphism['name']}")
-                print(f"    动态: {morphism['dynamics']}")
-                print(f"    标签: {morph_tags}")
-            
-            score = self.calculate_morphism_match_score(user_tags, morph_tags, verbose=verbose)
-            
-            if score > 0:
-                total_score += score
-                matched_morphisms.append({
-                    'id': morphism['id'],
-                    'name': morphism['name'],
-                    'dynamics': morphism['dynamics'],
-                    'tags': morph_tags,
-                    'score': score
-                })
-        
-        # 归一化分数 (0-1)
-        max_possible_score = len(user_tags) * 100 * len(morphisms)
-        normalized_score = total_score / max_possible_score if max_possible_score > 0 else 0
-        
-        if verbose:
-            print(f"\n  领域总分: {total_score}")
-            print(f"  最大可能分: {max_possible_score}")
-            print(f"  归一化分数: {normalized_score:.3f}")
-        
-        # 排序并取Top 3匹配的Morphism
-        matched_morphisms.sort(key=lambda x: x['score'], reverse=True)
-        
-        return min(normalized_score, 1.0), matched_morphisms[:3]
-    
-    def select_domains(self, O_a: List[str], M_a: List[Dict], top_n: int = 3, verbose: bool = False) -> List[Dict]:
-        """
-        主选择函数
-        
-        Args:
-            O_a: Objects列表
-            M_a: Morphisms列表
-            top_n: 返回前N个最佳匹配领域
-            verbose: 是否打印详细匹配过程
-        
-        Returns:
-            排序后的领域选择结果
-        """
-        # 提取用户Morphism标签
-        user_tags = self.extract_user_morphism_tags(M_a)
-        
-        if verbose:
-            print("=" * 70)
-            print("详细匹配过程")
-            print("=" * 70)
-            print(f"\n用户Objects: {O_a}")
-            print(f"用户Morphism标签: {user_tags}")
-            print(f"\n开始匹配 {len(self.domains)} 个领域...")
-        
-        if not user_tags:
-            return []
-        
-        # 计算所有领域匹配度
-        results = []
-        for domain_name in self.domains.keys():
-            score, best_matches = self.calculate_domain_match(user_tags, domain_name, verbose=verbose)
-            
-            if score > 0:
-                results.append({
-                    'domain': domain_name,
-                    'score': score,
-                    'best_matches': best_matches,
-                    'user_tags': list(user_tags),
-                    'match_count': len(best_matches)
-                })
-        
-        # 按分数降序排序
-        results.sort(key=lambda x: x['score'], reverse=True)
-        
-        if verbose:
-            print("\n" + "=" * 70)
-            print("匹配结果排序 (全部31个领域)")
-            print("=" * 70)
-            for i, r in enumerate(results, 1):
-                match_info = f"[{r['match_count']}个Morphism匹配]" if r['match_count'] > 0 else "[无匹配]"
-                print(f"{i:2d}. {r['domain']:25s} : {r['score']:6.1%} {match_info}")
-        
-        return results[:top_n]
-    
-    def format_selection_result(self, results: List[Dict]) -> str:
-        """格式化选择结果为可读文本"""
-        if not results:
-            return "未找到匹配的领域"
-        
-        output = []
-        output.append("=" * 60)
-        output.append("基于Morphism结构匹配的领域选择结果")
-        output.append("=" * 60)
-        output.append("")
-        
-        for i, result in enumerate(results, 1):
-            output.append(f"【推荐 #{i}】{result['domain']}")
-            output.append(f"  匹配分数: {result['score']:.1%}")
-            output.append(f"  匹配Morphism数: {result['match_count']}")
-            output.append(f"  用户标签: {', '.join(result['user_tags'])}")
-            output.append("")
-            output.append("  最佳匹配Morphism:")
-            for match in result['best_matches']:
-                output.append(f"    - {match['name']} (得分: {match['score']})")
-                output.append(f"      动态: {match['dynamics']}")
-                output.append(f"      标签: {', '.join(match['tags'])}")
-            output.append("")
-            output.append("-" * 60)
-            output.append("")
-        
-        return "\n".join(output)
-
-
-def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description='基于Morphism结构匹配的领域选择器')
-    parser.add_argument('--problem', type=str, help='用户问题JSON文件路径')
-    parser.add_argument('--interactive', action='store_true', help='交互模式')
-    parser.add_argument('--top-n', type=int, default=5, help='返回前N个领域')
-    parser.add_argument('--verbose', '-v', action='store_true', help='显示详细匹配过程')
-    
-    args = parser.parse_args()
-    
-    selector = DomainSelector()
-    
-    if args.interactive:
-        # 交互模式
+    def interactive_mode(self):
+        """交互模式"""
         print("=" * 60)
-        print("Morphism-Mapper v3.0 - 交互式领域选择")
+        print("Domain Selector v3.0 - 智能领域选择器")
         print("=" * 60)
         print()
         
         # 输入Objects
-        print("请输入Objects（用逗号分隔）:")
-        oa_input = input("> ")
-        O_a = [o.strip() for o in oa_input.split(",") if o.strip()]
+        print("请输入Objects（用逗号分隔，如：公司,产品,用户）：")
+        objects_input = input().strip()
+        objects = [o.strip() for o in objects_input.split(",") if o.strip()]
         
-        # 输入Morphism数量
-        print("\n请输入Morphism数量:")
-        try:
-            m_count = int(input("> "))
-        except ValueError:
-            m_count = 3
+        # 输入Morphisms
+        print("\n请输入Morphisms（格式：from->to:描述，每行一个，输入空行结束）：")
+        morphisms = []
+        while True:
+            line = input().strip()
+            if not line:
+                break
+            if "->" in line and ":" in line:
+                parts = line.split(":", 1)
+                relation = parts[0].strip()
+                dynamics = parts[1].strip()
+                if "->" in relation:
+                    from_obj, to_obj = relation.split("->", 1)
+                    morphisms.append({
+                        "from": from_obj.strip(),
+                        "to": to_obj.strip(),
+                        "dynamics": dynamics
+                    })
         
-        # 输入每个Morphism
-        M_a = []
-        for i in range(m_count):
-            print(f"\nMorphism #{i+1}:")
-            print("  动态描述（如：反馈调节、竞争选择等）:")
-            dynamics = input("> ")
-            if dynamics:
-                M_a.append({
-                    'from': f'obj_{i}',
-                    'to': f'obj_{i+1}',
-                    'dynamics': dynamics
-                })
+        # 选择用户画像
+        print("\n请选择用户画像（直接回车跳过）：")
+        profiles = ["tech_executive", "entrepreneur", "indie_developer", 
+                   "product_manager", "investor", "student_researcher"]
+        for i, profile in enumerate(profiles, 1):
+            print(f"{i}. {profile}")
+        profile_input = input().strip()
+        user_profile = None
+        if profile_input.isdigit() and 1 <= int(profile_input) <= len(profiles):
+            user_profile = profiles[int(profile_input) - 1]
         
         # 执行选择
-        results = selector.select_domains(O_a, M_a, top_n=args.top_n, verbose=args.verbose)
-        if not args.verbose:
-            print(selector.format_selection_result(results))
-    
-    elif args.problem:
-        # 文件模式
-        with open(args.problem, 'r', encoding='utf-8') as f:
-            problem = json.load(f)
+        print("\n" + "=" * 60)
+        print("正在分析...")
+        print("=" * 60)
         
-        O_a = problem.get('O_a', [])
-        M_a = problem.get('M_a', [])
+        result = self.select_domains(objects, morphisms, user_profile)
         
-        results = selector.select_domains(O_a, M_a, top_n=args.top_n, verbose=args.verbose)
-        if not args.verbose:
-            print(selector.format_selection_result(results))
+        # 输出结果
+        print("\n【分析结果】")
+        print(f"\n提取的标签: {', '.join(result['user_tags'])}")
+        print(f"问题复杂度: {result['complexity_level']}")
+        print(f"\n{result['recommendation']}")
+        
+        print("\n【推荐领域】")
+        for i, domain_info in enumerate(result['selected_domains'], 1):
+            print(f"\n{i}. {domain_info['domain']}")
+            print(f"   匹配分数: {domain_info['score']:.2f}")
+            print(f"   推荐理由: {domain_info['reasoning']}")
+            if domain_info['best_matches']:
+                print(f"   匹配标签: {', '.join([m['tag'] for m in domain_info['best_matches'][:3]])}")
+
+
+def main():
+    """主函数"""
+    import sys
     
+    selector = DomainSelector()
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "--interactive":
+        # 交互模式
+        selector.interactive_mode()
     else:
-        # 示例模式
-        print("使用示例数据演示...")
+        # 显示帮助
+        print("Domain Selector v3.0")
         print()
-        
-        O_a = ["公司", "产品", "用户", "市场"]
-        M_a = [
-            {"from": "产品", "to": "用户", "dynamics": "价值传递与反馈收集"},
-            {"from": "用户", "to": "产品", "dynamics": "需求反馈驱动改进"},
-            {"from": "公司", "to": "市场", "dynamics": "竞争与适应"}
-        ]
-        
-        results = selector.select_domains(O_a, M_a, top_n=args.top_n, verbose=args.verbose)
-        if not args.verbose:
-            print(selector.format_selection_result(results))
+        print("用法:")
+        print("  python domain_selector.py --interactive    启动交互模式")
+        print()
+        print("或在Python代码中使用:")
+        print("  from domain_selector import DomainSelector")
+        print("  selector = DomainSelector()")
+        print("  result = selector.select_domains(objects, morphisms)")
 
 
 if __name__ == "__main__":

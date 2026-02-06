@@ -171,29 +171,66 @@ Constraint Detection:
 - **Morphisms (M_a)**: 实体间动态关系
 - **Identity & Composition**: 维持现状的机制
 
-### Phase 2: Domain Selection (v3.0 - 基于Morphism结构匹配)
+### Phase 2: Domain Selection (v3.0 - 基于Morphism结构匹配) 【强制执行】⚙️
 
-**核心改进**：从Objects名称匹配转向**Morphism结构匹配**，通过 `scripts/domain_selector.py` 实现智能选择。
+**核心改进**：从Objects名称匹配转向**Morphism结构匹配**，通过 `scripts/domain_selector.py` 实现智能选择。数据文件位于 `data/morphism_tags.json`。
+
+**【强制执行】** 完成 Phase 1 后，必须执行以下步骤：
+
+1. 将 Phase 1 提取的 O_a 和 M_a 保存为 JSON 格式
+2. 运行 `python scripts/domain_selector.py` 进行智能领域选择
+3. 获取输出结果中的推荐领域列表
+4. 基于推荐结果继续 Phase 3
+
+**执行代码示例**：
+```python
+import subprocess
+import json
+
+# 准备输入数据
+input_data = {
+    "objects": O_a,  # Phase 1 提取的 Objects
+    "morphisms": M_a,  # Phase 1 提取的 Morphisms
+    "user_profile": user_profile  # 可选：用户画像类型
+}
+
+# 保存到临时文件
+with open("/tmp/morphism_input.json", "w", encoding="utf-8") as f:
+    json.dump(input_data, f, ensure_ascii=False)
+
+# 执行领域选择器
+result = subprocess.run(
+    ["python", "scripts/domain_selector.py", "--problem", "/tmp/morphism_input.json"],
+    capture_output=True, text=True, cwd="/Users/pinren/.claude/skills/morphism-mapper"
+)
+
+# 解析结果
+selected_domains = json.loads(result.stdout)
+print(f"推荐领域: {[d['domain'] for d in selected_domains['selected_domains']]}")
+```
 
 #### Phase 2.0: 候选域筛选
 
-**基础过滤**：
+**基础过滤**（由 domain_selector.py 自动执行）：
 1. **反重复过滤**：排除 `last_domain_b`（上次使用的领域）
 2. **熵值衰减过滤**：过去10次使用>3次的领域，权重-50%
 
 #### Phase 2.1: 用户Morphism标签提取
 
-运行 `scripts/domain_selector.py` 提取用户问题M_a的结构标签：
+**由 domain_selector.py 自动提取**，无需手动操作。提取逻辑：
+- 遍历每个 Morphism 的 dynamics 描述
+- 匹配 `data/morphism_tags.json` 中的 indicators 关键词
+- 返回匹配的标签列表
 
+**示例**：
 ```python
-# 示例
 O_a = ["公司", "产品", "用户"]
 M_a = [
     {"from": "产品", "to": "用户", "dynamics": "价值传递与反馈收集"},
     {"from": "用户", "to": "产品", "dynamics": "需求反馈驱动改进"}
 ]
 
-# 提取的标签
+# domain_selector.py 自动提取的标签
 user_tags = ["flow_exchange", "feedback_regulation", "learning_adaptation"]
 ```
 
@@ -262,14 +299,29 @@ for each domain in database:
 
 #### Phase 2.5: 执行选择
 
-**命令行使用**：
-```bash
-# 交互模式
-python scripts/domain_selector.py --interactive
-
-# 文件模式
-python scripts/domain_selector.py --problem user_input.json
+**domain_selector.py 自动输出格式**：
+```json
+{
+  "selected_domains": [
+    {
+      "domain": "control_systems",
+      "score": 0.85,
+      "best_matches": [
+        {"tag": "feedback_regulation", "score": 100, "type": "exact"}
+      ],
+      "reasoning": "用户问题包含反馈回路结构，与control_systems的反馈调节机制高度匹配"
+    }
+  ],
+  "user_tags": ["feedback_regulation", "flow_exchange"],
+  "complexity_level": "simple",
+  "recommendation": "建议使用 control_systems 作为主映射域"
+}
 ```
+
+**人工干预选项**（可选）：
+- 接受 AI 推荐的 Top 1 或 Top 5 领域
+- 基于推荐理由手动调整领域选择
+- 要求 domain_selector.py 重新计算（调整参数）
 
 **输出示例**：
 ```json
@@ -474,6 +526,15 @@ python scripts/domain_selector.py --problem user_input.json
 
 **⚠️ 触发词边界说明**: 不同模块的触发词有明确的语义边界，避免冲突
 
+**核心流程自动触发**:
+- **Domain Selector (Phase 2)**: 【强制执行】完成 Phase 1 (Category Extraction) 后自动执行
+  - 触发条件: 提取到 O_a 和 M_a 后
+  - 执行: `python scripts/domain_selector.py`
+  - 输入: O_a, M_a, user_profile
+  - 输出: 推荐领域列表 (Top 1 或 Top 5)
+  - 说明: 这是 v3.0 核心改进，必须执行以确保领域选择的客观性和一致性
+
+**按需挂载模块自动触发**:
 - **Yoneda Probe**: 当 Domain A 中关键对象属性缺失 >30% 时
   - 关键词: "看不穿"、"查不到"、"黑盒"、"信息不足"
 
@@ -515,8 +576,30 @@ python scripts/domain_selector.py --problem user_input.json
 - `/morphism-add-domain "领域名"` - 新增自定义领域
 
 ### 模块链式调用
-支持多模块顺序执行，默认优先级：
-`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `monad_risk_container` → `adjoint_balancer`
+
+**完整执行链（含强制执行节点）**：
+```
+Phase 1: Category Extraction
+    ↓
+【强制执行】Phase 2: Domain Selector (scripts/domain_selector.py)
+    ↓
+Phase 3: Functorial Mapping
+    ↓
+Phase 4: Pull-back & Synthesis
+    ↓
+Phase 4.1: Commutativity Check
+    ↓
+【按需挂载】yoneda_probe → natural_transformation → limits_colimits → kan_extension
+    ↓
+【强制执行】monad_risk_container
+    ↓
+【强制执行】adjoint_balancer
+```
+
+**说明**:
+- **Phase 2 (Domain Selector)** 和 **Phase 4.1 后的模块** 为强制执行节点
+- 其他模块为按需挂载，根据触发条件自动激活
+- 默认优先级：`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `monad_risk_container` → `adjoint_balancer`
 
 **逻辑解释**:
 1. **Yoneda Probe**: 补全信息，明确问题结构
