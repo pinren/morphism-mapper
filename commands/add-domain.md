@@ -144,9 +144,32 @@
 
 保存到 `references/custom/[domain_name]_v2.md`
 
-### Step 5: 更新标签数据库
+### Step 5: 自动更新标签数据库
 
-**重要**：新增领域后，必须为其14个Core Morphisms标注动态标签：
+**新增领域后，必须更新 `data/morphism_tags.json` 数据库**。
+
+#### 方法1：自动提取（推荐）
+
+运行自动更新脚本：
+
+```bash
+cd ~/.claude/skills/morphism-mapper
+python scripts/update_morphism_db.py <domain_name>
+```
+
+**示例**：
+```bash
+python scripts/update_morphism_db.py yijing_thought
+```
+
+脚本会自动：
+1. 从领域文件中提取14个Core Morphisms
+2. 添加到 `morphism_tags.json`
+3. 生成空的 `tags` 占位符（需要后续手动标注）
+
+#### 方法2：手动更新
+
+如果自动脚本失败，手动更新：
 
 1. 打开 `data/morphism_tags.json`
 2. 在 `domains` 下新增领域条目
@@ -185,7 +208,10 @@
 }
 ```
 
-**注意**：标注完成后，`domain_selector.py` 会自动识别新领域。
+**注意**：
+- 标注完成后，`domain_selector.py` 会自动识别新领域
+- 未标注的领域也会参与匹配，但匹配精度较低
+- 建议为所有Morphism标注标签以达到最佳效果
 
 ### Step 6: 返回确认
 
