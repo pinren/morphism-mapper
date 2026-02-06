@@ -170,45 +170,129 @@ Constraint Detection:
 - **Morphisms (M_a)**: 实体间动态关系
 - **Identity & Composition**: 维持现状的机制
 
-### Phase 2: Domain Selection
+### Phase 2: Domain Selection (v3.0 - 基于Morphism结构匹配)
 
-基于 O_a 和 M_a 的拓扑结构，从 references/ 中选择逻辑距离远但结构相似的 Domain B。
+**核心改进**：从Objects名称匹配转向**Morphism结构匹配**，通过 `scripts/domain_selector.py` 实现智能选择。
+
+#### Phase 2.0: 候选域筛选
+
+**基础过滤**：
+1. **反重复过滤**：排除 `last_domain_b`（上次使用的领域）
+2. **熵值衰减过滤**：过去10次使用>3次的领域，权重-50%
+
+#### Phase 2.1: 用户Morphism标签提取
+
+运行 `scripts/domain_selector.py` 提取用户问题M_a的结构标签：
+
+```python
+# 示例
+O_a = ["公司", "产品", "用户"]
+M_a = [
+    {"from": "产品", "to": "用户", "dynamics": "价值传递与反馈收集"},
+    {"from": "用户", "to": "产品", "dynamics": "需求反馈驱动改进"}
+]
+
+# 提取的标签
+user_tags = ["flow_exchange", "feedback_regulation", "learning_adaptation"]
+```
+
+**16种核心动态标签**：
+- `feedback_regulation` - 反馈调节
+- `feedforward_anticipation` - 前馈预见
+- `learning_adaptation` - 学习适应
+- `evolution_development` - 演化发展
+- `competition_selection` - 竞争选择
+- `cooperation_symbiosis` - 合作共生
+- `information_processing` - 信息处理
+- `stabilization_equilibrium` - 稳定均衡
+- `flow_exchange` - 流动交换
+- `structural_organization` - 结构组织
+- `optimization_search` - 优化搜索
+- `diffusion_propagation` - 扩散传播
+- `transformation_conversion` - 转化转变
+- `emergence_generation` - 涌现生成
+- `exploration_exploitation` - 探索利用
+- `oscillation_fluctuation` - 振荡波动
+
+#### Phase 2.2: 结构相似度计算
+
+**算法逻辑**（无需LLM，基于 `data/morphism_tags.json`）：
+
+```python
+for each domain in database:
+    for each morphism in domain:
+        # 完全匹配：用户标签 == Morphism标签 → +100分
+        # 相关匹配：标签相关但不完全相同 → +50分
+        score = calculate_match_score(user_tags, morphism_tags)
+    
+    domain_score = normalize(total_score)
+```
+
+**标签关联关系**（示例）：
+- `feedback_regulation` ↔ `feedforward_anticipation`（相关）
+- `learning_adaptation` ↔ `evolution_development`（相关）
+- `competition_selection` ↔ `cooperation_symbiosis`（对立但相关）
+
+#### Phase 2.3: 用户画像加权
+
+根据6种用户类型调整领域权重：
+
+| 用户类型 | 偏好领域 | 避免领域 | 权重调整 |
+|---------|---------|---------|---------|
+| 科技高管 | control_systems, game_theory | mythology | +20% / -20% |
+| 创业者 | kaizen, innovation_theory | evolutionary_biology | +20% / -20% |
+| 独立开发者 | second_order_thinking, information_theory | - | +20% |
+| 产品经理 | behavioral_economics, network_theory | - | +20% |
+| 投资者 | complexity_science, thermodynamics | - | +20% |
+| 学生/研究者 | zhuangzi, anthropology | - | +20% |
+
+**意外性奖励**：非理科领域（神话学、人类学、庄子哲学、宗教学）额外+10%
+
+#### Phase 2.4: 多域组合生成
+
+**复杂度判定**：
+- 简单问题（O_a ≤ 5 且 M_a ≤ 7）：选择Top 1领域
+- 复杂问题（O_a > 5 或 M_a > 7）：选择Top 5领域组合
+
+**组合原则**：
+1. **维度互补**：不同领域覆盖问题的不同维度
+2. **避免同构**：不选择结构过于相似的领域
+3. **渐进验证**：从单域→双域→三域逐步增加
+
+#### Phase 2.5: 执行选择
+
+**命令行使用**：
+```bash
+# 交互模式
+python scripts/domain_selector.py --interactive
+
+# 文件模式
+python scripts/domain_selector.py --problem user_input.json
+```
+
+**输出示例**：
+```json
+{
+  "selected_domains": [
+    {
+      "domain": "control_systems",
+      "score": 0.85,
+      "best_matches": [
+        {"morphism": "反馈", "score": 100, "tags": ["feedback_regulation"]},
+        {"morphism": "调节", "score": 100, "tags": ["feedback_regulation"]}
+      ],
+      "reasoning": "用户问题包含反馈回路结构，与control_systems的反馈调节机制高度匹配"
+    }
+  ]
+}
+```
 
 **知识引用原则 (Grounding Mechanism)**：
 
-1. **优先索引**：首先检索 `references/` 目录下的 V2 标准库。
-
-2. **外部验证**：若选用库外领域，或库内信息不足，**必须**调用搜索工具验证该定理的真实性：
-   - Who proposed it?（谁提出的？）
-   - Which book/paper?（哪本书/论文？）
-   - Is it widely accepted?（是否被广泛接受？）
-
-3. **幻觉阻断**：**禁止**捏造定理名称。如果找不到适配定理，宁可报告：
-   > "当前知识库中无适配定理，建议：①扩展领域知识 ②重构问题结构 ③使用 koan_break 模块"
-
-4. **引文标注**：每个使用的定理必须标注来源：
-   - 内置领域：`[来源: thermodynamics_v2.md / Theorem 7]`
-   - 外部验证：`[来源: Smith (2019), Nature; 已验证]`
-
-**领域选择策略（Entropy Injection）**：
-
-1. **距离优先**：优先选择 Semantic Distance (语义距离) > 0.7 的领域
-   - 语义距离计算：`distance = 1 - similarity(O_a, Domain_B_Objects)`
-   - 高距离示例：金融问题 → 菌群生态 (距离≈0.85)
-   - 低距离示例：商业问题 → 博弈论 (距离≈0.3) - 避免连续使用
-
-2. **反重复**：检查对话历史，**禁止**连续两次使用同一个 Domain B
-   - 追踪 `last_domain_b` 变量
-   - 若用户再次询问相似问题，强制切换 Domain B
-
-3. **意外性奖励**：如果能从以下非理科领域找到同构，优先权 +1：
-   - `mythology` - 神话学/原型
-   - `anthropology` - 人类学
-   - `zhuangzi` - 庄子哲学
-   - `religious_studies` - 宗教学
-   - 其他人文领域
-
-4. **熵值衰减**：若某领域在过去 10 次映射中被使用超过 3 次，其选择权重下降 50%
+1. **优先索引**：首先检索 `references/` 目录下的 V2 标准库
+2. **外部验证**：若选用库外领域，必须验证定理真实性
+3. **幻觉阻断**：禁止捏造定理名称
+4. **引文标注**：每个定理标注来源文件
 
 **V2领域结构**：
 每个领域文件包含以下标准化结构：

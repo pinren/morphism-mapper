@@ -144,7 +144,50 @@
 
 保存到 `references/custom/[domain_name]_v2.md`
 
-### Step 5: 返回确认
+### Step 5: 更新标签数据库
+
+**重要**：新增领域后，必须为其14个Core Morphisms标注动态标签：
+
+1. 打开 `data/morphism_tags.json`
+2. 在 `domains` 下新增领域条目
+3. 为每个Core Morphism添加 `tags` 字段（1-3个标签）
+
+**标签选择**（16种）：
+- `feedback_regulation` - 反馈调节
+- `feedforward_anticipation` - 前馈预见
+- `learning_adaptation` - 学习适应
+- `evolution_development` - 演化发展
+- `competition_selection` - 竞争选择
+- `cooperation_symbiosis` - 合作共生
+- `information_processing` - 信息处理
+- `stabilization_equilibrium` - 稳定均衡
+- `flow_exchange` - 流动交换
+- `structural_organization` - 结构组织
+- `optimization_search` - 优化搜索
+- `diffusion_propagation` - 扩散传播
+- `transformation_conversion` - 转化转变
+- `emergence_generation` - 涌现生成
+- `exploration_exploitation` - 探索利用
+- `oscillation_fluctuation` - 振荡波动
+
+**示例**：
+```json
+"new_domain": {
+  "morphisms": [
+    {
+      "id": 1,
+      "name": "核心Morphism",
+      "dynamics": "动态描述",
+      "tags": ["feedback_regulation", "learning_adaptation"],
+      "annotation_method": "manual"
+    }
+  ]
+}
+```
+
+**注意**：标注完成后，`domain_selector.py` 会自动识别新领域。
+
+### Step 6: 返回确认
 
 向用户确认：
 - 领域文件已创建
