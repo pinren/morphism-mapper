@@ -5,8 +5,8 @@
 > 将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v2.6-green.svg)](https://github.com/pinren/morphism-mapper/releases)
-[![Domains](https://img.shields.io/badge/domains-27+-orange.svg)](#built-in-domains)
+[![Version](https://img.shields.io/badge/version-v3.0-green.svg)](https://github.com/pinren/morphism-mapper/releases)
+[![Domains](https://img.shields.io/badge/domains-31+-orange.svg)](#built-in-domains)
 
 ---
 
@@ -95,7 +95,7 @@ Morphism Mapper 的工作方式是：
 
 ---
 
-## 🗺️ 内置领域（27个）
+## 🗺️ 内置领域（31个）
 
 <details>
 <summary><b>物理学与复杂性科学</b></summary>
@@ -163,6 +163,24 @@ Morphism Mapper 的工作方式是：
 - **anthropology** - 人类学（文化、田野调查、参与观察）
 - **religious_studies** - 宗教学（神圣与世俗、仪式、象征）
 - **mao_zedong_thought** - 毛泽东思想（实践论、矛盾论、持久战）
+
+</details>
+
+<details>
+<summary><b>⭐ v3.0 新增领域 & 核心改进</b></summary>
+
+**新增领域**:
+- **military_logistics** - 军事后勤（物资筹措、战略投送、供应链）
+- **organizational_behavior** - 组织行为学（社会化、激励、领导力）
+- **traditional_chinese_medicine** - 中医学（阴阳五行、辨证论治）
+- **yijing_thought** - 易经思想（阴阳、变易、象数）
+
+**核心改进**:
+- **基于Morphism结构匹配的领域选择** - 从Objects匹配转向Morphism动态匹配
+- **16种核心动态标签** - feedback_regulation, learning_adaptation, competition_selection等
+- **100%标注覆盖率** - 31个领域434条Core Morphisms全部标注
+- **智能选择算法** - 完全匹配+100分，相关匹配+50分
+- **默认Top 5推荐** - 支持更全面的多域交叉验证
 
 </details>
 
