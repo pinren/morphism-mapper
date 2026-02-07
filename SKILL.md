@@ -299,10 +299,59 @@ for each domain in database:
 
 #### Phase 2.5: 执行选择
 
-**domain_selector.py 自动输出格式**：
+**【重要】用户选择交互步骤**：
+
+完成 domain_selector.py 执行后，**必须停下来等待用户选择**，不得自动继续到 Phase 3。
+
+**输出格式**（向用户展示）：
+```markdown
+**智能领域选择完成** 🎯
+
+| 排名 | 领域 | 匹配分数 | 推荐理由 |
+|------|------|----------|----------|
+| 1️⃣ | **thermodynamics** 热力学 | 0.67 | flow_exchange + transformation_conversion |
+| 2️⃣ | **quantum_mechanics** 量子力学 | 0.50 | oscillation_fluctuation + transformation_conversion |
+| 3️⃣ | **zhuangzi** 庄子哲学 | 0.50 | oscillation_fluctuation + transformation_conversion |
+| 4️⃣ | **network_theory** 网络理论 | 0.50 | flow_exchange + diffusion_propagation |
+| 5️⃣ | **social_capital** 社会资本 | 0.50 | flow_exchange + cooperation_symbiosis |
+
+**用户标签提取**: [标签列表]
+**问题复杂度**: Simple / Complex
+
+---
+
+**请选择**：
+- 输入 **1-5** 选择对应领域进行映射
+- 输入 **0** 查看 Top 10 的后5位（6-10名）
+- 输入 **自定义领域名称** 使用用户指定领域
+```
+
+**用户选择处理**：
+
+1. **输入 1-5**：直接使用该选择继续 Phase 3
+2. **输入 0**：显示 Top 10 的第6-10名，格式：
+   ```markdown
+   **Top 10 第6-10名**：
+
+   | 排名 | 领域 | 匹配分数 | 推荐理由 |
+   |------|------|----------|----------|
+   | 6️⃣ | **antifragility** 反脆弱性 | 0.45 | ... |
+   | 7️⃣ | **control_systems** 控制系统 | 0.42 | ... |
+   | 8️⃣ | **kaizen** 精益改善 | 0.38 | ... |
+   | 9️⃣ | **innovation_theory** 创新理论 | 0.35 | ... |
+   | 🔟 | **second_order_thinking** 二阶思维 | 0.32 | ... |
+
+   **请选择**：
+   - 输入 **1-5** 选择对应领域
+   - 输入 **6-10** 选择上述领域
+   - 输入 **自定义领域名称**
+   ```
+3. **输入自定义领域名**：验证领域是否存在，若存在则继续 Phase 3
+
+**domain_selector.py 内部输出格式**（供内部使用）：
 ```json
 {
-  "selected_domains": [
+  "top_domains": [
     {
       "domain": "control_systems",
       "score": 0.85,
@@ -313,30 +362,7 @@ for each domain in database:
     }
   ],
   "user_tags": ["feedback_regulation", "flow_exchange"],
-  "complexity_level": "simple",
-  "recommendation": "建议使用 control_systems 作为主映射域"
-}
-```
-
-**人工干预选项**（可选）：
-- 接受 AI 推荐的 Top 1 或 Top 5 领域
-- 基于推荐理由手动调整领域选择
-- 要求 domain_selector.py 重新计算（调整参数）
-
-**输出示例**：
-```json
-{
-  "selected_domains": [
-    {
-      "domain": "control_systems",
-      "score": 0.85,
-      "best_matches": [
-        {"morphism": "反馈", "score": 100, "tags": ["feedback_regulation"]},
-        {"morphism": "调节", "score": 100, "tags": ["feedback_regulation"]}
-      ],
-      "reasoning": "用户问题包含反馈回路结构，与control_systems的反馈调节机制高度匹配"
-    }
-  ]
+  "complexity_level": "simple"
 }
 ```
 
@@ -583,7 +609,12 @@ Phase 1: Category Extraction
     ↓
 【强制执行】Phase 2: Domain Selector (scripts/domain_selector.py)
     ↓
-Phase 3: Functorial Mapping
+【暂停等待用户选择】输出 Top 5 推荐 → 用户选择领域
+    - 输入 1-5：选择对应领域
+    - 输入 0：查看 Top 10 后5位
+    - 输入自定义领域名：使用用户指定领域
+    ↓
+Phase 3: Functorial Mapping (用户确认后执行)
     ↓
 Phase 4: Pull-back & Synthesis
     ↓
@@ -595,6 +626,12 @@ Phase 4.1: Commutativity Check
     ↓
 【强制执行】adjoint_balancer
 ```
+
+**说明**:
+- **Phase 2 (Domain Selector)** 执行后必须暂停，等待用户确认
+- **暂停等待用户选择** 是新的强制执行节点，确保用户参与领域决策
+- 其他模块为按需挂载，根据触发条件自动激活
+- 默认优先级：`yoneda_probe` → `natural_transformation` → `limits_colimits` → `kan_extension` → `monad_risk_container` → `adjoint_balancer`
 
 **说明**:
 - **Phase 2 (Domain Selector)** 和 **Phase 4.1 后的模块** 为强制执行节点
