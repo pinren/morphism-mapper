@@ -252,19 +252,17 @@ class DomainSelector:
                 "reasoning": reasoning
             })
         
-        # 排序并选择Top N
+        # 排序并选择Top 5
         domain_scores.sort(key=lambda x: x["score"], reverse=True)
-        
-        if complexity_level == "simple":
-            selected = domain_scores[:1]
-        else:
-            selected = domain_scores[:5]
-        
+
+        # 总是返回Top 5，让用户选择
+        top_5 = domain_scores[:5]
+
         return {
-            "selected_domains": selected,
+            "all_domains": domain_scores,  # 所有领域评分
+            "top_domains": top_5,          # Top 5领域
             "user_tags": user_tags,
             "complexity_level": complexity_level,
-            "recommendation": f"建议使用 {selected[0]['domain']} 作为主映射域" if selected else "未找到匹配领域"
         }
     
     def _determine_complexity(
@@ -348,22 +346,64 @@ class DomainSelector:
         print("\n" + "=" * 60)
         print("正在分析...")
         print("=" * 60)
-        
+
         result = self.select_domains(objects, morphisms, user_profile)
-        
-        # 输出结果
+
+        # 输出分析结果
         print("\n【分析结果】")
-        print(f"\n提取的标签: {', '.join(result['user_tags'])}")
+        print(f"\n提取的标签: {', '.join(result['user_tags']) if result['user_tags'] else '(无)'}")
         print(f"问题复杂度: {result['complexity_level']}")
-        print(f"\n{result['recommendation']}")
-        
-        print("\n【推荐领域】")
-        for i, domain_info in enumerate(result['selected_domains'], 1):
+
+        # 显示Top 5领域
+        top_domains = result['top_domains']
+        print(f"\n【Top 5 推荐领域】")
+        for i, domain_info in enumerate(top_domains, 1):
             print(f"\n{i}. {domain_info['domain']}")
             print(f"   匹配分数: {domain_info['score']:.2f}")
             print(f"   推荐理由: {domain_info['reasoning']}")
             if domain_info['best_matches']:
-                print(f"   匹配标签: {', '.join([m['tag'] for m in domain_info['best_matches'][:3]])}")
+                tags_str = ', '.join([m['tag'] for m in domain_info['best_matches'][:3]])
+                print(f"   匹配标签: {tags_str}")
+
+        # 用户选择
+        print("\n" + "=" * 60)
+        print("请选择领域（输入1-5的数字，或输入0查看更多领域，直接回车选择第1名）:")
+        choice = input().strip()
+
+        if not choice:
+            # 默认选择第1名
+            selected = top_domains[0]
+            print(f"\n已选择: {selected['domain']}")
+        elif choice == "0":
+            # 显示更多领域
+            print(f"\n【所有领域评分 (Top 10)】")
+            all_domains = result['all_domains'][:10]
+            for i, domain_info in enumerate(all_domains, 1):
+                print(f"{i}. {domain_info['domain']}: {domain_info['score']:.2f}")
+            print("\n请输入序号选择:")
+            choice = input().strip()
+            if choice.isdigit() and 1 <= int(choice) <= len(all_domains):
+                selected = all_domains[int(choice) - 1]
+                print(f"\n已选择: {selected['domain']}")
+            else:
+                print("输入无效，使用默认选择第1名")
+                selected = top_domains[0]
+        elif choice.isdigit() and 1 <= int(choice) <= len(top_domains):
+            # 选择指定领域
+            selected = top_domains[int(choice) - 1]
+            print(f"\n已选择: {selected['domain']}")
+        else:
+            print("输入无效，使用默认选择第1名")
+            selected = top_domains[0]
+
+        # 输出最终选择
+        print("\n" + "=" * 60)
+        print("【最终选择】")
+        print(f"\n选定领域: {selected['domain']}")
+        print(f"匹配分数: {selected['score']:.2f}")
+        print(f"推荐理由: {selected['reasoning']}")
+        print("\n可将其复制到 morphism-mapper 中使用！")
+        print("=" * 60)
 
 
 def main():
