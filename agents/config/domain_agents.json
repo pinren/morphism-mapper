@@ -2,12 +2,36 @@
   "version": "4.0",
   "description": "Domain Agents 配置文件 - Morphism Mapper v4.0",
   "last_updated": "2025-02-08",
+  "complexity_tiers": {
+    "tier_1_axiomatic": {
+      "name": "公理级（底层逻辑）",
+      "description": "基础科学理论，提供核心逻辑和原理，适合提取 Limit",
+      "domains": ["thermodynamics", "complexity_science", "evolutionary_biology", "quantum_mechanics"]
+    },
+    "tier_2_application": {
+      "name": "应用级（方法论）",
+      "description": "应用科学理论，提供具体方法和工具，适合生成 Colimit",
+      "domains": ["control_systems", "game_theory", "network_theory", "information_theory", "operations_research", "distributed_systems", "neuroscience", "behavioral_economics", "immunology", "ecology"]
+    },
+    "tier_3_practical": {
+      "name": "实践级（经验智慧）",
+      "description": "实践经验和智慧，提供可执行的洞察",
+      "domains": ["kaizen", "antifragility", "military_strategy", "innovation_theory", "incentive_design", "second_order_thinking", "social_capital"]
+    },
+    "tier_4_interpretive": {
+      "name": "阐释级（意义建构）",
+      "description": "人文社科理论，提供意义和文化视角",
+      "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought"]
+    }
+  },
   "domains": {
     "thermodynamics": {
       "domain_file": "references/thermodynamics_v2.md",
       "modules": ["yoneda_probe", "natural_transformation", "limits_colimits"],
       "persona": "agents/personas/thermodynamics_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_1_axiomatic",
+      "tier_strength": 0.95,
       "tags": ["feedback_regulation", "flow_exchange", "stabilization_equilibrium", "entropy_dissipation"],
       "metadata": {
         "activation_count": 0,
@@ -21,6 +45,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/information_theory_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.85,
       "tags": ["information_processing", "flow_exchange", "feedforward_anticipation", "entropy_communication"],
       "metadata": {
         "activation_count": 0,
@@ -34,6 +60,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/complexity_science_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_1_axiomatic",
+      "tier_strength": 0.90,
       "tags": ["emergence_generation", "evolution_development", "self_organization", "nonlinear_dynamics"],
       "metadata": {
         "activation_count": 0,
@@ -47,6 +75,8 @@
       "modules": ["yoneda_probe", "natural_transformation", "limits_colimits"],
       "persona": "agents/personas/control_systems_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.88,
       "tags": ["feedback_regulation", "feedforward_anticipation", "stabilization_equilibrium", "control_loop"],
       "metadata": {
         "activation_count": 0,
@@ -60,6 +90,8 @@
       "modules": ["yoneda_probe", "adjoint_balancer", "limits_colimits"],
       "persona": "agents/personas/game_theory_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.82,
       "tags": ["competition_selection", "strategic_interaction", "equilibrium_nash", "incentive_design"],
       "metadata": {
         "activation_count": 0,
@@ -73,6 +105,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/evolutionary_biology_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_1_axiomatic",
+      "tier_strength": 0.92,
       "tags": ["evolution_development", "competition_selection", "learning_adaptation", "key_innovation"],
       "metadata": {
         "activation_count": 0,
@@ -86,6 +120,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/network_theory_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.80,
       "tags": ["structural_organization", "diffusion_propagation", "network_effects", "connectivity"],
       "metadata": {
         "activation_count": 0,
@@ -99,6 +135,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/antifragility_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.85,
       "tags": ["convex_response", "optionality", "barbell_strategy", "stress_benefits"],
       "metadata": {
         "activation_count": 0,
@@ -112,6 +150,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/innovation_theory_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.78,
       "tags": ["disruptive_innovation", "s_curve", "network_effects", "adoption_dynamics"],
       "metadata": {
         "activation_count": 0,
@@ -125,6 +165,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/kaizen_persona.md",
       "default_seed": true,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.88,
       "tags": ["learning_adaptation", "continuous_improvement", "waste_elimination", "pdca"],
       "metadata": {
         "activation_count": 0,
@@ -138,6 +180,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/behavioral_economics_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.75,
       "tags": ["cognitive_bias", "loss_aversion", "heuristics", "decision_making"],
       "metadata": {
         "activation_count": 0,
@@ -151,6 +195,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/neuroscience_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.78,
       "tags": ["information_processing", "learning_adaptation", "predictive_coding", "plasticity"],
       "metadata": {
         "activation_count": 0,
@@ -164,6 +210,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/distributed_systems_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.72,
       "tags": ["consistency", "fault_tolerance", "consensus", "replication"],
       "metadata": {
         "activation_count": 0,
@@ -177,6 +225,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/ecology_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.80,
       "tags": ["cooperation_symbiosis", "competition_selection", "niche", "ecosystem"],
       "metadata": {
         "activation_count": 0,
@@ -190,6 +240,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/immunology_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.75,
       "tags": ["recognition", "memory", "tolerance", "adaptation"],
       "metadata": {
         "activation_count": 0,
@@ -203,6 +255,8 @@
       "modules": ["yoneda_probe", "adjoint_balancer"],
       "persona": "agents/personas/incentive_design_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.82,
       "tags": ["motivation", "agency_problem", "reward_structure", "alignment"],
       "metadata": {
         "activation_count": 0,
@@ -216,6 +270,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/linguistics_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.70,
       "tags": ["information_processing", "symbol_system", "meaning", "metaphor"],
       "metadata": {
         "activation_count": 0,
@@ -229,6 +285,8 @@
       "modules": ["yoneda_probe", "adjoint_balancer"],
       "persona": "agents/personas/military_strategy_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.85,
       "tags": ["competition_selection", "maneuver", "logistics", "ooda_loop"],
       "metadata": {
         "activation_count": 0,
@@ -242,6 +300,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/mythology_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.65,
       "tags": ["archetype", "hero_journey", "liminality", "collective_unconscious"],
       "metadata": {
         "activation_count": 0,
@@ -255,6 +315,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/operations_research_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.78,
       "tags": ["optimization_search", "resource_allocation", "constraint", "efficiency"],
       "metadata": {
         "activation_count": 0,
@@ -268,6 +330,8 @@
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/quantum_mechanics_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_1_axiomatic",
+      "tier_strength": 0.70,
       "tags": ["superposition", "uncertainty", "entanglement", "observation"],
       "metadata": {
         "activation_count": 0,
@@ -281,6 +345,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/second_order_thinking_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.82,
       "tags": ["feedback_delay", "unintended_consequences", "circularity", "reflexivity"],
       "metadata": {
         "activation_count": 0,
@@ -294,6 +360,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/social_capital_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.75,
       "tags": ["cooperation_symbiosis", "trust", "network_structure", "structural_holes"],
       "metadata": {
         "activation_count": 0,
@@ -307,6 +375,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/zhuangzi_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.88,
       "tags": ["transformation", "perspective_relativity", "usefulness_uselessness", "flow_adaptation"],
       "metadata": {
         "activation_count": 0,
@@ -320,6 +390,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/anthropology_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.72,
       "tags": ["culture", "field_observation", "participant_observation", "ethnography"],
       "metadata": {
         "activation_count": 0,
@@ -333,6 +405,8 @@
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/religious_studies_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.68,
       "tags": ["sacred_profane", "ritual", "symbol", "meaning_system"],
       "metadata": {
         "activation_count": 0,
@@ -346,6 +420,8 @@
       "modules": ["yoneda_probe", "adjoint_balancer"],
       "persona": "agents/personas/mao_zedong_thought_persona.md",
       "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.75,
       "tags": ["practice", "contradiction", "protracted_war", "mass_line"],
       "metadata": {
         "activation_count": 0,
@@ -366,5 +442,15 @@
     "antifragility",
     "innovation_theory",
     "kaizen"
-  ]
+  ],
+  "wildcard_candidates": [
+    "mythology",
+    "quantum_mechanics",
+    "zhuangzi",
+    "religious_studies"
+  ],
+  "seed_selection_strategy": {
+    "tier_balance": "种子应包含 tier_1 和 tier_2 的混合，确保既有底层理论又有应用方法",
+    "wildcard_injection": "每次 Swarm 探索强制随机引入 1 个 wildcard 领域，增加非共识创新概率"
+  }
 }

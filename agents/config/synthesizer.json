@@ -24,12 +24,19 @@
     "limit": {
       "description": "跨域共识（所有领域都支持的核心洞察）",
       "structure": "最大公共子结构",
-      "stability_rating": "稳定性评级（1-5星）"
+      "stability_rating": "稳定性评级（1-5星）",
+      "structural_requirement": "必须包含结构性描述，禁止通用形容词",
+      "dissensus_metric": "分歧度量（0-100，越高分歧越大）"
     },
     "colimit": {
       "description": "互补整合方案（各领域的独特贡献组合）",
       "domain_contributions": "每个领域的独特洞察",
       "integrated_proposal": "组合方案"
+    },
+    "conflict_analysis": {
+      "description": "当分歧度过高时的冲突报告",
+      "adjunction_opportunities": "Agent 之间的对立统一关系",
+      "tension_resolution": "如何利用冲突产生洞察"
     },
     "synthesis_report": {
       "exploration_summary": "探索过程摘要",
@@ -42,7 +49,11 @@
       "name": "limit_computer",
       "description": "计算跨域共识（Limit）",
       "module": "scripts/modules/limits_colimits.md",
-      "logic": "提取所有同构簇的交集结构"
+      "logic": "提取所有同构簇的交集结构",
+      "constraints": [
+        "必须包含结构性描述（禁止'需要平衡'等空话）",
+        "必须基于形式化映射，而非语义类比"
+      ]
     },
     {
       "name": "colimit_computer",
@@ -51,13 +62,26 @@
       "logic": "分配各领域独特贡献并组合"
     },
     {
+      "name": "conflict_analyzer",
+      "description": "分析 Agent 间的分歧和冲突",
+      "triggers": [
+        "Dissensus Metric > 60",
+        "Limit 被检测为平庸（trivial_limit_detection）"
+      ],
+      "output": {
+        "adjunction_opportunities": "Agent 之间的对立统一关系",
+        "tension_resolution": "如何利用冲突产生洞察"
+      }
+    },
+    {
       "name": "graph_updater",
       "description": "更新知识图谱",
       "target_file": "knowledge/homography_graph.json",
       "updates": [
         "节点统计（激活次数、成功率）",
         "边统计（同构计数、强度）",
-        "推荐提示生成"
+        "推荐提示生成",
+        "边衰减计算（Edge Decay）"
       ]
     },
     {
@@ -69,10 +93,16 @@
   "decision_logic": {
     "sufficient_clusters": "同构簇数量 >= 2 且平均置信度 >= 60",
     "koan_break_trigger": "所有 Domain Agents 置信度 < 50",
+    "trivial_limit_detection": "Limit 使用通用形容词且缺乏结构性描述",
     "quality_threshold": {
       "minimal": "至少 1 个同构簇，置信度 >= 50",
       "acceptable": "至少 2 个同构簇，平均置信度 >= 60",
       "excellent": "3+ 个同构簇，平均置信度 >= 75"
+    },
+    "dissensus_handling": {
+      "low_dissensus": "< 30: 强共识，Limit 可信度高",
+      "medium_dissensus": "30-60: 健康分歧，Colimit 价值高",
+      "high_dissensus": "> 60: 深度冲突，启动冲突分析"
     }
   },
   "coordination": {
@@ -87,6 +117,11 @@
     "gap_analysis": {
       "enabled": true,
       "threshold": "同类问题 3 次低置信度触发建议"
+    },
+    "edge_decay": {
+      "enabled": true,
+      "half_life_days": 180,
+      "description": "长期不活跃的同构关系逐渐衰减，保持图谱鲜活"
     }
   }
 }

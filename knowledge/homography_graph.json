@@ -1,8 +1,16 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "created": "2025-02-08",
   "last_updated": "2025-02-08",
   "description": "Morphism Swarm 跨域同构图谱 - 记录领域间的同构关系和探索历史",
+  "edge_decay_config": {
+    "enabled": true,
+    "half_life_days": 180,
+    "description": "长期不活跃的同构关系逐渐衰减，保持图谱鲜活",
+    "formula": "decay_factor = 0.5 ^ (days_since_last_active / half_life_days)",
+    "min_strength": 0.1,
+    "recovery_boost": 1.5
+  },
   "metadata": {
     "total_explorations": 0,
     "total_homography_discoveries": 0,
@@ -253,7 +261,31 @@
       "tags": ["practice", "contradiction", "protracted_war", "mass_line"]
     }
   },
-  "edges": {},
+  "edges": {
+    "_schema": {
+      "edge_id": "domain_a↔domain_b",
+      "properties": {
+        "homography_count": "发现同构的次数",
+        "avg_confidence": "平均置信度",
+        "strength": "当前强度（0-1，受衰减影响）",
+        "base_strength": "基础强度（不考虑衰减）",
+        "last_active": "最后一次活跃日期",
+        "common_structures": "共同结构列表",
+        "decay_factor": "衰减因子（0-1）"
+      }
+    },
+    "_example": {
+      "thermodynamics↔information_theory": {
+        "homography_count": 5,
+        "avg_confidence": 0.88,
+        "strength": 0.92,
+        "base_strength": 0.92,
+        "last_active": "2025-02-08",
+        "common_structures": ["entropy_noise", "dissipation_channel"],
+        "decay_factor": 1.0
+      }
+    }
+  },
   "recommendation_hints": {
     "based_on_theory": true,
     "description": "当领域 A 被选中时，基于历史数据和理论相关性推荐其他领域",

@@ -74,15 +74,21 @@
         "timestamp": "ISO8601",
         "payload": {
           "my_observation": "我的观察",
-          "formal_structure": "形式化结构",
-          "query": "你领域有对应结构吗？"
+          "formal_structure": "形式化结构（自然语言）",
+          "formal_structure_signature": "符号化表达（伪代码）",
+          "query": "你领域有对应结构吗？",
+          "examples": [
+            "A -> B -> A' (Feedback Loop)",
+            "X + Y -> Z (Composition)",
+            "d/dt(A) = f(B) (Dynamics)"
+          ]
         }
       }
     },
     "HOMOGRAPHY_CONFIRM": {
       "from": "Domain Agent",
       "to": "发起探测的 Agent",
-      "purpose": "确认结构同构",
+      "purpose": "确认结构同构（带验证证明）",
       "schema": {
         "type": "HOMOGRAPHY_CONFIRM",
         "message_id": "唯一ID",
@@ -93,7 +99,18 @@
           "corresponding_structure": "对应结构",
           "formal_mapping": "形式化映射",
           "isomorphism_type": "同构类型",
-          "confidence": "0-1"
+          "confidence": "0-1",
+          "verification_proof": {
+            "description": "双点验证：证明映射的一致性",
+            "if_then_logic": "如果 Domain A 的 [X] 映射为 Domain B 的 [Y]，那么 Domain A 的 [X'] 必须对应 Domain B 的 [Y']",
+            "examples": [
+              {
+                "domain_a_element": "熵增 (dS/dt > 0)",
+                "domain_b_element": "噪声增加 (H(X|Y) 上升)",
+                "verification": "熵增导致混乱度增加 ↔ 噪声导致信息丢失，两者都是'不可逆的无序化过程'"
+              }
+            ]
+          }
         }
       }
     },
@@ -167,6 +184,13 @@
       "enabled": true,
       "source": "knowledge_graph_recommendations",
       "description": "基于知识图谱的历史成功率调整种子选择"
+    },
+    "wildcard_agent": {
+      "enabled": true,
+      "description": "随机引入 1 个不相关领域，增加发现非共识创新的概率",
+      "selection_method": "随机从 non_default_seed_domains 中选择",
+      "probability": 1.0,
+      "rationale": "引入随机扰动（Stochasticity），防止在局部极值中打转"
     }
   },
   "quality_metrics": {
