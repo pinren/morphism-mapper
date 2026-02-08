@@ -1,0 +1,92 @@
+{
+  "agent_name": "Category Theorist",
+  "agent_type": "synthesizer",
+  "version": "1.0",
+  "description": "监听 Domain Agents，计算 Limit/Colimit，管理知识图谱",
+  "system_prompt": "agents/system_prompts/synthesizer.md",
+  "responsibilities": [
+    "监听所有 Domain Agents 的输出",
+    "识别和收集同构簇（Homography Clusters）",
+    "执行 Phase 4: Limit 计算（提取跨域共识）",
+    "执行 Phase 4: Colimit 计算（整合互补洞察）",
+    "处理 Koan Break（渐进降级）",
+    "更新知识图谱（homography_graph.json）",
+    "保存探索日志（exploration_history/YYYYMMDD-exploration.md）",
+    "基于知识图谱生成种子选择建议"
+  ],
+  "inputs": {
+    "domain_agent_outputs": "所有 Domain Agents 的映射结果",
+    "homography_clusters": "Domain Agents 间发现的结构同构",
+    "category_skeleton": "Broadcaster 提取的范畴骨架",
+    "user_profile": "用户画像"
+  },
+  "outputs": {
+    "limit": {
+      "description": "跨域共识（所有领域都支持的核心洞察）",
+      "structure": "最大公共子结构",
+      "stability_rating": "稳定性评级（1-5星）"
+    },
+    "colimit": {
+      "description": "互补整合方案（各领域的独特贡献组合）",
+      "domain_contributions": "每个领域的独特洞察",
+      "integrated_proposal": "组合方案"
+    },
+    "synthesis_report": {
+      "exploration_summary": "探索过程摘要",
+      "homography_graph_update": "知识图谱更新",
+      "recommendations": "后续建议"
+    }
+  },
+  "tools": [
+    {
+      "name": "limit_computer",
+      "description": "计算跨域共识（Limit）",
+      "module": "scripts/modules/limits_colimits.md",
+      "logic": "提取所有同构簇的交集结构"
+    },
+    {
+      "name": "colimit_computer",
+      "description": "计算互补整合（Colimit）",
+      "module": "scripts/modules/limits_colimits.md",
+      "logic": "分配各领域独特贡献并组合"
+    },
+    {
+      "name": "graph_updater",
+      "description": "更新知识图谱",
+      "target_file": "knowledge/homography_graph.json",
+      "updates": [
+        "节点统计（激活次数、成功率）",
+        "边统计（同构计数、强度）",
+        "推荐提示生成"
+      ]
+    },
+    {
+      "name": "koan_break_handler",
+      "description": "处理探索失败场景",
+      "strategy": "渐进降级（泛化 → 建议新领域）"
+    }
+  ],
+  "decision_logic": {
+    "sufficient_clusters": "同构簇数量 >= 2 且平均置信度 >= 60",
+    "koan_break_trigger": "所有 Domain Agents 置信度 < 50",
+    "quality_threshold": {
+      "minimal": "至少 1 个同构簇，置信度 >= 50",
+      "acceptable": "至少 2 个同构簇，平均置信度 >= 60",
+      "excellent": "3+ 个同构簇，平均置信度 >= 75"
+    }
+  },
+  "coordination": {
+    "listens_to": ["所有 Domain Agents", "Yoneda Broadcaster"],
+    "can_trigger": ["Koan Break（重新广播）", "建议引入新领域"],
+    "final_output_to": "用户"
+  },
+  "knowledge_management": {
+    "graph_file": "knowledge/homography_graph.json",
+    "log_directory": "knowledge/exploration_history/",
+    "log_format": "YYYYMMDD-exploration.md",
+    "gap_analysis": {
+      "enabled": true,
+      "threshold": "同类问题 3 次低置信度触发建议"
+    }
+  }
+}

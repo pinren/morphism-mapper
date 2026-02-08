@@ -1,0 +1,177 @@
+{
+  "protocol_name": "Morphism Swarm Protocol",
+  "version": "1.0",
+  "description": "Agent Team 协调与通信协议",
+  "modes": {
+    "fast": {
+      "description": "单函子映射模式（v3.0 兼容）",
+      "flow": [
+        "Phase 1: Category Extraction (Broadcaster)",
+        "Phase 2: Domain Selection (domain_selector.py)",
+        "Phase 3: Functorial Mapping (单个 Domain Agent)",
+        "Phase 4: Pull-back & Synthesis (生成提案)"
+      ],
+      "trigger": "默认启动"
+    },
+    "swarm": {
+      "description": "函子范畴蜂群模式（v4.0 新增）",
+      "flow": [
+        "Phase 1: Category Extraction (Broadcaster)",
+        "Phase 2: Domain Selection (Fast Mode 预筛选 3-5 个种子)",
+        "Phase 2.5: Agent Swarm Exploration",
+        "  2.5.1: Broadcast (Broadcaster → Domain Agents)",
+        "  2.5.2: Parallel Mapping (Domain Agents 独立映射)",
+        "  2.5.3: Natural Transformation (Agents 两两通信检测同构)",
+        "  2.5.4: Cluster Formation (形成同构簇)",
+        "  2.5.5: Synthesis (Synthesizer 计算 Limit/Colimit)",
+        "  2.5.6: Knowledge Update (更新图谱和日志)"
+      ],
+      "trigger": [
+        "用户明确请求",
+        "Fast Mode 置信度 < 70%",
+        "关键词匹配: 突破/创新/换个视角/复杂问题"
+      ]
+    }
+  },
+  "message_types": {
+    "BROADCAST": {
+      "from": "Broadcaster",
+      "to": "Domain Agents",
+      "purpose": "发送范畴骨架",
+      "schema": {
+        "type": "BROADCAST",
+        "timestamp": "ISO8601",
+        "payload": {
+          "category_skeleton": "范畴骨架",
+          "user_profile": "用户画像",
+          "exploration_mode": "swarm"
+        }
+      }
+    },
+    "MAPPING_RESULT": {
+      "from": "Domain Agent",
+      "to": "Synthesizer",
+      "purpose": "报告独立映射结果",
+      "schema": {
+        "type": "MAPPING_RESULT",
+        "agent_id": "域名",
+        "timestamp": "ISO8601",
+        "payload": {
+          "confidence_score": "0-100",
+          "homography_candidates": "候选同构列表",
+          "unmatched_elements": "无法匹配的元素",
+          "open_queries": "向其他 Agent 的询问"
+        }
+      }
+    },
+    "HOMOGRAPHY_PROBE": {
+      "from": "Domain Agent",
+      "to": "另一个 Domain Agent",
+      "purpose": "探测结构同构",
+      "schema": {
+        "type": "HOMOGRAPHY_PROBE",
+        "message_id": "唯一ID",
+        "timestamp": "ISO8601",
+        "payload": {
+          "my_observation": "我的观察",
+          "formal_structure": "形式化结构",
+          "query": "你领域有对应结构吗？"
+        }
+      }
+    },
+    "HOMOGRAPHY_CONFIRM": {
+      "from": "Domain Agent",
+      "to": "发起探测的 Agent",
+      "purpose": "确认结构同构",
+      "schema": {
+        "type": "HOMOGRAPHY_CONFIRM",
+        "message_id": "唯一ID",
+        "in_reply_to": "原始消息ID",
+        "timestamp": "ISO8601",
+        "payload": {
+          "matched": true,
+          "corresponding_structure": "对应结构",
+          "formal_mapping": "形式化映射",
+          "isomorphism_type": "同构类型",
+          "confidence": "0-1"
+        }
+      }
+    },
+    "HOMOGRAPHY_REJECT": {
+      "from": "Domain Agent",
+      "to": "发起探测的 Agent",
+      "purpose": "拒绝同构探测",
+      "schema": {
+        "type": "HOMOGRAPHY_REJECT",
+        "message_id": "唯一ID",
+        "in_reply_to": "原始消息ID",
+        "timestamp": "ISO8601",
+        "payload": {
+          "matched": false,
+          "reason": "拒绝原因"
+        }
+      }
+    },
+    "CLUSTER_REPORT": {
+      "from": "Synthesizer",
+      "to": "所有 Agents",
+      "purpose": "广播同构簇形成",
+      "schema": {
+        "type": "CLUSTER_REPORT",
+        "timestamp": "ISO8601",
+        "payload": {
+          "cluster_id": "簇ID",
+          "members": "成员列表",
+          "shared_structure": "共享结构",
+          "collective_confidence": "集体置信度"
+        }
+      }
+    }
+  },
+  "timeout_settings": {
+    "agent_mapping_timeout": 30,
+    "probe_response_timeout": 15,
+    "total_swarm_timeout": 300,
+    "description": "秒，超时后强制继续"
+  },
+  "fault_tolerance": {
+    "allow_partial_failure": true,
+    "min_working_agents": 2,
+    "fallback_to_fast": "当 < 2 个 Agents 响应时回退到 Fast Mode"
+  },
+  "koan_break": {
+    "triggers": [
+      "所有 confidence_score < 50",
+      "超时且无有效结果"
+    ],
+    "strategy": "渐进降级",
+    "phase_1": {
+      "name": "概念泛化",
+      "description": "将具体概念泛化为更抽象的概念重试",
+      "examples": [
+        "耗散结构 → 系统",
+        "信号博弈 → 互动",
+        "关键创新 → 突破"
+      ]
+    },
+    "phase_2": {
+      "name": "建议新领域",
+      "description": "向用户报告部分发现，建议引入新领域",
+      "user_interaction": "用户确认后动态启动新 Agent"
+    }
+  },
+  "seed_selection": {
+    "method": "fast_mode_first",
+    "fallback": "default_seed_domains",
+    "adaptive": {
+      "enabled": true,
+      "source": "knowledge_graph_recommendations",
+      "description": "基于知识图谱的历史成功率调整种子选择"
+    }
+  },
+  "quality_metrics": {
+    "limit_quality": "基于参与领域数量 × 平均置信度",
+    "colimit_quality": "基于互补性评分 × 可执行性",
+    "overall_swarm_success": "Limit + Colimit 综合评分 > 70"
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "version": "1.0",
+  "created": "2025-02-08",
+  "last_updated": "2025-02-08",
+  "description": "Morphism Swarm 跨域同构图谱 - 记录领域间的同构关系和探索历史",
+  "metadata": {
+    "total_explorations": 0,
+    "total_homography_discoveries": 0,
+    "last_exploration": null
+  },
+  "nodes": {
+    "thermodynamics": {
+      "name": "热力学",
+      "domain_file": "references/thermodynamics_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["feedback_regulation", "flow_exchange", "stabilization_equilibrium", "entropy_dissipation"]
+    },
+    "information_theory": {
+      "name": "信息论",
+      "domain_file": "references/information_theory_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["information_processing", "flow_exchange", "feedforward_anticipation", "entropy_communication"]
+    },
+    "complexity_science": {
+      "name": "复杂性科学",
+      "domain_file": "references/complexity_science_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["emergence_generation", "evolution_development", "self_organization", "nonlinear_dynamics"]
+    },
+    "control_systems": {
+      "name": "控制系统",
+      "domain_file": "references/control_systems_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["feedback_regulation", "feedforward_anticipation", "stabilization_equilibrium", "control_loop"]
+    },
+    "game_theory": {
+      "name": "博弈论",
+      "domain_file": "references/game_theory_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["competition_selection", "strategic_interaction", "equilibrium_nash", "incentive_design"]
+    },
+    "evolutionary_biology": {
+      "name": "进化生物学",
+      "domain_file": "references/evolutionary_biology_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["evolution_development", "competition_selection", "learning_adaptation", "key_innovation"]
+    },
+    "network_theory": {
+      "name": "网络理论",
+      "domain_file": "references/network_theory_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["structural_organization", "diffusion_propagation", "network_effects", "connectivity"]
+    },
+    "antifragility": {
+      "name": "反脆弱性",
+      "domain_file": "references/antifragility_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["convex_response", "optionality", "barbell_strategy", "stress_benefits"]
+    },
+    "innovation_theory": {
+      "name": "创新理论",
+      "domain_file": "references/innovation_theory_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["disruptive_innovation", "s_curve", "network_effects", "adoption_dynamics"]
+    },
+    "kaizen": {
+      "name": "精益/持续改善",
+      "domain_file": "references/kaizen_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["learning_adaptation", "continuous_improvement", "waste_elimination", "pdca"]
+    },
+    "behavioral_economics": {
+      "name": "行为经济学",
+      "domain_file": "references/behavioral_economics_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["cognitive_bias", "loss_aversion", "heuristics", "decision_making"]
+    },
+    "neuroscience": {
+      "name": "神经科学",
+      "domain_file": "references/neuroscience_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["information_processing", "learning_adaptation", "predictive_coding", "plasticity"]
+    },
+    "distributed_systems": {
+      "name": "分布式系统",
+      "domain_file": "references/distributed_systems_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["consistency", "fault_tolerance", "consensus", "replication"]
+    },
+    "ecology": {
+      "name": "生态学",
+      "domain_file": "references/ecology_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["cooperation_symbiosis", "competition_selection", "niche", "ecosystem"]
+    },
+    "immunology": {
+      "name": "免疫学",
+      "domain_file": "references/immunology_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["recognition", "memory", "tolerance", "adaptation"]
+    },
+    "incentive_design": {
+      "name": "激励机制设计",
+      "domain_file": "references/incentive_design_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["motivation", "agency_problem", "reward_structure", "alignment"]
+    },
+    "linguistics": {
+      "name": "语言学",
+      "domain_file": "references/linguistics_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["information_processing", "symbol_system", "meaning", "metaphor"]
+    },
+    "military_strategy": {
+      "name": "军事战略",
+      "domain_file": "references/military_strategy_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["competition_selection", "maneuver", "logistics", "ooda_loop"]
+    },
+    "mythology": {
+      "name": "神话学",
+      "domain_file": "references/mythology_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["archetype", "hero_journey", "liminality", "collective_unconscious"]
+    },
+    "operations_research": {
+      "name": "运筹学",
+      "domain_file": "references/operations_research_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["optimization_search", "resource_allocation", "constraint", "efficiency"]
+    },
+    "quantum_mechanics": {
+      "name": "量子力学",
+      "domain_file": "references/quantum_mechanics_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["superposition", "uncertainty", "entanglement", "observation"]
+    },
+    "second_order_thinking": {
+      "name": "二阶思维",
+      "domain_file": "references/second_order_thinking_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["feedback_delay", "unintended_consequences", "circularity", "reflexivity"]
+    },
+    "social_capital": {
+      "name": "社会资本",
+      "domain_file": "references/social_capital_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["cooperation_symbiosis", "trust", "network_structure", "structural_holes"]
+    },
+    "zhuangzi": {
+      "name": "庄子哲学",
+      "domain_file": "references/zhuangzi_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["transformation", "perspective_relativity", "usefulness_uselessness", "flow_adaptation"]
+    },
+    "anthropology": {
+      "name": "人类学",
+      "domain_file": "references/anthropology_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["culture", "field_observation", "participant_observation", "ethnography"]
+    },
+    "religious_studies": {
+      "name": "宗教学",
+      "domain_file": "references/religious_studies_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["sacred_profane", "ritual", "symbol", "meaning_system"]
+    },
+    "mao_zedong_thought": {
+      "name": "毛泽东思想",
+      "domain_file": "references/mao_zedong_thought_v2.md",
+      "activation_count": 0,
+      "success_rate": 0.0,
+      "avg_confidence": 0.0,
+      "last_used": null,
+      "tags": ["practice", "contradiction", "protracted_war", "mass_line"]
+    }
+  },
+  "edges": {},
+  "recommendation_hints": {
+    "based_on_theory": true,
+    "description": "当领域 A 被选中时，基于历史数据和理论相关性推荐其他领域",
+    "hints": {}
+  },
+  "gap_analysis": {
+    "repeated_patterns": [],
+    "suggested_domains": [],
+    "last_analysis": null
+  },
+  "exploration_history": {
+    "count": 0,
+    "recent": []
+  }
+}
