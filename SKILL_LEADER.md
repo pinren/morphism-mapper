@@ -63,40 +63,53 @@ Team Lead 是 Morphism Swarm 的协调者，负责：
 
 Team Lead 现在负责从用户问题中提取范畴骨架，包括：
 - 核心对象（Objects）
-- 动态关系（Morphisms）
+- 精细动态关系（Morphisms，8个维度）
 - 结构标签（16个动态标签）
 
-### 执行步骤
+### 执行方式：LLM 对话式提取
 
-**Step 0.1: 分析用户问题**
+**⚠️ 不使用 Python 脚本，直接使用 LLM 对话**
 
-输入: 用户自然语言问题
-输出: 结构化问题理解
+**Step 0.1: 使用精细化提取提示词**
 
-**Step 0.2: 提取核心 Objects（实体）**
+参考 `prompts/category_extraction_prompt.md` 中的提示词模板
 
-- 识别问题中的关键实体
-- 标注实体类型（资源、主体、关系等）
-- 提取实体属性
-
-**Step 0.3: 提取 Morphisms（动态关系）**
-
-- 识别实体间的动态关系
-- 提取关系方向性
-- 标注关系强度
-
-**Step 0.4: 提取结构标签（16个动态标签）**
+**Step 0.2: 发送提示词给 LLM**
 
 ```
-反馈调节、流动交换、竞争对抗、合作协同、
-适应学习、优化效率、不确定风险、涌现模式、
-平衡稳定、转化变化、信息编码、资源分配、
-约束限制、分解组合、选择淘汰、通信信号
+你是 Category Extraction Specialist，负责从用户问题中提取精细的范畴骨架。
+
+**用户问题**：
+{用户的问题}
+
+**请按以下格式输出 JSON**：
+{
+  "objects": [...],
+  "morphisms": [
+    {
+      "from": "源实体",
+      "to": "目标实体",
+      "relation_type": "关系类型",
+      "dynamics": "动态描述",
+      "temporal_type": "瞬时|延迟|持续|累积",
+      "direction_type": "单向|双向|循环",
+      "intensity_level": "弱|中|强|指数级",
+      "feedback_type": "无|正反馈|负反馈|复合反馈",
+      "reversibility_type": "可逆|不可逆|条件可逆",
+      "conditions": ["触发条件"],
+      "effects": ["主要效果"],
+      "side_effects": ["副作用"]
+    }
+  ],
+  "structural_tags": [...]
+}
 ```
 
-**Step 0.5: 保存范畴骨架**
+**Step 0.3: 验证并保存 JSON 输出**
 
-保存到本地上下文，用于后续领域选择和Agent注入
+- 确保 JSON 格式正确
+- 检查 morphisms 包含所有 8 个维度
+- 保存到本地上下文
 
 ### 输出格式
 
