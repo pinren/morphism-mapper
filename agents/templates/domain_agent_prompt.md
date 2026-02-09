@@ -162,49 +162,122 @@ Morphisms (动态关系):
 
 ### 完成标志：发送 MAPPING_RESULT
 
-**⚠️ 重要：不要创建文件，直接发送消息！**
+## 【CRITICAL】输出流程 - 严格遵守
 
-完成分析后，使用以下格式发送 MAPPING_RESULT：
+完成分析后，**必须且只能**使用以下流程：
+
+**⚠️ 禁止操作**：
+- ❌ 使用 Write 工具写入 MAPPING_RESULT 到文件
+- ❌ 发送普通 "message" 类型代替 MAPPING_RESULT_ROUND1
+- ❌ 先写文件再发送（直接发送即可）
+- ❌ 创建任何文件或引用文件路径
+
+**后果**：违反此协议将导致后续流程挂起，Swarm Orchestrator 无法继续
+
+---
+
+### 步骤 1: 向 obstruction-theorist 发送 MAPPING_RESULT_ROUND1
 
 ```python
-SendMessage(type="message", recipient="synthesizer", content="""
-## 📊 MAPPING_RESULT: {DOMAIN_NAME} Domain Agent
+SendMessage(
+    type="message",
+    recipient="obstruction-theorist",
+    content="""**MAPPING_RESULT_ROUND1** - {DOMAIN_NAME} Domain Agent
 
+**分析时间**: {ISO_TIMESTAMP}
 **Domain**: {DOMAIN_NAME}
-**Mapping Time**: {timestamp}
-**Problem Space**: {user_problem}
-
-{mapping_proposal_json}
+**核心定理**: {theorem_1}, {theorem_2}
 
 ---
 
-**MAPPING_RESULT 完整度检查**:
-- ✅ 函子映射定义完整
-- ✅ 对象映射完整
-- ✅ 态射映射完整
-- ✅ 核心定理应用
-- ✅ 双点验证（if_then_logic + examples）
-- ✅ Kernel Loss 诚实
-""")
+## 一、范畴骨架-热力学映射
 
-SendMessage(type="message", recipient="obstruction-theorist", content="""
-## 📊 MAPPING_RESULT: {DOMAIN_NAME} Domain Agent
+### Objects 映射
+| Domain A | Domain B ({DOMAIN_NAME}) | 映射依据 |
+|----------|--------------------------|----------|
+| Domain A Object 1 | {DOMAIN_NAME} 对应结构 1 | 映射逻辑 |
+| Domain A Object 2 | {DOMAIN_NAME} 对应结构 2 | 映射逻辑 |
 
-{mapping_proposal_json}
+### Morphisms 映射
+| Domain A | Domain B ({DOMAIN_NAME}) | 动态分析 |
+|----------|--------------------------|----------|
+| Domain A Morphism 1 | {DOMAIN_NAME} 对应动态 1 | 动态描述 |
+| Domain A Morphism 2 | {DOMAIN_NAME} 对应动态 2 | 动态描述 |
 
 ---
-**发送目标**: synthesizer + obstruction-theorist
-""")
+
+## 二、核心洞察：[核心问题从{DOMAIN_NAME}视角的分析]
+
+[详细分析内容...]
+
+---
+
+## 三、Verification Proof (双重验证)
+
+### If_Then_Logic
+- **IF** [条件1]
+- **AND** [条件2]
+- **THEN** [结论]
+
+### Examples
+1. [具体案例1]
+2. [具体案例2]
+
+---
+
+## 四、Tags
+
+[tag1, tag2, tag3, ...]
+""",
+    summary="MAPPING_RESULT_ROUND1: {DOMAIN_NAME} Agent [分析主题]"
+)
 ```
 
-**❌ 错误格式 - 不要使用**:
-- 不要创建文件或引用文件路径
-- 不要使用 `SendMessage(recipient="...", type="message", ...)` 参数顺序错误
+### 步骤 2: 向 synthesizer 发送一句话洞察
 
-**✅ 正确格式**:
-- `SendMessage(type="message", recipient="...", content="...")` 参数顺序
-- content 参数直接包含完整的 MAPPING_RESULT
-- 同时发送给 synthesizer 和 obstruction-theorist
+```python
+SendMessage(
+    type="message",
+    recipient="synthesizer",
+    content="""**一句话洞察**（30字）：
+[你的30字核心洞察]
+
+**核心映射**：
+- Domain A Object 1 → {DOMAIN_NAME} 对应结构 1
+- Domain A Object 2 → {DOMAIN_NAME} 对应结构 2
+- [其他关键映射...]
+
+**关键定理**：
+1. [定理名称]: [核心应用]
+2. [定理名称]: [核心应用]
+
+**Verification Proof**:
+IF [条件] THEN [结论]
+Examples: [案例1]; [案例2]
+""",
+    summary="{DOMAIN_NAME} Agent: [分析主题]完成"
+)
+```
+
+---
+
+### ✅ 正确格式总结
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| type | "message" | 固定值 |
+| recipient | "obstruction-theorist" 或 "synthesizer" | 根据步骤选择 |
+| content | 完整的分析内容 | 直接包含，不引用文件 |
+| summary | 简短描述 | 用于消息预览 |
+
+### ❌ 常见错误（绝对禁止）
+
+| 错误类型 | 示例 | 后果 |
+|----------|------|------|
+| 写入文件 | `Write(file_path=..., content=...)` | 流程挂起，无人读取 |
+| 参数顺序错误 | `SendMessage(recipient=..., type=...)` | 路由失败 |
+| 引用文件路径 | "详见 /tmp/xxx.json" | obstruction-theorist 无法读取 |
+| 使用其他类型 | `type="broadcast"` 或其他 | 消息类型不匹配 |
 
 详见：docs/SENDMESSAGE_FORMAT_GUIDE.md
 

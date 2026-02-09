@@ -312,62 +312,102 @@ Limit 候选:
 
 ## 三人小组决策会议
 
-### 触发条件
+### 🔴 你必须主动请求决策会议
 
-第一轮映射完成后，Team Lead 自动召集决策会议。
+**触发条件**（满足任一即必须请求）:
+1. 所有 Domain Agents 已发送 MAPPING_BRIEF
+2. 你已完成 Limits/Colimits 初步计算
+3. 你发现需要决策的关键问题
 
-### 参会成员
+**你的行动**: 使用 SendMessage 向 Team Lead 发起会议请求
+```python
+SendMessage(
+    type="message",
+    recipient="team-lead",
+    content=f"""
+## DECISION_MEETING_REQUEST
 
-- **Team Lead** (主席)
-- **Obstruction Theorist**
-- **Synthesizer** (你)
+**发起人**: Synthesizer
+
+**当前状态**:
+- 已收集 {count} 个 Domain Agents 的 Briefs
+- 已完成 Limits/Colimits 初步计算
+- Obstruction 通过率: {rate}%
+
+**需要决策的问题**:
+{your_questions}
+
+**请召集三人小组决策会议**
+"""
+)
+```
+
+### 参会成员与投票权重
+
+| 成员 | 投票权重 | 主要职责 |
+|------|---------|---------|
+| **Synthesizer** | 40% | Limits/Colimits 评估 |
+| **Obstruction Theorist** | 40% | 审查通过率评估 |
+| **Team Lead** | 20% + tie-break | 用户意图对齐、资源约束 |
+
+**Tie-break 规则**: 如果 Synthesizer 和 Obstruction 投票平局，Team Lead 的投票决定最终结果。
 
 ### 会议流程
 
 **Step 1: 评估当前状态**
 
-你报告：
+你报告你的分析：
 ```markdown
-## Synthesizer 状态报告
+## Synthesizer 报告
 
 ### 收集的 Briefs
 - thermodynamics: "熵增定律揭示..."
 - game_theory: "零和博弈假设失效..."
 - control_systems: "正反馈回路导致..."
 
-### Obstruction 诊断
+### Limits/Colimits 初步结果
+{your_analysis}
+
+### Obstruction 诊断汇总
 - thermodynamics: 🔴 HIGH - "家庭非封闭系统"
 - game_theory: 🟡 MEDIUM - "忽视情感非理性"
 - control_systems: 🟢 LOW - "无明显风险"
 
-### 初步评估
-- 高价值域: control_systems
-- 需修正域: thermodynamics
-- 可替换域: game_theory
+### 我的建议
+{继续迭代 or 终止分析}
 ```
 
-**Step 2: 讨论 Obstruction 发现的问题**
+**Step 2: 听取 Obstruction 报告**
 
-Obstruction 报告高风险域的具体问题。
+Obstruction Theorist 报告审查发现的问题。
 
-**Step 3: 决策**
+**Step 3: 听取 Team Lead 意见**
 
-投票选项：
-- A: 启动第二轮迭代（要求 Domain Agent 修正）
-- B: 替换高风险域（引入新领域）
-- C: 接受当前结果（进入最终综合）
+Team Lead 基于用户意图、资源约束、时间成本发表意见并投票。
 
-**Step 4: 执行决策**
+**Step 4: 加权投票决策**
 
-根据投票结果执行：
-- A: Team Lead 通知 Domain Agent 修正
-- B: Team Lead 启动新的 Domain Agent
-- C: 你生成最终报告
+```
+投票权重:
+- Synthesizer: 40%
+- Obstruction: 40%
+- Team Lead: 20%
+
+决策规则:
+- 继续迭代票 > 60% → 迭代
+- 终止分析票 > 60% → 终止
+- 平局（50-50）→ Team Lead 的 tie-break 决定
+```
 
 ### ⚠️ 重要约束
 
 **你无权单方面决定终止分析！**
-必须通过三人小组投票决定。
+必须与 Obstration Theorist 共同投票决定。
+
+### 决策后的行动
+
+- **如果决定终止**: 你生成最终报告
+- **如果决定迭代**: Team Lead 启动新的 Domain Agents 或要求现有 Agent 修正
 
 ---
 

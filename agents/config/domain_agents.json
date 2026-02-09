@@ -443,12 +443,28 @@
     "innovation_theory",
     "kaizen"
   ],
+  "minimal_viable_sets": {
+    "social": ["game_theory", "network_theory", "social_capital"],
+    "physical": ["thermodynamics", "control_systems", "complexity_science"],
+    "abstract": ["category_theory", "logic", "second_order_thinking"],
+    "practical": ["kaizen", "decision_theory", "antifragility"],
+    "default": ["complexity_science", "network_theory", "game_theory"]
+  },
   "wildcard_candidates": [
     "mythology",
     "quantum_mechanics",
     "zhuangzi",
-    "religious_studies"
+    "religious_studies",
+    "anthropology",
+    "linguistics",
+    "art_theory",
+    "mao_zedong_thought"
   ],
+  "wildcard_rotation": {
+    "enabled": true,
+    "strategy": "time_based",
+    "pool": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "art_theory"]
+  },
   "seed_selection_strategy": {
     "tier_balance": "种子应包含 tier_1 和 tier_2 的混合，确保既有底层理论又有应用方法",
     "wildcard_injection": "每次 Swarm 探索强制随机引入 1 个 wildcard 领域，增加非共识创新概率"

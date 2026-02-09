@@ -76,6 +76,10 @@ class DomainSelector:
         self.wildcard_candidates = self.agents_data.get("wildcard_candidates", [])
         self.default_seed_domains = self.agents_data.get("default_seed_domains", [])
 
+        # v4.4.1 新增：最小可用集和 wildcard 轮换
+        self.minimal_viable_sets = self.agents_data.get("minimal_viable_sets", {})
+        self.wildcard_rotation_config = self.agents_data.get("wildcard_rotation", {})
+
     def _load_tags(self, tags_file: str) -> Dict:
         """加载标签定义文件"""
         with open(tags_file, 'r', encoding='utf-8') as f:
@@ -108,6 +112,7 @@ class DomainSelector:
         Args:
             morphisms: 用户问题的Morphism列表（标准字典格式）
                 [{"from": "A", "to": "B", "dynamics": "描述"}, ...]
+                兼容字段名: from/source/src, to/target/dst, dynamics/description/relation/type
 
         Returns:
             提取的标签列表
@@ -117,21 +122,51 @@ class DomainSelector:
 
         user_tags = set()
 
-        for morphism in morphisms:
-            # 兼容 "dynamics" 字段（精细格式）或直接描述字段
-            dynamics = morphism.get("dynamics", "")
-            if not dynamics:
-                # 如果没有 dynamics，尝试从 from/to 组合提取
-                from_obj = morphism.get("from", "")
-                to_obj = morphism.get("to", "")
-                dynamics = f"{from_obj} → {to_obj}"
+        # 字段名映射表（兼容多种命名风格）
+        source_fields = ["from", "source", "src", "start", "源", "起点", "起始"]
+        target_fields = ["to", "target", "dst", "end", "dest", "目标", "终点", "结束"]
+        dynamics_fields = ["dynamics", "description", "desc", "relation", "type", "relationship",
+                          "动态", "描述", "关系", "类型"]
 
-            dynamics = dynamics.lower()
+        for i, morphism in enumerate(morphisms):
+            if not isinstance(morphism, dict):
+                continue
+
+            # 提取描述字段（多字段兼容）
+            dynamics = ""
+            for field in dynamics_fields:
+                if field in morphism and morphism[field]:
+                    dynamics = str(morphism[field])
+                    break
+
+            # 如果没有找到描述字段，尝试从源/目标字段组合
+            if not dynamics:
+                source_val = ""
+                target_val = ""
+
+                for field in source_fields:
+                    if field in morphism and morphism[field]:
+                        source_val = str(morphism[field])
+                        break
+
+                for field in target_fields:
+                    if field in morphism and morphism[field]:
+                        target_val = str(morphism[field])
+                        break
+
+                if source_val and target_val:
+                    dynamics = f"{source_val} → {target_val}"
+
+            # 如果仍然没有dynamics，记录警告（仅在verbose模式）
+            if not dynamics:
+                continue
+
+            dynamics_lower = dynamics.lower()
 
             for tag_id, tag in self.tags.items():
                 # 检查指标词匹配
                 for indicator in tag.indicators:
-                    if indicator.lower() in dynamics:
+                    if indicator.lower() in dynamics_lower:
                         user_tags.add(tag_id)
                         break
 
@@ -345,6 +380,22 @@ class DomainSelector:
         Returns:
             TierBalanceResult 包含选定领域和wildcard
         """
+        # v4.4.1: 如果候选为空或不足，使用最小可用集作为回退
+        if not fast_candidates or len(fast_candidates) < 2:
+            minimal_set = self._get_minimal_viable_set("default")
+            # 转换为 fast_candidates 格式
+            fast_candidates = []
+            for domain_name in minimal_set:
+                complexity_tier, tier_strength = self.get_domain_complexity_tier(domain_name)
+                fast_candidates.append({
+                    "domain": domain_name,
+                    "score": 0.5,  # 默认分数
+                    "complexity_tier": complexity_tier,
+                    "tier_strength": tier_strength,
+                    "best_matches": [],
+                    "reasoning": "来自最小可用集"
+                })
+
         # 按tier分组
         tier_groups: Dict[str, List[Dict]] = {
             "tier_1_axiomatic": [],
@@ -386,13 +437,8 @@ class DomainSelector:
             all_remaining = [d for t_group in tier_groups.values() for d in t_group if d not in selected]
             selected.extend(all_remaining[:selected_count - len(selected)])
 
-        # 🔴 强制 Wildcard Agent
-        wildcard = None
-        if self.wildcard_candidates:
-            selected_domains = [d["domain"] for d in selected]
-            available_wildcards = [w for w in self.wildcard_candidates if w not in selected_domains]
-            if available_wildcards:
-                wildcard = random.choice(available_wildcards)
+        # 🔴 强制 Wildcard Agent（v4.4.1: 支持轮换）
+        wildcard = self._select_wildcard_with_rotation(selected)
 
         # 构建tier分布映射
         tier_distribution = {}
@@ -465,10 +511,68 @@ class DomainSelector:
 
         return score
 
+    def _get_minimal_viable_set(self, set_type: str = "default") -> List[str]:
+        """
+        获取最小可用集（v4.4.1 新增）
+
+        Args:
+            set_type: 集合类型（social/physical/abstract/practical/default）
+
+        Returns:
+            领域名称列表
+        """
+        if not self.minimal_viable_sets:
+            # 回退到更小的缺省集
+            return ["complexity_science", "network_theory", "game_theory"]
+
+        return self.minimal_viable_sets.get(set_type, self.minimal_viable_sets.get("default", []))
+
+    def _select_wildcard_with_rotation(self, selected: List[Dict[str, Any]]) -> Optional[str]:
+        """
+        使用轮换机制选择 wildcard（v4.4.1 新增）
+
+        Args:
+            selected: 已选定的领域列表
+
+        Returns:
+            wildcard 领域名称
+        """
+        import time
+
+        selected_domains = [d["domain"] for d in selected]
+
+        # 检查是否启用轮换
+        if self.wildcard_rotation_config.get("enabled", False):
+            pool = self.wildcard_rotation_config.get("pool", [])
+            if pool:
+                # 基于时间戳轮换
+                index = int(time.time()) % len(pool)
+                wildcard = pool[index]
+                # 确保 wildcard 不在已选列表中
+                if wildcard not in selected_domains:
+                    return wildcard
+                # 否则尝试下一个
+                for i in range(len(pool)):
+                    index = (index + 1) % len(pool)
+                    wildcard = pool[index]
+                    if wildcard not in selected_domains:
+                        return wildcard
+
+        # 回退到原始逻辑
+        if self.wildcard_candidates:
+            available_wildcards = [w for w in self.wildcard_candidates if w not in selected_domains]
+            if available_wildcards:
+                return random.choice(available_wildcards)
+
+        return None
+
     def interactive_mode(self):
-        """交互模式"""
+        """
+        交互模式（调试用途）
+        ⚠️ 注意：Swarm 模式下自动调用 select_domains() + tier_balance_selection()，无需交互
+        """
         print("=" * 60)
-        print("Domain Selector v4.0 - 智能领域选择器")
+        print("Domain Selector v4.0 - 智能领域选择器（全自动模式）")
         print("=" * 60)
         print()
 
@@ -512,65 +616,43 @@ class DomainSelector:
         print("正在分析...")
         print("=" * 60)
 
+        # Step 1: Fast Mode 预筛选
         result = self.select_domains(objects, morphisms, user_profile)
 
         # 输出分析结果
-        print("\n【分析结果】")
+        print("\n【Fast Mode 分析结果】")
         print(f"\n提取的标签: {', '.join(result['user_tags']) if result['user_tags'] else '(无)'}")
         print(f"问题复杂度: {result['complexity_level']}")
-        print(f"Fast Mode 置信度: {result['confidence']:.0f}%")
+        print(f"置信度: {result['confidence']:.0f}%")
 
         # 显示Top 5领域
         top_domains = result['top_domains']
-        print(f"\n【Top 5 推荐领域】")
+        print(f"\n【Top 5 候选领域】")
         for i, domain_info in enumerate(top_domains, 1):
             print(f"\n{i}. {domain_info['domain']}")
             print(f"   匹配分数: {domain_info['score']:.2f}")
             print(f"   复杂度层级: {domain_info['complexity_tier']}")
-            print(f"   推荐理由: {domain_info['reasoning']}")
             if domain_info['best_matches']:
                 tags_str = ', '.join([m['tag'] for m in domain_info['best_matches'][:3]])
                 print(f"   匹配标签: {tags_str}")
 
-        # 用户选择
+        # Step 2: 全自动 Tier Balance 选择（Swarm 模式标准流程）
         print("\n" + "=" * 60)
-        print("请选择领域（输入1-5的数字，或输入0查看更多领域，直接回车选择第1名）:")
-        choice = input().strip()
+        print("【Swarm Mode】执行 Tier Balance 全自动选择...")
+        print("=" * 60)
 
-        if not choice:
-            # 默认选择第1名
-            selected = top_domains[0]
-            print(f"\n已选择: {selected['domain']}")
-        elif choice == "0":
-            # 显示更多领域
-            print(f"\n【所有领域评分 (Top 10)】")
-            all_domains = result['all_domains'][:10]
-            for i, domain_info in enumerate(all_domains, 1):
-                print(f"{i}. {domain_info['domain']}: {domain_info['score']:.2f}")
-            print("\n请输入序号选择:")
-            choice = input().strip()
-            if choice.isdigit() and 1 <= int(choice) <= len(all_domains):
-                selected = all_domains[int(choice) - 1]
-                print(f"\n已选择: {selected['domain']}")
-            else:
-                print("输入无效，使用默认选择第1名")
-                selected = top_domains[0]
-        elif choice.isdigit() and 1 <= int(choice) <= len(top_domains):
-            # 选择指定领域
-            selected = top_domains[int(choice) - 1]
-            print(f"\n已选择: {selected['domain']}")
-        else:
-            print("输入无效，使用默认选择第1名")
-            selected = top_domains[0]
+        tier_result = self.tier_balance_selection(result['top_domains'])
 
-        # 输出最终选择
-        print("\n" + "=" * 60)
-        print("【最终选择】")
-        print(f"\n选定领域: {selected['domain']}")
-        print(f"匹配分数: {selected['score']:.2f}")
-        print(f"复杂度层级: {selected['complexity_tier']}")
-        print(f"推荐理由: {selected['reasoning']}")
-        print("\n可将其复制到 morphism-mapper 中使用！")
+        print(f"\n✓ 选定领域: {tier_result.selected_domains}")
+        print(f"✓ Wildcard: {tier_result.wildcard_domain}")
+        print(f"✓ Tier 分布: {tier_result.tier_distribution}")
+
+        final_list = tier_result.selected_domains.copy()
+        if tier_result.wildcard_domain:
+            final_list.append(tier_result.wildcard_domain)
+
+        print(f"\n【最终种子列表 (Swarm Mode)】: {final_list}")
+        print("\n⚠️ 提示: Swarm 模式下 Team Lead 自动调用，无需人工选择")
         print("=" * 60)
 
 
