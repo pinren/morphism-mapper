@@ -14,16 +14,42 @@
 
 Morphism Mapper 是一个为 **Claude Code** 和 **OpenCode** 设计的智能体技能 (Agent Skill)。它通过结构化的提示词和领域知识库，让 AI 能够系统化地进行跨域思维映射。
 
-### 安装方法
+### ⚠️ 环境要求
 
-#### Claude Code 环境
+**本分支 (swarm-experimental) 需要：**
+
+- **Claude Code 2.1.34+** (支持 Agent Team 模式)
+- **必须开启 Agent Team 模式**
+
+#### 启用 Agent Team 模式
 
 ```bash
-# 克隆到 Claude Code 的 skills 目录
-cd ~/.claude/skills
-git clone https://github.com/pinren/morphism-mapper.git
+# 方式一：启动时设置环境变量
+export CLAUDE_CODE_USE_AGENT_TEAMS=true
+claude
 
-# 重启 Claude Code 即可使用
+# 方式二：在 Claude Code 内部启用
+# 启动后输入 /agents 命令，然后选择 "Enable Agent Teams"
+```
+
+> **关键点**: `export CLAUDE_CODE_USE_AGENT_TEAMS=true` 必须在启动 Claude Code **之前**设置，启动后设置无效。
+
+### 安装方法
+
+#### Claude Code 环境 (Swarm 模式)
+
+```bash
+# 1. 克隆到 Claude Code 的 skills 目录
+cd ~/.claude/skills
+git clone -b swarm-experimental https://github.com/pinren/morphism-mapper.git
+
+# 2. 启用 Agent Team 模式
+export CLAUDE_CODE_USE_AGENT_TEAMS=true
+
+# 3. 启动 Claude Code
+claude
+
+# 4. 验证：启动后输入 /agents 应看到 "Agent Teams enabled"
 ```
 
 #### OpenCode 环境
@@ -37,6 +63,8 @@ git clone https://github.com/pinren/morphism-mapper.git
 ```
 
 > **提示**: 安装完成后，在对话中直接描述问题即可触发 Morphism Mapper。例如："帮我分析一下这个商业模式"、"如何用庄子哲学看待创业困境？"
+>
+> **Swarm 模式触发词**: "swarm"、"多领域分析"、"深度分析"、"看不穿商业模式"、"看不透" 等
 
 ---
 
