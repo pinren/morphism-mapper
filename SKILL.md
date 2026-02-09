@@ -68,7 +68,7 @@ TeamCreate(team_name="xxx")
 
 ---
 
-## ⚠️ 重要：蜂群模式是正确打开姿势
+## 蜂群模式 vs 并行 Task Pool 模式
 
 **Morphism Mapper v4.0 采用蜂群模式，而非并行 Task Pool 模式**：
 
@@ -832,6 +832,6 @@ elif obstruction_result == "PASS":
 
 ---
 
-**创建时间**: 2026-02-08
+**初版创建**: 2026-02-08
 **最新版本**: v4.4 (合并Lead+Broadcaster，优化信息流)
 **核心理念**: 从"五角色协作"转向"三角色高效协作 + 分层信息流"
