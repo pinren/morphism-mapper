@@ -8,7 +8,7 @@ Domain Selector - 智能领域选择器 (v4.0)
 import json
 import os
 import random
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Any, Optional, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,6 +40,15 @@ class TierBalanceResult:
     wildcard_domain: Optional[str]
     tier_distribution: Dict[str, List[str]]
     reasoning: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式，便于序列化和外部调用"""
+        return {
+            'selected_domains': self.selected_domains,
+            'wildcard_domain': self.wildcard_domain,
+            'tier_distribution': self.tier_distribution,
+            'reasoning': self.reasoning,
+        }
 
 class DomainSelector:
     """智能领域选择器 v4.0"""
@@ -176,7 +185,7 @@ class DomainSelector:
         self,
         domain: str,
         user_tags: List[str],
-        user_profile: Optional[str] = None
+        user_profile: Optional[Union[str, Dict]] = None
     ) -> Tuple[float, List[Dict], str]:
         """
         计算领域匹配分数
@@ -244,15 +253,75 @@ class DomainSelector:
 
         return normalized_score, best_matches, reasoning
 
-    def _apply_user_profile_bonus(self, domain: str, user_profile: str) -> float:
-        """应用用户画像加权"""
-        profile_rules = self.scoring_rules.get("user_profile_bonus", {})
-        profile = profile_rules.get(user_profile, {})
+    def _apply_user_profile_bonus(self, domain: str, user_profile: Union[str, Dict]) -> float:
+        """应用用户画像加权
 
-        if domain in profile.get("preferred", []):
-            return profile.get("bonus", 0.2)
-        elif domain in profile.get("avoid", []):
-            return -profile.get("bonus", 0.2)
+        支持两种格式:
+        1. 字符串格式: 预定义的 profile key (如 "investor", "tech_executive")
+        2. 字典格式: 详细的用户画像，如 {"concern_type": "...", "risk_tolerance": "..."}
+
+        Args:
+            domain: 领域名称
+            user_profile: 用户画像，字符串或字典
+
+        Returns:
+            加权分数，范围通常在 -0.2 到 0.2 之间
+        """
+        profile_rules = self.scoring_rules.get("user_profile_bonus", {})
+
+        # 处理字符串格式（预定义 profile）
+        if isinstance(user_profile, str):
+            profile = profile_rules.get(user_profile, {})
+            if domain in profile.get("preferred", []):
+                return profile.get("bonus", 0.2)
+            elif domain in profile.get("avoid", []):
+                return -profile.get("bonus", 0.2)
+            return 0.0
+
+        # 处理字典格式（详细画像）
+        if isinstance(user_profile, dict):
+            bonus = 0.0
+
+            # 基于 concern_type 进行领域偏好匹配
+            concern_type = user_profile.get("concern_type", "")
+            concern_lower = concern_type.lower() if concern_type else ""
+
+            # 经济/财务相关 → 博弈论、行为经济学、复杂科学
+            if any(kw in concern_lower for kw in ["经济", "财务", "投资", "market", "finance"]):
+                if domain in ["game_theory", "behavioral_economics", "complexity_science"]:
+                    bonus += 0.15
+
+            # 社会影响相关 → 社会资本、人类学、网络理论
+            if any(kw in concern_lower for kw in ["社会", "影响", "social", "impact"]):
+                if domain in ["social_capital", "anthropology", "network_theory"]:
+                    bonus += 0.15
+
+            # 战略/政策相关 → 博弈论、军事战略、激励设计
+            if any(kw in concern_lower for kw in ["战略", "政策", "strategy", "policy"]):
+                if domain in ["game_theory", "military_strategy", "incentive_design"]:
+                    bonus += 0.15
+
+            # 基于 risk_tolerance 调整
+            risk_tolerance = user_profile.get("risk_tolerance", "")
+            if risk_tolerance and domain in ["antifragility", "complexity_science", "evolutionary_biology"]:
+                bonus += 0.1
+
+            # 基于 constraint_emphasis 调整
+            constraints = user_profile.get("constraint_emphasis", [])
+            if isinstance(constraints, list):
+                constraint_str = ",".join(constraints).lower()
+                if "技术" in constraint_str or "technical" in constraint_str:
+                    if domain in ["control_systems", "distributed_systems", "information_theory"]:
+                        bonus += 0.1
+                if "资源" in constraint_str or "resource" in constraint_str:
+                    if domain in ["thermodynamics", "ecology", "operations_research"]:
+                        bonus += 0.1
+                if "伦理" in constraint_str or "ethical" in constraint_str:
+                    if domain in ["anthropology", "religious_studies", "zhuangzi"]:
+                        bonus += 0.1
+
+            # 上限控制
+            return min(bonus, 0.3)
 
         return 0.0
 
@@ -293,7 +362,7 @@ class DomainSelector:
         self,
         objects: Optional[List[str]],
         morphisms: Optional[List[Dict[str, str]]],
-        user_profile: Optional[str] = None,
+        user_profile: Optional[Union[str, Dict]] = None,
         exclude_domains: Optional[List[str]] = None,
         history_domains: Optional[List[str]] = None,
         top_n: int = 5
@@ -659,6 +728,7 @@ class DomainSelector:
 def main():
     """主函数"""
     import sys
+    import json
 
     selector = DomainSelector()
 
@@ -698,6 +768,29 @@ def main():
             final_list.append(tier_result.wildcard_domain)
         print(f"\n最终种子列表 (含Wildcard): {final_list}")
 
+    elif len(sys.argv) > 1 and sys.argv[1] == "--output-json":
+        # JSON输出模式（便于脚本调用）
+        demo_result = selector.select_domains(
+            objects=["产品", "用户", "增长"],
+            morphisms=[
+                {"from": "产品", "to": "用户", "dynamics": "价值传递"},
+                {"from": "用户", "to": "产品", "dynamics": "反馈驱动"}
+            ]
+        )
+
+        tier_result = selector.tier_balance_selection(demo_result['top_domains'][:6])
+
+        output = {
+            'selected_domains': tier_result.selected_domains,
+            'wildcard_domain': tier_result.wildcard_domain,
+            'tier_distribution': tier_result.tier_distribution,
+            'reasoning': tier_result.reasoning,
+            'user_tags': demo_result.get('user_tags', []),
+            'confidence': demo_result.get('confidence', 0.0)
+        }
+
+        print(json.dumps(output, ensure_ascii=False, indent=2))
+
     else:
         # 显示帮助
         print("Domain Selector v4.0")
@@ -705,12 +798,22 @@ def main():
         print("用法:")
         print("  python domain_selector.py --interactive    启动交互模式")
         print("  python domain_selector.py --tier-balance   Tier Balance 演示")
+        print("  python domain_selector.py --output-json    JSON输出（脚本调用）")
         print()
         print("或在Python代码中使用:")
         print("  from domain_selector import DomainSelector")
         print("  selector = DomainSelector()")
         print("  result = selector.select_domains(objects, morphisms)")
         print("  tier_result = selector.tier_balance_selection(result['top_domains'])")
+        print()
+        print("返回值说明:")
+        print("  tier_result.selected_domains  - List[str] 选中的领域列表")
+        print("  tier_result.wildcard_domain   - Optional[str] 随机领域")
+        print("  tier_result.tier_distribution - Dict[str, List[str]] 各层级分布")
+        print("  tier_result.reasoning         - str 选择理由")
+        print()
+        print("或使用 to_dict() 方法转换为字典:")
+        print("  tier_result.to_dict()  - Dict[str, Any]")
 
 
 if __name__ == "__main__":
