@@ -1,6 +1,6 @@
 {
   "agent_strategy": "hybrid",
-  "version": "4.0",
+  "version": "4.4",
   "description": "混合策略：核心独立Agent + 轻量级Agent + 动态生成",
   "categories": {
     "tier_1_full_agents": {
@@ -46,9 +46,7 @@
         "incentive_design",
         "linguistics",
         "immunology",
-        "control_systems",
         "military_strategy",
-        "thermodynamics",
         "traditional_chinese_medicine",
         "organizational_behavior",
         "yijing_thought"
@@ -68,7 +66,9 @@
       "mythology",
       "quantum_mechanics",
       "zhuangzi",
-      "religious_studies"
+      "religious_studies",
+      "yijing_thought",
+      "mao_zedong_thought"
     ]
   }
 }
