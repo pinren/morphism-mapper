@@ -101,52 +101,32 @@ class DomainSelector:
             )
         return tags
 
-    def _normalize_morphisms(self, morphisms: Optional[List]) -> List[Dict[str, str]]:
-        """
-        标准化 morphisms 输入格式
-
-        Args:
-            morphisms: 字典列表或字符串列表
-
-        Returns:
-            标准化的字典列表，每个包含 "dynamics" 字段
-        """
-        if morphisms is None:
-            return []
-
-        normalized = []
-        for item in morphisms:
-            if isinstance(item, dict):
-                # 已经是字典格式
-                if "dynamics" not in item:
-                    item["dynamics"] = f"{item.get('from', '')} → {item.get('to', '')}"
-                normalized.append(item)
-            elif isinstance(item, str):
-                # 字符串格式，转换为字典
-                normalized.append({"dynamics": item})
-        return normalized
-
-    def extract_user_tags(self, morphisms: Optional[List]) -> List[str]:
+    def extract_user_tags(self, morphisms: Optional[List[Dict[str, str]]]) -> List[str]:
         """
         从用户Morphism中提取标签
 
         Args:
-            morphisms: 用户问题的Morphism列表
+            morphisms: 用户问题的Morphism列表（标准字典格式）
                 [{"from": "A", "to": "B", "dynamics": "描述"}, ...]
-                或字符串列表 ["描述1", "描述2", ...]
 
         Returns:
             提取的标签列表
         """
-        # 标准化输入格式
-        normalized = self._normalize_morphisms(morphisms)
-        if not normalized:
+        if morphisms is None:
             return []
 
         user_tags = set()
 
-        for morphism in normalized:
-            dynamics = morphism.get("dynamics", "").lower()
+        for morphism in morphisms:
+            # 兼容 "dynamics" 字段（精细格式）或直接描述字段
+            dynamics = morphism.get("dynamics", "")
+            if not dynamics:
+                # 如果没有 dynamics，尝试从 from/to 组合提取
+                from_obj = morphism.get("from", "")
+                to_obj = morphism.get("to", "")
+                dynamics = f"{from_obj} → {to_obj}"
+
+            dynamics = dynamics.lower()
 
             for tag_id, tag in self.tags.items():
                 # 检查指标词匹配

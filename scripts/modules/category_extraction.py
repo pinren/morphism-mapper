@@ -93,12 +93,12 @@ class Morphism:
     time_lag: Optional[float] = None     # 延迟时间
 
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式（统一标准）"""
         return {
-            "source": self.source,
-            "target": self.target,
-            "relation_type": self.relation_type,
-            "dynamics": self.dynamics,
+            "from": self.source,                    # 统一使用 "from"
+            "to": self.target,                      # 统一使用 "to"
+            "relation_type": self.relation_type,   # 关系类型
+            "dynamics": self.dynamics,              # 动态描述
             "temporal_type": self.temporal_type.value,
             "direction_type": self.direction_type.value,
             "intensity_level": self.intensity_level.value,
@@ -112,7 +112,7 @@ class Morphism:
         }
 
     def to_simple_string(self) -> str:
-        """转换为简化的字符串格式（用于 domain_selector）"""
+        """转换为简化的字符串格式（用于展示）"""
         return f"{self.source} → {self.target}: {self.dynamics}"
 
 
@@ -129,10 +129,10 @@ class CategorySkeleton:
     user_profile: Optional[Dict] = None  # 用户画像
 
     def to_simple_format(self) -> Dict[str, Any]:
-        """转换为简单格式（用于 domain_selector）"""
+        """转换为标准格式（用于 domain_selector）"""
         return {
             "objects": [obj.get("name", obj) for obj in self.objects],
-            "morphisms": [m.to_simple_string() for m in self.morphisms],
+            "morphisms": [m.to_dict() for m in self.morphisms],  # 字典列表格式
             "tags": self.structural_tags
         }
 
