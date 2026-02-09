@@ -1,0 +1,74 @@
+{
+  "agent_strategy": "hybrid",
+  "version": "4.0",
+  "description": "混合策略：核心独立Agent + 轻量级Agent + 动态生成",
+  "categories": {
+    "tier_1_full_agents": {
+      "description": "高频核心领域 - 独立Agent，完整prompt定制",
+      "domains": [
+        "thermodynamics",
+        "game_theory",
+        "control_systems",
+        "information_theory",
+        "complexity_science"
+      ],
+      "implementation": "独立persona文件 + 完整系统prompt",
+      "trigger_frequency": "> 30% 的Swarm Mode调用"
+    },
+    "tier_2_lightweight_agents": {
+      "description": "中频领域 - 轻量级Agent，模板+少量定制",
+      "domains": [
+        "evolutionary_biology",
+        "ecology",
+        "neuroscience",
+        "distributed_systems",
+        "network_theory",
+        "operations_research",
+        "innovation_theory",
+        "kaizen",
+        "antifragility",
+        "second_order_thinking"
+      ],
+      "implementation": "使用domain_template.md + 领域配置覆盖",
+      "trigger_frequency": "5-30% 的Swarm Mode调用"
+    },
+    "tier_3_dynamic_generation": {
+      "description": "低频领域 - 运行时动态生成prompt",
+      "domains": [
+        "zhuangzi",
+        "mythology",
+        "quantum_mechanics",
+        "religious_studies",
+        "anthropology",
+        "mao_zedong_thought",
+        "behavioral_economics",
+        "social_capital",
+        "incentive_design",
+        "linguistics",
+        "immunology",
+        "control_systems",
+        "military_strategy",
+        "thermodynamics",
+        "traditional_chinese_medicine",
+        "organizational_behavior",
+        "yijing_thought"
+      ],
+      "implementation": "运行时从references/{domain}_v2.md提取结构",
+      "trigger_frequency": "< 5% 的Swarm Mode调用"
+    }
+  },
+  "fallback_mechanism": {
+    "description": "当轻量级或动态Agent被频繁调用时，自动升级",
+    "threshold": "连续3次被调用 → 升级为更高层级",
+    "action": "自动生成完整persona文件"
+  },
+  "wildcard_domains": {
+    "description": "Wildcard候选池 - 优先使用tier_3动态生成",
+    "candidates": [
+      "mythology",
+      "quantum_mechanics",
+      "zhuangzi",
+      "religious_studies"
+    ]
+  }
+}

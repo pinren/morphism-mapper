@@ -1,2 +1,28 @@
 # Git worktrees
 .worktrees/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Temporary/obsolete docs (v4.2-v4.3)
+docs/obstruction_theorist_integration.md
+docs/SENDMESSAGE_FIX_SUMMARY.md
+docs/SENDMESSAGE_FORMAT_GUIDE.md
+
+# Change summaries (keep only latest)
+CHANGES_v4.4.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
