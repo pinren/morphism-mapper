@@ -1,0 +1,28 @@
+{
+  "agent_strategy": "dynamic_only",
+  "version": "4.4.1",
+  "description": "纯动态生成模式：所有Domain Agent运行时从references提取结构生成prompt",
+  "implementation": {
+    "mode": "dynamic_generation",
+    "source": "references/{domain}_v2.md",
+    "generator": "Team Lead 动态构建 Task prompt",
+    "method": "基于 domain 名称和范畴骨架，实时生成 Domain Agent 系统 prompt"
+  },
+  "domains": {
+    "all_dynamic": true,
+    "count": 31,
+    "source_files": "references/*_v2.md"
+  },
+  "generation_config": {
+    "basics_section": "100基本基石（哲学+原理+心智模型+方法论）",
+    "objects_section": "14 Core Objects",
+    "morphisms_section": "14 Core Morphisms",
+    "theorems_section": "18 Theorems（含Mapping_Hint）",
+    "output_format": "标准化Domain Agent系统prompt"
+  },
+  "notes": {
+    "deprecated": ["tier_1_full_agents", "tier_2_lightweight_agents", "tier_3_dynamic_generation"],
+    "migration": "v4.4.1起所有Domain Agent统一走动态生成，不再区分高频/中频/低频",
+    "rationale": "简化架构，减少维护成本，所有领域享受同等的动态生成质量"
+  }
+}

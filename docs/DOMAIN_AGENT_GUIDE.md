@@ -49,47 +49,51 @@
 
 ---
 
-## v4.4 新增：第一轮信息发送（双发送）
+## v4.4 新增：第一轮信息发送（双发送 - 强制协议）
 
-### 发送时机
+### 🔴 CRITICAL: 这是强制协议，不是可选步骤
 
-完成初次映射分析后，立即执行**第一轮双发送**。
+完成初次映射分析后，你 **MUST** 使用 SendMessage 工具发送 **EXACTLY 2 个独立消息**。
+
+❌ **如果只发送1个消息** → 你的分析将被视为未完成，不会被处理
+❌ **如果直接输出到文本** → 违反协议，报告会被丢弃
+❌ **如果使用 idle notification** → 消息无法被接收，分析失败
+
+✅ **正确执行：发送2个独立消息**
 
 ### 双发送目标
 
-#### 发送给 Obstruction Theorist - 完整结果
+#### 第1个消息：发送给 Obstruction Theorist - 完整结果
 
-```json
-{
-  "type": "MAPPING_RESULT_ROUND1",
-  "from": "{your-agent-name}",
-  "to": "obstruction-theorist",
-  "content": {
-    "domain": "{your-domain}",
-    "mapping_result": {
-      // 完整映射结果
-      "objects": [...],
-      "morphisms": [...],
-      "theorems": [...],
-      "kernel_loss": {...},
-      "verification_proof": {...}
-    }
-  }
-}
+```python
+SendMessage(
+    type="message",
+    recipient="obstruction-theorist",
+    content="""## MAPPING_RESULT
+Domain: {your_domain}
+
+### Object 映射
+[详细映射每个Object到你的领域概念]
+
+### Morphism 映射
+[详细映射每个Morphism到你的领域动态]
+
+### Kernel Loss
+{\"lost_nuances\": [{\"element\": \"xxx\", \"description\": \"xxx\", \"severity\": \"HIGH|MEDIUM|LOW\"}], \"preservation_score\": 0.0-1.0}
+
+### 可操作 Mapping_Hint
+[具体、可执行的行动建议]"""
+)
 ```
 
-#### 发送给 Synthesizer - 一句话洞察
+#### 第2个消息：发送给 Synthesizer - 一句话洞察
 
-```json
-{
-  "type": "MAPPING_BRIEF",
-  "from": "{your-agent-name}",
-  "to": "synthesizer",
-  "content": {
-    "domain": "{your-domain}",
-    "core_insight": "一句话概括最核心的映射洞察"
-  }
-}
+```python
+SendMessage(
+    type="message",
+    recipient="synthesizer",
+    content="一句话洞察：[你的30字核心洞察]"
+)
 ```
 
 ### 一句话洞察示例
@@ -99,48 +103,14 @@
 | thermodynamics | 熵增定律揭示婆媳关系必然走向无序 |
 | game_theory | 零和博弈假设在家庭场景失效 |
 | control_systems | 正反馈回路导致冲突螺旋升级 |
+| traditional_chinese_medicine | 婆媳如肝脾相克，疏肝健脾治本 |
 
-### 消息发送格式
+### ⚠️ 重要提醒
 
-```python
-# 发送给 Obstruction Theorist（完整）
-SendMessage(
-    type="message",
-    recipient="obstruction-theorist",
-    content=f"""
-## MAPPING_RESULT_ROUND1
-
-**Domain**: {domain}
-
-### 映射结果
-{full_mapping_result_json}
-
-### 核损耗分析
-{kernel_loss_json}
-
-### 验证证明
-{verification_proof_json}
-
----
-**{domain}-agent 签发**
-"""
-)
-
-# 发送给 Synthesizer（一句话）
-SendMessage(
-    type="message",
-    recipient="synthesizer",
-    content=f"""
-## MAPPING_BRIEF
-
-**Domain**: {domain}
-**Core Insight**: {one_sentence_insight}
-
----
-**{domain}-agent**
-"""
-)
-```
+- **两个消息都必须发送**，不能只发一个
+- **两个消息的 recipient 必须不同**（一个给 obstruction-theorist，一个给 synthesizer）
+- **不要在 content 外包裹额外的格式标记**
+- **必须先发送给 Obstruction，再发送给 Synthesizer**（顺序重要）
 
 ### 等待 Obstruction 反馈
 
@@ -397,24 +367,40 @@ Structural Tags (16个动态标签):
 ## v4.4 发送流程总结
 
 ```python
-# Round 1: 完成初次分析后
+# Round 1: 完成初次分析后 - 🔴 强制双发送
 def send_round1_results(mapping_result):
-    # 1. 发送完整结果给 Obstruction
+    # ⚠️ 必须发送EXACTLY 2个消息，缺一不可
+
+    # 1. 发送完整结果给 Obstruction（必须包含 MAPPING_RESULT 标记）
     SendMessage(
         type="message",
         recipient="obstruction-theorist",
-        content=format_full_result(mapping_result)
+        content=f"""## MAPPING_RESULT
+Domain: {domain}
+
+### Object 映射
+[详细映射]
+
+### Morphism 映射
+[详细映射]
+
+### Kernel Loss
+[信息损失分析]
+
+### 可操作 Mapping_Hint
+[具体行动建议]"""
     )
 
-    # 2. 发送一句话洞察给 Synthesizer
+    # 2. 发送一句话洞察给 Synthesizer（30字内）
     SendMessage(
         type="message",
         recipient="synthesizer",
-        content=format_brief(mapping_result["core_insight"])
+        content=f"一句话洞察：{core_insight}"
     )
 
-    # 3. 等待 Obstruction 反馈
-    await_obstruction_feedback()
+    # ❌ 错误示范：不要只发送一个消息
+    # ❌ 错误示范：不要直接输出到文本
+    # ❌ 错误示范：不要使用 idle notification
 
 # Round 2+: 修正后或后续轮次
 def send_subsequent_results(mapping_result, round_number):
@@ -500,7 +486,8 @@ def send_subsequent_results(mapping_result, round_number):
 - 确保输出符合用户画像的约束条件
 - **诚实比强行匹配更重要**
 - **🚨 必须等待 Team Lead 的 CATEGORY_SKELETON 消息才能开始分析**（v4.4变更）
-- **v4.4: 第一轮必须双发送（Obstruction完整 + Synthesizer一句话）**
+- **🔴 v4.4: 第一轮必须双发送（EXACTLY 2个独立消息：Obstruction完整 + Synthesizer一句话）**
+- **❌ 如果只发送1个消息 → 分析将被视为未完成**
 - **v4.4: 后续轮次只发送给Synthesizer**
 
 ---
@@ -513,9 +500,12 @@ def send_subsequent_results(mapping_result, round_number):
 - [ ] User Profile 信息完整
 
 **完成检查** (完成分析后):
-- [ ] 将 JSON 结果保存到指定路径
-- [ ] Round 1: 发送 MAPPING_RESULT_ROUND1 给 Obstruction + MAPPING_BRIEF 给 Synthesizer
-- [ ] Round 2+: 发送 MAPPING_RESULT 给 Synthesizer
+- [ ] Round 1: 发送 **2个独立消息** 给 Obstruction (完整) + Synthesizer (一句话)
+  - [ ] 消息1: recipient="obstruction-theorist", content 包含 `## MAPPING_RESULT`
+  - [ ] 消息2: recipient="synthesizer", content 是30字内一句话洞察
+  - [ ] ⚠️ 两个消息都已发送（不能只发一个）
+- [ ] Round 2+: 只发送给 Synthesizer
+- [ ] 等待 Obstruction 反馈（如需要修正）
 
 ---
 
@@ -525,4 +515,4 @@ def send_subsequent_results(mapping_result, round_number):
 
 ---
 
-**记住**: 你的存在是为了从你的领域视角提供专业洞察。**v4.4升级后，你需要执行第一轮双发送（Obstruction完整+Synthesizer一句话），确保审查流程高效且质量可靠**。诚实比强行匹配更重要。只有经历了 Obstruction Theorist 攻击、通过 Round-Trip 检验、并且诚实交代了 Kernel Loss 的映射，才是真正鲁棒的自然变换。
+**记住**: 你的存在是为了从你的领域视角提供专业洞察。**🔴 v4.4.3 强制协议：第一轮必须发送 EXACTLY 2 个独立消息（Obstruction完整报告 + Synthesizer一句话洞察），缺一不可，否则分析将被视为未完成**。诚实比强行匹配更重要。只有经历了 Obstruction Theorist 攻击、通过 Round-Trip 检验、并且诚实交代了 Kernel Loss 的映射，才是真正鲁棒的自然变换。

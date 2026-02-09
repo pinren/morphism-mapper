@@ -26,3 +26,12 @@ CHANGES_v4.4.md
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated prompts (temporary files, regenerated per session)
+generated_prompts/
+
+# Runtime data directories
+docs/
+knowledge/
+exploration_history/
+*.log

@@ -63,7 +63,7 @@ class DomainSelector:
 
         Args:
             tags_file: morphism_tags.json文件路径，默认为assets目录
-            agents_file: domain_agents.json文件路径，默认为agents/config目录
+            agents_file: domain_agents.json文件路径，默认为assets/agents/config目录
         """
         script_dir = Path(__file__).parent.parent
 
@@ -78,7 +78,7 @@ class DomainSelector:
 
         # 加载 domain_agents.json (v4.0)
         if agents_file is None:
-            agents_file = str(script_dir / "agents" / "config" / "domain_agents.json")
+            agents_file = str(script_dir / "assets" / "agents" / "config" / "domain_agents.json")
         self.agents_data = self._load_agents(agents_file)
         self.domain_info = self.agents_data.get("domains", {})
         self.complexity_tiers = self.agents_data.get("complexity_tiers", {})

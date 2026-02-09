@@ -12,18 +12,18 @@
     "recovery_boost": 1.5
   },
   "metadata": {
-    "total_explorations": 2,
-    "total_homography_discoveries": 1,
-    "last_exploration": "2026-02-09T10:32:40.494684"
+    "total_explorations": 5,
+    "total_homography_discoveries": 4,
+    "last_exploration": "2026-02-09T15:10:16"
   },
   "nodes": {
     "thermodynamics": {
       "name": "热力学",
       "domain_file": "references/thermodynamics_v2.md",
-      "activation_count": 2,
-      "success_rate": 0.75,
-      "avg_confidence": 0.665,
-      "last_used": "2026-02-09T10:32:40.494861",
+      "activation_count": 3,
+      "success_rate": 0.78,
+      "avg_confidence": 0.72,
+      "last_used": "2026-02-09T15:10:16",
       "tags": [
         "feedback_regulation",
         "flow_exchange",
@@ -62,10 +62,10 @@
     "control_systems": {
       "name": "控制系统",
       "domain_file": "references/control_systems_v2.md",
-      "activation_count": 1,
+      "activation_count": 2,
       "success_rate": 0.75,
-      "avg_confidence": 1.0,
-      "last_used": "2026-02-09T10:32:40.494863",
+      "avg_confidence": 0.92,
+      "last_used": "2026-02-09T06:06:00",
       "tags": [
         "feedback_regulation",
         "feedforward_anticipation",
@@ -76,10 +76,10 @@
     "game_theory": {
       "name": "博弈论",
       "domain_file": "references/game_theory_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 3,
+      "success_rate": 0.86,
+      "avg_confidence": 0.88,
+      "last_used": "2026-02-09T15:10:16",
       "tags": [
         "competition_selection",
         "strategic_interaction",
@@ -104,10 +104,10 @@
     "network_theory": {
       "name": "网络理论",
       "domain_file": "references/network_theory_v2.md",
-      "activation_count": 1,
-      "success_rate": 0.9,
-      "avg_confidence": 0.83,
-      "last_used": "2026-02-09T09:30:33",
+      "activation_count": 2,
+      "success_rate": 0.88,
+      "avg_confidence": 0.86,
+      "last_used": "2026-02-09T06:06:00",
       "tags": [
         "structural_organization",
         "diffusion_propagation",
@@ -118,10 +118,10 @@
     "antifragility": {
       "name": "反脆弱性",
       "domain_file": "references/antifragility_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 1,
+      "success_rate": 0.8,
+      "avg_confidence": 0.78,
+      "last_used": "2026-02-09T15:10:16",
       "tags": [
         "convex_response",
         "optionality",
@@ -202,10 +202,10 @@
     "ecology": {
       "name": "生态学",
       "domain_file": "references/ecology_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 1,
+      "success_rate": 0.8,
+      "avg_confidence": 0.75,
+      "last_used": "2026-02-09T15:10:16",
       "tags": [
         "cooperation_symbiosis",
         "competition_selection",
@@ -216,10 +216,10 @@
     "immunology": {
       "name": "免疫学",
       "domain_file": "references/immunology_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 1,
+      "success_rate": 0.8,
+      "avg_confidence": 0.75,
+      "last_used": "2026-02-09T03:05:00",
       "tags": [
         "recognition",
         "memory",
@@ -258,10 +258,10 @@
     "military_strategy": {
       "name": "军事战略",
       "domain_file": "references/military_strategy_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 1,
+      "success_rate": 0.85,
+      "avg_confidence": 0.9,
+      "last_used": "2026-02-09T06:06:00",
       "tags": [
         "competition_selection",
         "maneuver",
@@ -314,15 +314,29 @@
     "second_order_thinking": {
       "name": "二阶思维",
       "domain_file": "references/second_order_thinking_v2.md",
-      "activation_count": 0,
-      "success_rate": 0.0,
-      "avg_confidence": 0.0,
-      "last_used": null,
+      "activation_count": 2,
+      "success_rate": 0.85,
+      "avg_confidence": 0.79,
+      "last_used": "2026-02-09T06:06:00",
       "tags": [
         "feedback_delay",
         "unintended_consequences",
         "circularity",
         "reflexivity"
+      ]
+    },
+    "social_psychology": {
+      "name": "社会心理学",
+      "domain_file": "references/social_psychology_v2.md",
+      "activation_count": 1,
+      "success_rate": 0.8,
+      "avg_confidence": 0.75,
+      "last_used": "2026-02-09T03:05:00",
+      "tags": [
+        "role_conflict",
+        "attribution",
+        "ingroup_outgroup",
+        "social_influence"
       ]
     },
     "social_capital": {
@@ -342,10 +356,10 @@
     "zhuangzi": {
       "name": "庄子哲学",
       "domain_file": "references/zhuangzi_v2.md",
-      "activation_count": 1,
-      "success_rate": 0.75,
-      "avg_confidence": 0.83,
-      "last_used": "2026-02-09T09:30:33",
+      "activation_count": 3,
+      "success_rate": 0.82,
+      "avg_confidence": 0.80,
+      "last_used": "2026-02-09T15:10:16",
       "tags": [
         "transformation",
         "perspective_relativity",
@@ -456,6 +470,45 @@
         "稳态转移"
       ],
       "last_active": "2026-02-09T10:32:40.494872"
+    },
+    "game_theory↔military_strategy": {
+      "homography_count": 1,
+      "avg_confidence": 0.88,
+      "strength": 0.85,
+      "base_strength": 0.85,
+      "last_active": "2026-02-09",
+      "common_structures": [
+        "战略均衡",
+        "威慑理论",
+        "成本收益计算"
+      ],
+      "decay_factor": 1.0
+    },
+    "game_theory↔second_order_thinking": {
+      "homography_count": 1,
+      "avg_confidence": 0.9,
+      "strength": 0.88,
+      "base_strength": 0.88,
+      "last_active": "2026-02-09",
+      "common_structures": [
+        "多层推理",
+        "隐性动机",
+        "承诺可信度"
+      ],
+      "decay_factor": 1.0
+    },
+    "network_theory↔military_strategy": {
+      "homography_count": 1,
+      "avg_confidence": 0.82,
+      "strength": 0.8,
+      "base_strength": 0.8,
+      "last_active": "2026-02-09",
+      "common_structures": [
+        "同盟网络",
+        "级联效应",
+        "鲁棒性分析"
+      ],
+      "decay_factor": 1.0
     }
   },
   "recommendation_hints": {
@@ -491,8 +544,56 @@
     "last_analysis": "2026-02-09"
   },
   "exploration_history": {
-    "count": 2,
+    "count": 5,
     "recent": [
+      {
+        "timestamp": "2026-02-09T15:10:16",
+        "topic": "公务员职业困境去留决策",
+        "domains": [
+          "thermodynamics",
+          "game_theory",
+          "ecology",
+          "zhuangzi",
+          "antifragility"
+        ],
+        "decision": "terminate",
+        "report_file": "20260209_151016_公务员职业困境跨域分析.md",
+        "obstruction_pass_rate": 0.70,
+        "quality_rating": 4
+      },
+      {
+        "timestamp": "2026-02-09T06:06:00",
+        "topic": "日本修宪美国反应",
+        "domains": [
+          "game_theory",
+          "military_strategy",
+          "second_order_thinking",
+          "network_theory",
+          "control_systems",
+          "zhuangzi"
+        ],
+        "decision": "terminate",
+        "report_file": "20260209_060600_日本修宪美国反应跨域分析.md",
+        "obstruction_pass_rate": 0.83,
+        "quality_rating": 4
+      },
+      {
+        "timestamp": "2026-02-09T03:05:00",
+        "topic": "婆媳问题怎么破",
+        "domains": [
+          "immunology",
+          "second_order_thinking",
+          "game_theory",
+          "social_psychology",
+          "control_systems",
+          "kaizen",
+          "behavioral_economics"
+        ],
+        "decision": "terminate",
+        "report_file": "20260209_030500_婆媳问题跨域分析.md",
+        "obstruction_pass_rate": 0.5,
+        "quality_rating": 4
+      },
       {
         "timestamp": "2026-02-09T10:32:40.494873",
         "topic": "人到中年，没有爱情？",

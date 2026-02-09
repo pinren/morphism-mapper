@@ -16,12 +16,12 @@
     "tier_3_practical": {
       "name": "实践级（经验智慧）",
       "description": "实践经验和智慧，提供可执行的洞察",
-      "domains": ["kaizen", "antifragility", "military_strategy", "innovation_theory", "incentive_design", "second_order_thinking", "social_capital"]
+      "domains": ["kaizen", "antifragility", "military_strategy", "innovation_theory", "incentive_design", "second_order_thinking", "social_capital", "military_logistics", "organizational_behavior"]
     },
     "tier_4_interpretive": {
       "name": "阐释级（意义建构）",
       "description": "人文社科理论，提供意义和文化视角",
-      "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought"]
+      "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought", "yijing_thought"]
     }
   },
   "domains": {
@@ -408,6 +408,66 @@
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.68,
       "tags": ["sacred_profane", "ritual", "symbol", "meaning_system"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "yijing_thought": {
+      "domain_file": "references/custom/yijing_thought_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits"],
+      "persona": "agents/personas/yijing_thought_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.82,
+      "tags": ["transformation", "yin_yang", "bagua_hexagrams", "timely_position", "cyclical_change"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "traditional_chinese_medicine": {
+      "domain_file": "references/custom/traditional_chinese_medicine_v2.md",
+      "modules": ["yoneda_probe", "natural_transformation"],
+      "persona": "agents/personas/traditional_chinese_medicine_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.75,
+      "tags": ["feedback_regulation", "holistic_balance", "pattern_recognition", "syndrome_differentiation"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "military_logistics": {
+      "domain_file": "references/custom/military_logistics_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits"],
+      "persona": "agents/personas/military_logistics_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.78,
+      "tags": ["supply_chain", "resource_allocation", "operational_reach", "redundancy_resilience"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "organizational_behavior": {
+      "domain_file": "references/custom/organizational_behavior_v2.md",
+      "modules": ["yoneda_probe", "natural_transformation"],
+      "persona": "agents/personas/organizational_behavior_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_3_practical",
+      "tier_strength": 0.76,
+      "tags": ["motivation", "group_dynamics", "organizational_culture", "power_influence"],
       "metadata": {
         "activation_count": 0,
         "success_rate": 0.0,
