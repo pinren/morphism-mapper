@@ -7,7 +7,7 @@ description: Category Theory Morphism Mapper v4.4 Swarm Mode - 基于范畴论�
 
 基于范畴论的函子映射逻辑，通过**蜂群模式**将 Domain A 的问题结构并行映射到多个远域 Domain B，借助跨域共识生成创新方案。
 
-**版本**: v4.4 (Swarm Mode - 合并Lead+Broadcaster，优化信息流)
+**版本**: v4.4.1 (Swarm Mode - 合并Lead+Broadcaster，优化信息流 + 范畴骨架注入标准)
 **更新日期**: 2026-02-09
 **领域数量**: 31个内置领域
 
@@ -799,6 +799,7 @@ elif obstruction_result == "PASS":
 
 | 版本 | 日期 | 核心更新 |
 |-----|------|---------|
+| **v4.4.1** | 2026-02-09 | 🔧 **范畴骨架注入标准**: 新增统一模板确保所有 Agent 获得一致的范畴骨架 |
 | **v4.4** | 2026-02-09 | 🎯 **架构简化**: 合并Lead+Broadcaster职责，优化第一轮信息流分层发送 |
 | **v4.3.1** | 2026-02-09 | 🔧 **修复范畴骨架注入机制**：Broadcaster → Team Lead → Domain Agents（显式注入，防止抢跑） |
 | **v4.3** | 2026-02-09 | 🎯 **三人小组迭代决策制度化**：强制触发决策会议、禁止单方面终止、决策记录要求 |
@@ -830,8 +831,116 @@ elif obstruction_result == "PASS":
 - 更新 Team Lead 职责描述
 - 更新信息流发送逻辑
 
+**5. 新增：范畴骨架注入标准模板** ⭐ v4.4.1
+- 确保 Team Lead 向所有 Domain Agent（包括迭代新增）注入**统一格式**的范畴骨架
+- 防止信息差导致分析深度不一致
+
+---
+
+## 🚨 CRITICAL: 范畴骨架注入标准模板 (v4.4.1)
+
+**问题**: 迭代时新增 Agent 可能获得的信息不一致
+
+**解决方案**: Team Lead 必须向**每个** Domain Agent 注入完整的范畴骨架
+
+### 标准模板格式
+
+```python
+# ============================================================================
+# 范畴骨架注入模板（所有 Domain Agent 必须使用）
+# ============================================================================
+
+CATEGORY_SKELETON = {
+    "objects": [
+        {"name": "实体1", "attributes": "属性描述"},
+        {"name": "实体2", "attributes": "属性描述"},
+        {"name": "实体3", "attributes": "属性描述"},
+        {"name": "实体4", "attributes": "属性描述"}
+    ],
+    "morphisms": [
+        {
+            "from": "实体1",
+            "to": "实体2",
+            "dynamics": "详细的动态描述（如：信息选择、过滤、包装机制）"
+        },
+        {
+            "from": "实体2",
+            "to": "实体3",
+            "dynamics": "详细的动态描述（如：认知塑造、信念更新机制）"
+        },
+        {
+            "from": "实体3",
+            "to": "实体1",
+            "dynamics": "详细的动态描述（如：反馈调节、修正机制）"
+        },
+        {
+            "from": "外部冲击",
+            "to": "实体2",
+            "dynamics": "详细的动态描述（如：现实检验、相变触发）"
+        }
+    ],
+    "核心问题": "用户困惑的精确表述"
+}
+```
+
+### Domain Agent Prompt 注入示例
+
+```python
+Task(
+    description="{Domain} Agent 分析",
+    prompt=f"""
+    你是 {Domain} Domain Agent，基于 {Domain} 原理分析问题。
+
+    **范畴骨架**（统一标准格式）:
+    - Objects: {', '.join([f"{o['name']}({o['attributes']})" for o in CATEGORY_SKELETON['objects']])}
+    - Morphisms:
+        {chr(10).join([f"{m['from']} → {m['to']}: {m['dynamics']}" for m in CATEGORY_SKELETON['morphisms']])}
+
+    **核心问题**: {CATEGORY_SKELETON['核心问题']}
+
+    **输出要求**:
+    - 完整 MAPPING_RESULT → obstruction-theorist
+    - 一句话洞察（30字内） → synthesizer
+
+    请开始分析。
+    """,
+    subagent_type="general-purpose",
+    team_name=f"morphism-swarm-{task_id}",
+    name="{domain_lower}-agent"
+)
+```
+
+### 强制检查点
+
+每次启动 Domain Agent 后，Team Lead 必须确认：
+- [ ] Objects 是否包含 4 个核心实体？
+- [ ] Morphisms 是否包含 `from`, `to`, `dynamics` 三个字段？
+- [ ] `dynamics` 描述是否足够详细（非简略）？
+- [ ] 所有 Agent 获得的格式是否一致？
+
+**❌ 禁止**:
+```python
+# 禁止使用简化版本
+prompt=f"""
+范畴骨架:
+- Objects: 媒体, 受众, 美国
+- Morphisms: 宣传, 认知, 崩塌
+"""  # ✗ 信息不足
+
+# ✅ 必须使用详细版本
+prompt=f"""
+范畴骨架:
+- Objects: 媒体主体(信息编码器), 受众群体(解码器+信念更新者), 目标对象(被建构的理想美国), 现实对照(爱泼斯坦案等事实冲击)
+- Morphisms:
+  - 媒体主体 → 目标对象: 宣传建构(信息选择、过滤、美化编码)
+  - 目标对象 → 受众群体: 认知塑造(信念植入、形成刻板印象)
+  - 现实对照 → 受众群体: 认知冲击(贝叶斯更新、失调崩塌)
+  - 受众群体 → 媒体主体: 信任崩塌(互信息→0、不再信任)
+"""  # ✓ 信息完整
+```
+
 ---
 
 **初版创建**: 2026-02-08
-**最新版本**: v4.4 (合并Lead+Broadcaster，优化信息流)
-**核心理念**: 从"五角色协作"转向"三角色高效协作 + 分层信息流"
+**最新版本**: v4.4.1 (范畴骨架注入标准)
+**核心理念**: 从"五角色协作"转向"三角色高效协作 + 分层信息流 + 统一范畴注入"
