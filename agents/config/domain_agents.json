@@ -1,7 +1,7 @@
 {
-  "version": "4.0",
-  "description": "Domain Agents 配置文件 - Morphism Mapper v4.0",
-  "last_updated": "2025-02-08",
+  "version": "4.4",
+  "description": "Domain Agents 配置文件 - Morphism Mapper v4.4",
+  "last_updated": "2025-02-09",
   "complexity_tiers": {
     "tier_1_axiomatic": {
       "name": "公理级（底层逻辑）",
