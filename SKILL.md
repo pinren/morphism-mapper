@@ -7,7 +7,7 @@ description: Category Theory Morphism Mapper v4.4 Swarm Mode - 基于范畴论�
 
 基于范畴论的函子映射逻辑，通过**蜂群模式**将 Domain A 的问题结构并行映射到多个远域 Domain B，借助跨域共识生成创新方案。
 
-**版本**: v4.4.1 (Swarm Mode - 合并Lead+Broadcaster，优化信息流 + 范畴骨架注入标准)
+**版本**: v4.4.2 (Swarm Mode - 合并Lead+Broadcaster，优化信息流 + 范畴骨架注入 + 结果存储)
 **更新日期**: 2026-02-09
 **领域数量**: 31个内置领域
 
@@ -799,6 +799,7 @@ elif obstruction_result == "PASS":
 
 | 版本 | 日期 | 核心更新 |
 |-----|------|---------|
+| **v4.4.2** | 2026-02-09 | 🔧 **分析结果自动存储**: 新增知识库存储机制，保存报告到 exploration_history/ |
 | **v4.4.1** | 2026-02-09 | 🔧 **范畴骨架注入标准**: 新增统一模板确保所有 Agent 获得一致的范畴骨架 |
 | **v4.4** | 2026-02-09 | 🎯 **架构简化**: 合并Lead+Broadcaster职责，优化第一轮信息流分层发送 |
 | **v4.3.1** | 2026-02-09 | 🔧 **修复范畴骨架注入机制**：Broadcaster → Team Lead → Domain Agents（显式注入，防止抢跑） |
@@ -834,6 +835,10 @@ elif obstruction_result == "PASS":
 **5. 新增：范畴骨架注入标准模板** ⭐ v4.4.1
 - 确保 Team Lead 向所有 Domain Agent（包括迭代新增）注入**统一格式**的范畴骨架
 - 防止信息差导致分析深度不一致
+
+**6. 新增：分析结果自动存储** ⭐ v4.4.2
+- Synthesizer 生成最终报告后，自动保存到知识库
+- 更新领域统计数据和同构关系
 
 ---
 
@@ -941,6 +946,156 @@ prompt=f"""
 
 ---
 
+## 🚨 CRITICAL: 分析结果自动存储 (v4.4.2)
+
+**问题**: 分析完成后报告只在对话中显示，无法后续查阅和累积知识
+
+**解决方案**: Team Lead 必须在分析完成后将报告保存到知识库
+
+### 存储位置规范
+
+```
+knowledge/exploration_history/
+├── {YYYYMMDD}_{HHMMSS}_{topic_summary}.md
+└── 例如: 20260209_012000_媒体宣传认知塑造机制.md
+```
+
+### 报告存储模板
+
+```markdown
+# {分析主题} - Morphism Swarm 分析报告
+
+**分析时间**: {timestamp}
+**分析ID**: {unique_id}
+**参与领域**: {domain1, domain2, ...}
+
+---
+
+## 【极限提取】跨域共识
+
+{Synthesizer 生成的 Limit 内容}
+
+---
+
+## 【余极限整合】解决方案
+
+{Synthesizer 生成的 Colimit 内容}
+
+---
+
+## ⚠️ 风险说明
+
+{Obstruction 风险诊断}
+
+---
+
+## 三人小组决策
+
+| 决策 | 投票结果 |
+|------|---------|
+| 终止/迭代 | {decision} |
+| 理由 | {reasoning} |
+
+---
+
+**元数据**:
+- 分析轮次: {round_count}
+- Obstruction 通过率: {pass_rate}%
+- 同构簇数量: {homography_count}
+- 质量评级: {quality_rating}星
+```
+
+### 统计数据更新要求
+
+每次分析完成后，Team Lead 必须更新 `knowledge/homography_graph.json`:
+
+```python
+# 更新全局统计
+metadata["total_explorations"] += 1
+metadata["last_exploration"] = current_timestamp
+
+# 更新参与领域统计
+for domain in participating_domains:
+    nodes[domain]["activation_count"] += 1
+    nodes[domain]["last_used"] = current_timestamp
+    nodes[domain]["success_rate"] = rolling_average(success_rate)
+    nodes[domain]["avg_confidence"] = rolling_average(confidence)
+
+# 记录同构关系（如果 Synthesizer 检测到）
+if homography_clusters:
+    for cluster in homography_clusters:
+        edge_id = "↔".join(sorted(cluster["domains"]))
+        if edge_id not in edges:
+            edges[edge_id] = {
+                "homography_count": 0,
+                "avg_confidence": 0.0,
+                "strength": 0.0,
+                "common_structures": []
+            }
+        edges[edge_id]["homography_count"] += 1
+        edges[edge_id]["avg_confidence"] = cluster["confidence"]
+        edges[edge_id]["strength"] = calculate_strength(edge_id)
+        edges[edge_id]["last_active"] = current_timestamp
+        edges[edge_id]["common_structures"].extend(cluster["structures"])
+
+# 添加到探索历史
+exploration_history["count"] += 1
+exploration_history["recent"].insert(0, {
+    "timestamp": current_timestamp,
+    "topic": topic_summary,
+    "domains": participating_domains,
+    "decision": final_decision,
+    "report_file": report_filename
+})
+# 只保留最近 50 条
+if len(exploration_history["recent"]) > 50:
+    exploration_history["recent"] = exploration_history["recent"][:50]
+```
+
+### 代码执行示例
+
+```python
+# ============================================================================
+# STEP 9: 保存分析结果到知识库（Team Lead 职责）
+# ============================================================================
+
+import json
+from datetime import datetime
+from pathlib import Path
+
+def save_analysis_report(synthesizer_report, obstruction_report, decision_record):
+    """保存分析报告到知识库"""
+
+    # 生成文件名
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    topic_summary = decision_record["topic"][:20].replace(" ", "_")
+    filename = f"{timestamp}_{topic_summary}.md"
+
+    # 保存报告
+    report_path = Path(f"knowledge/exploration_history/{filename}")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write(format_report(synthesizer_report, obstruction_report, decision_record))
+
+    # 更新统计数据
+    update_homography_graph(decision_record)
+
+    return report_path
+```
+
+### 强制检查点
+
+分析完成后，Team Lead 必须确认：
+- [ ] 报告已保存到 `knowledge/exploration_history/`
+- [ ] `homography_graph.json` 已更新
+- [ ] 领域统计数据已更新
+- [ ] 同构关系已记录
+
+**❌ 禁止**: 分析完成后不保存报告直接结束
+
+---
+
 **初版创建**: 2026-02-08
-**最新版本**: v4.4.1 (范畴骨架注入标准)
-**核心理念**: 从"五角色协作"转向"三角色高效协作 + 分层信息流 + 统一范畴注入"
+**最新版本**: v4.4.2 (分析结果自动存储)
+**核心理念**: 从"五角色协作"转向"三角色高效协作 + 分层信息流 + 统一范畴注入 + 知识累积"
