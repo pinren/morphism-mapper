@@ -1,13 +1,17 @@
 ---
 name: morphism-mapper
-description: Category Theory Morphism Mapper v4.4 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过多 Agent Team 并行分析，将 Domain A 的问题结构映射到多个远域 Domain B，借助跨域共识（Limits）和互补整合（Colimits）生成非共识创新方案。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"等。
+description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过多 Agent Team 并行分析，将 Domain A 的问题结构映射到多个远域 Domain B，借助跨域共识（Limits）和互补整合（Colimits）生成非共识创新方案。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"等。
 ---
 
-# Category Theory Morphism Mapper v4.4 🐝
+# Category Theory Morphism Mapper v4.5 🐝
 
-**版本**: v4.4.3 (Swarm Mode)
-**更新日期**: 2026-02-09
+**版本**: v4.5.0 (Swarm Mode - 四维十二式智能攻击矩阵)
+**更新日期**: 2026-02-10
 **领域数量**: 31个内置领域 + 动态新增
+
+**核心升级**: Obstruction Theorist 升级为四维十二式智能攻击矩阵
+  - 新增本体论维度（针对"人"的系统）
+  - 智能武器选择（从12个攻击点选择最致命的3个）
 
 **核心架构**: 3个关键 Agent + 动态 Domain Agents
 **通信铁律**: 只能使用 SendMessage，其他方式会导致 Team 异常
