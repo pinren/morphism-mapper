@@ -8,21 +8,21 @@
       "description": "基础科学理论，提供核心逻辑和原理，适合提取 Limit",
       "domains": ["thermodynamics", "complexity_science", "evolutionary_biology", "quantum_mechanics"]
     },
-    "tier_2_application": {
-      "name": "应用级（方法论）",
-      "description": "应用科学理论，提供具体方法和工具，适合生成 Colimit",
-      "domains": ["control_systems", "game_theory", "network_theory", "information_theory", "operations_research", "distributed_systems", "neuroscience", "behavioral_economics", "immunology", "ecology"]
-    },
-    "tier_3_practical": {
-      "name": "实践级（经验智慧）",
-      "description": "实践经验和智慧，提供可执行的洞察",
-      "domains": ["kaizen", "antifragility", "military_strategy", "innovation_theory", "incentive_design", "second_order_thinking", "social_capital", "military_logistics", "organizational_behavior"]
-    },
-    "tier_4_interpretive": {
-      "name": "阐释级（意义建构）",
-      "description": "人文社科理论，提供意义和文化视角",
-      "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought", "yijing_thought"]
-    }
+     "tier_2_application": {
+       "name": "应用级（方法论）",
+       "description": "应用科学理论，提供具体方法和工具，适合生成 Colimit",
+       "domains": ["control_systems", "game_theory", "network_theory", "information_theory", "operations_research", "distributed_systems", "neuroscience", "behavioral_economics", "immunology", "ecology", "geopolitics", "psychology", "traditional_chinese_medicine"]
+     },
+     "tier_3_practical": {
+       "name": "实践级（经验智慧）",
+       "description": "实践经验和智慧，提供可执行的洞察",
+       "domains": ["kaizen", "antifragility", "military_strategy", "innovation_theory", "incentive_design", "second_order_thinking", "social_capital", "military_logistics", "organizational_behavior"]
+     },
+     "tier_4_interpretive": {
+       "name": "阐释级（意义建构）",
+       "description": "人文社科理论，提供意义和文化视角",
+       "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought", "yijing_thought", "art_theory", "sociology"]
+     }
   },
   "domains": {
     "thermodynamics": {
@@ -416,7 +416,7 @@
       }
     },
     "yijing_thought": {
-      "domain_file": "references/custom/yijing_thought_v2.md",
+      "domain_file": "references/yijing_thought_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/yijing_thought_persona.md",
       "default_seed": false,
@@ -431,7 +431,7 @@
       }
     },
     "traditional_chinese_medicine": {
-      "domain_file": "references/custom/traditional_chinese_medicine_v2.md",
+      "domain_file": "references/traditional_chinese_medicine_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/traditional_chinese_medicine_persona.md",
       "default_seed": false,
@@ -446,7 +446,7 @@
       }
     },
     "military_logistics": {
-      "domain_file": "references/custom/military_logistics_v2.md",
+      "domain_file": "references/military_logistics_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
       "persona": "agents/personas/military_logistics_persona.md",
       "default_seed": false,
@@ -461,7 +461,7 @@
       }
     },
     "organizational_behavior": {
-      "domain_file": "references/custom/organizational_behavior_v2.md",
+      "domain_file": "references/organizational_behavior_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
       "persona": "agents/personas/organizational_behavior_persona.md",
       "default_seed": false,
@@ -475,14 +475,74 @@
         "last_used": null
       }
     },
-    "mao_zedong_thought": {
-      "domain_file": "references/mao_zedong_thought_v2.md",
-      "modules": ["yoneda_probe", "adjoint_balancer"],
-      "persona": "agents/personas/mao_zedong_thought_persona.md",
+    "art_theory": {
+      "domain_file": "references/art_theory_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits"],
+      "persona": "agents/personas/art_theory_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
-      "tier_strength": 0.75,
-      "tags": ["practice", "contradiction", "protracted_war", "mass_line"],
+      "tier_strength": 0.73,
+      "tags": ["aesthetic_experience", "symbol_expression", "form_content", "artistic_innovation"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "geopolitics": {
+      "domain_file": "references/geopolitics_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits"],
+      "persona": "agents/personas/geopolitics_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.78,
+      "tags": ["state_competition", "power_balance", "alliance_dynamics", "strategic_depth"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "psychology": {
+      "domain_file": "references/psychology_v2.md",
+      "modules": ["yoneda_probe", "natural_transformation"],
+      "persona": "agents/personas/psychology_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.80,
+      "tags": ["cognitive_process", "motivation_emotion", "social_behavior", "mental_health"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "sociology": {
+      "domain_file": "references/sociology_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits"],
+      "persona": "agents/personas/sociology_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.72,
+      "tags": ["social_structure", "institutional_dynamics", "culture_norm", "social_stratification"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
+    "mao_zedong_thought": {
+      "domain_file": "references/mao_zedong_thought_v2.md",
+      "modules": ["yoneda_probe", "adjoint_balancer", "limits_colimits"],
+      "persona": "agents/personas/mao_zedong_thought_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_2_application",
+      "tier_strength": 0.88,
+      "tags": ["practical_application", "mass_line", "protracted_war", "contradiction_analysis", "practice_seek_truth"],
       "metadata": {
         "activation_count": 0,
         "success_rate": 0.0,

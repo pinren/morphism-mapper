@@ -207,7 +207,10 @@
       "mao_zedong_thought": ["evolution_development", "competition_selection", "structural_organization"],
       "yijing_thought": ["transformation_conversion", "oscillation_fluctuation", "emergence_generation"],
       "traditional_chinese_medicine": ["feedback_regulation", "flow_exchange", "stabilization_equilibrium"],
-      "organizational_behavior": ["structural_organization", "cooperation_symbiosis", "feedback_regulation"]
+      "organizational_behavior": ["structural_organization", "cooperation_symbiosis", "feedback_regulation"],
+      "psychology": ["feedback_regulation", "learning_adaptation", "evolution_development", "information_processing", "structural_organization", "emergence_generation", "exploration_exploitation"],
+      "geopolitics": ["structural_organization", "competition_selection", "flow_exchange", "feedback_regulation", "evolution_development", "information_processing", "optimization_search", "transformation_conversion"],
+      "sociology": ["structural_organization", "emergence_generation", "information_processing", "feedback_regulation", "evolution_development", "competition_selection", "cooperation_symbiosis", "learning_adaptation"]
     }
   },
   "scoring_rules": {
