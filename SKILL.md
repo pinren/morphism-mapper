@@ -51,16 +51,30 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 
 ```
 检测流程:
-1. 尝试执行 TeamCreate(team_name="env-test") 创建一个测试 Team（会自动创建 team-lead）
-2. 如果 Task() 成功 → ✅ 进入 Agent Swarm 模式（下文所有流程适用）
-3. 如果 Task() 失败或不可用 → ⚠️ 降级到 Fallback 模式
+1. 尝试执行 TeamCreate(team_name="morphism-{timestamp}") 创建一个 Team
+2. 判断返回结果:
+
+   Case A: TeamCreate 成功 ✅
+   → 进入 Agent Swarm 模式（下文所有流程适用）
+   → team_name 已知，后续创建 Agents 时使用此 team_name
+   
+   Case B: 报错 "Already leading team XXX" ⚠️
+   → **这不是 Fallback 场景！Team 功能可用！**
+   → 获取现有 Team 的 team_name（从错误信息中提取 "XXX"）
+   → 使用现有 team_name 继续 Agent Swarm 模式
+   → **禁止降级到 Simulation 或创建独立 Task agents**
+   
+   Case C: 报错 "Feature not available" 或其他不可用错误 ❌
+   → 确认 Team 功能不可用
+   → 降级到 Fallback 模式
    → 读取 references/docs/simulation_mode_guide.md 获取完整 Fallback 流程
    → 按该文件中的「单 AI 顺序执行」步骤操作
 ```
 
 **⚠️ 关键规则**:
 - **永远先尝试生产模式**，不要预判环境不可用
-- **只有 Task() 确实失败时**才降级
+- **"Already leading team" 不等于失败**，这说明 Team 功能正常工作！
+- **只有功能确实不可用时**才降级到 Simulation
 - **用户明确要求生产模式时**，必须使用 Agent Swarm，不得自行降级
 - **降级后的完整 Fallback 流程不在本文档中**，请参阅 [Simulation Mode Guide](references/docs/simulation_mode_guide.md)
 
