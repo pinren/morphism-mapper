@@ -445,7 +445,7 @@ FINAL_REPORT = f"{EXPLORATION_PATH}/final_reports/synthesis.json"
 
 ```python
 # Team Lead 在启动时创建统一的问题子目录
-exploration_path = create_exploration_dir(problem="人在AI时代如何快速学习成长")
+exploration_path = create_exploration_dir(problem=user_problem)  # user_problem 来自用户输入
 
 # 将路径注入到所有后续Agent的环境变量
 os.environ["MORPHISM_EXPLORATION_PATH"] = exploration_path
