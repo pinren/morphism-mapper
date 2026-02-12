@@ -10,9 +10,7 @@
     "执行 Phase 4: Limit 计算（提取跨域共识）",
     "执行 Phase 4: Colimit 计算（整合互补洞察）",
     "处理 Koan Break（渐进降级）",
-    "更新知识图谱（homography_graph.json）",
-    "保存探索日志（exploration_history/YYYYMMDD-exploration.md）",
-    "基于知识图谱生成种子选择建议"
+    "保存探索日志（exploration_history/YYYYMMDD-exploration.md）"
   ],
   "inputs": {
     "domain_agent_outputs": "所有 Domain Agents 的映射结果",
@@ -40,7 +38,6 @@
     },
     "synthesis_report": {
       "exploration_summary": "探索过程摘要",
-      "homography_graph_update": "知识图谱更新",
       "recommendations": "后续建议"
     }
   },
@@ -74,17 +71,6 @@
       }
     },
     {
-      "name": "graph_updater",
-      "description": "更新知识图谱",
-      "target_file": "knowledge/homography_graph.json",
-      "updates": [
-        "节点统计（激活次数、成功率）",
-        "边统计（同构计数、强度）",
-        "推荐提示生成",
-        "边衰减计算（Edge Decay）"
-      ]
-    },
-    {
       "name": "koan_break_handler",
       "description": "处理探索失败场景",
       "strategy": "渐进降级（泛化 → 建议新领域）"
@@ -106,22 +92,22 @@
     }
   },
   "coordination": {
-    "listens_to": ["所有 Domain Agents", "Yoneda Broadcaster"],
-    "can_trigger": ["Koan Break（重新广播）", "建议引入新领域"],
+    "listens_to": [
+      "所有 Domain Agents",
+      "Yoneda Broadcaster"
+    ],
+    "can_trigger": [
+      "Koan Break（重新广播）",
+      "建议引入新领域"
+    ],
     "final_output_to": "用户"
   },
   "knowledge_management": {
-    "graph_file": "knowledge/homography_graph.json",
-    "log_directory": "knowledge/exploration_history/",
+    "log_directory": "exploration_history/",
     "log_format": "YYYYMMDD-exploration.md",
     "gap_analysis": {
       "enabled": true,
       "threshold": "同类问题 3 次低置信度触发建议"
-    },
-    "edge_decay": {
-      "enabled": true,
-      "half_life_days": 180,
-      "description": "长期不活跃的同构关系逐渐衰减，保持图谱鲜活"
     }
   }
 }

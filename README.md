@@ -5,7 +5,7 @@
 > 将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v3.0-green.svg)](https://github.com/pinren/morphism-mapper/releases)
+[![Version](https://img.shields.io/badge/version-v4.5.6-green.svg)](https://github.com/pinren/morphism-mapper/releases)
 [![Domains](https://img.shields.io/badge/domains-31+-orange.svg)](#built-in-domains)
 
 ---
@@ -347,6 +347,9 @@ morphism-mapper/
 │       ├── koan_break.md      # 禅宗打断
 │       └── README.md          # 模块说明
 ├── references/                 # 领域知识库
+│   ├── docs/                   # 文档目录 (v4.5+)
+│   │   ├── persistence_guide.md
+│   │   └── simulation_mode_guide.md
 │   ├── *_v2.md                # V2标准领域 (100+14+14+18)
 │   ├── custom/                # 自定义领域
 │   └── v1_backup/             # V1版本备份
