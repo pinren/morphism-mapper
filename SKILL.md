@@ -52,7 +52,7 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 #### 1. Agent Swarm 模式 (生产目标)
 - **触发条件**: 
   - `Claude Code >= 2.1.34` 
-  - **且** 环境变量 `AGENT_TEAM_ENABLED = "true"`
+  - **且** 环境变量 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = 1`
 - **行为**: 启动真实的多 Agent 协同，使用系统级 `SendMessage`，自动处理持久化。
 
 #### 2. 模拟演示模式 (降级回滚)

@@ -25,14 +25,14 @@ Morphism Mapper 是一个为 **Claude Code** 和 **OpenCode** 设计的智能体
 
 ```bash
 # 方式一：启动时设置环境变量
-export CLAUDE_CODE_USE_AGENT_TEAMS=true
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 claude
 
 # 方式二：在 Claude Code 内部启用
 # 启动后输入 /agents 命令，然后选择 "Enable Agent Teams"
 ```
 
-> **关键点**: `export CLAUDE_CODE_USE_AGENT_TEAMS=true` 必须在启动 Claude Code **之前**设置，启动后设置无效。
+> **关键点**: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 必须在启动 Claude Code **之前**设置，启动后设置无效。
 
 ### 安装方法
 
@@ -44,7 +44,7 @@ cd ~/.claude/skills
 git clone -b swarm-experimental https://github.com/pinren/morphism-mapper.git
 
 # 2. 启用 Agent Team 模式
-export CLAUDE_CODE_USE_AGENT_TEAMS=true
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 
 # 3. 启动 Claude Code
 claude
