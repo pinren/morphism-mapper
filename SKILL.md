@@ -50,7 +50,7 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 
 ```
 检测流程:
-1. 尝试执行 Task(name="env-check", prompt="回复 OK") 创建一个测试 Agent
+1. 尝试执行 TeamCreate(team_name="env-test") 创建一个测试 Team（会自动创建 team-lead）
 2. 如果 Task() 成功 → ✅ 进入 Agent Swarm 模式（下文所有流程适用）
 3. 如果 Task() 失败或不可用 → ⚠️ 降级到 Fallback 模式
    → 读取 references/docs/simulation_mode_guide.md 获取完整 Fallback 流程
@@ -84,12 +84,23 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 | 8 | 指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
 
 ### ❌ Lead Agent 禁止行为
-- 未经 Task() 测试就直接采用 Fallback 模式
+- 未经 TeamCreate() 测试就直接采用 Fallback 模式
 - 完成骨架提取后停下来等待用户指令
 - 领域选择后不启动 Domain Agents
 - Domain Agents 完成后不触发 Obstruction 审查
 - 被动等待而不主动催促超时的 Agent
 - **一个人分饰多角完成全部分析**（这是 Fallback 行为，生产模式禁止）
+- **创建 Task() 时不传入 `team_name` 参数**（会导致创建独立 Agent 而非 Team 成员）
+
+### ✅ 关键提醒：所有 Task() 调用必须传入 team_name
+
+```python
+# ❌ 错误示范 - 会创建独立 Agent，不属于 Team
+Task(name="obstruction-theorist", prompt="...")
+
+# ✅ 正确示范 - 创建 Team 成员
+Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
+```
 
 ---
 
@@ -139,9 +150,9 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 | Agent | 创建方式 | 核心职责 | 通信对象 |
 |-------|---------|---------|---------|
 | **Team Lead** | `TeamCreate` 自动创建 | 范畴提取、领域选择、Agent生成、决策协调 | 所有成员 |
-| **Obstruction Theorist** | `Task(name="obstruction-theorist")` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
-| **Synthesizer** | `Task(name="synthesizer")` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
-| **Domain Agent** | `Task(name="{domain}-agent")` | 领域分析、映射执行 | Obstruction, Synthesizer |
+| **Obstruction Theorist** | `Task(name="obstruction-theorist", team_name="morphism-team")` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
+| **Synthesizer** | `Task(name="synthesizer", team_name="morphism-team")` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
+| **Domain Agent** | `Task(name="{domain}-agent", team_name="morphism-team")` | 领域分析、映射执行 | Obstruction, Synthesizer |
 
 ---
 
@@ -241,11 +252,11 @@ for domain, prompt in prompts.items():
 ## 执行流程
 
 ```
-Step 1: TeamCreate(team_name="xxx")
-    ↓ 自动创建 team-lead
-Step 2: 启动核心成员
-    ├── Task("obstruction-theorist")
-    └── Task("synthesizer")
+Step 1: TeamCreate(team_name="morphism-team")  # 创建 Team 并自动启动 team-lead
+    ↓
+Step 2: Team Lead 启动核心成员（必须传入 team_name）
+    ├── Task(name="obstruction-theorist", team_name="morphism-team")
+    └── Task(name="synthesizer", team_name="morphism-team")
     ↓
 Step 3: Team Lead 提取 Category Skeleton
     ├── Objects: 问题中的实体
