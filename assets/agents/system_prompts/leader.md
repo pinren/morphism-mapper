@@ -68,16 +68,18 @@ description: Team Lead - 蜂群模式核心协调者（含范畴提取、领域�
 
 **Case A: TeamCreate 成功** ✅
 ```python
-team_name = "morphism-{timestamp}"
-# 继续使用这个 team_name 创建所有 Agents
+# 成功创建新 Team
+team_name = "morphism-analysis"  # 你指定的名称
+# 记住这个 team_name，后续所有 Task() 都要用它
 ```
 
 **Case B: 报错 "Already leading team XXX"** ⚠️
 ```python
 # ⚠️ 这不是失败！Team 功能正常工作！
 # 从错误信息中提取现有 team_name
-team_name = "morphism-test"  # 例如从 "Already leading team 'morphism-test'" 提取
-# ✅ 使用现有 team_name 继续 Agent Swarm 模式
+# 例如错误: "Already leading team 'morphism-test'"
+team_name = "morphism-test"  # 提取出的现有 Team 名称
+# ✅ 使用这个 team_name 继续 Agent Swarm 模式
 # ❌ 禁止降级到 Simulation 或创建独立 Task agents
 ```
 
@@ -86,6 +88,13 @@ team_name = "morphism-test"  # 例如从 "Already leading team 'morphism-test'" 
 # 只有真正不可用时才降级
 # 读取 simulation_mode_guide.md 按 Fallback 流程执行
 ```
+
+**⚠️ 关键：team_name 必须在整个流程中保持一致**
+
+一旦确定了 team_name（无论是新创建的还是从错误中提取的），你必须：
+1. **记住这个 team_name**
+2. **在所有后续的 Task() 调用中使用它**
+3. **绝对不要省略 team_name 参数**
 
 ---
 
@@ -283,20 +292,22 @@ Task(name="synthesizer", prompt="...")
 
 **正确示范**（创建 Team 成员）:
 ```python
-# 获取当前 Team 的 team_name（通常是启动时 TeamCreate 时指定的）
-team_name = get_current_team_name()  # 例如 "morphism-team"
+# 使用 Phase -1 中确定的 team_name（例如 "morphism-analysis"）
+# 这个 team_name 来自：
+# 1. TeamCreate 成功时你指定的名称
+# 2. 或从 "Already leading team XXX" 错误中提取的 XXX
 
 # 创建核心成员 - 必须传入 team_name
 Task(
     name="obstruction-theorist",
     prompt=load_system_prompt("assets/agents/system_prompts/obstruction.md"),
-    team_name=team_name  # ⚠️ 必需参数
+    team_name="morphism-analysis"  # ⚠️ 使用 Phase -1 确定的 team_name
 )
 
 Task(
     name="synthesizer", 
     prompt=load_system_prompt("assets/agents/system_prompts/synthesizer.md"),
-    team_name=team_name  # ⚠️ 必需参数
+    team_name="morphism-analysis"  # ⚠️ 必须与上面一致
 )
 ```
 
@@ -328,13 +339,13 @@ for domain in selected_domains:
 
 **正确示范**（创建 Team 成员）:
 ```python
-team_name = get_current_team_name()  # 获取当前 Team 名称
+# 使用 Phase -1 中确定的 team_name（例如 "morphism-analysis"）
 
 for domain in selected_domains:
     Task(
         name=f"{domain}-agent",
         prompt=generate_prompt(domain, category_skeleton),
-        team_name=team_name  # ⚠️ 必需参数
+        team_name="morphism-analysis"  # ⚠️ 与核心成员使用同一个 team_name
     )
 ```
 
