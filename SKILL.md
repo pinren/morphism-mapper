@@ -10,9 +10,10 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 **领域数量**: 31个内置领域 + 动态新增
 
 **核心升级**:
-1. **Obstruction Theorist 升级为四维十二式智能攻击矩阵**
-   - 新增本体论维度（针对"人"的系统）
-   - 智能武器选择（从12个攻击点选择最致命的3个）
+1. **Obstruction Theorist 升级为五维十四式智能攻击矩阵**
+   - 五个维度：动力学、约束条件、认识论、本体论、函子性
+   - 3+2 模式：3个智能选择 + 2个强制范畴论检查
+   - 智能武器选择（根据问题特征从14个攻击点中选择最致命的3个）
 2. **统一持久化架构** (v4.5.1)
    - 按问题维度组织子目录：`~/.morphism_mapper/explorations/{timestamp}_{problem_slug}/`
    - 每个探索独立存储，避免文件混乱
