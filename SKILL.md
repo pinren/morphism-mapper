@@ -3,9 +3,9 @@ name: morphism-mapper
 description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过多 Agent Team 并行分析，将 Domain A 的问题结构映射到多个远域 Domain B，借助跨域共识（Limits）和互补整合（Colimits）生成非共识创新方案。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"、"新增领域"、"添加领域"等。
 ---
 
-# Category Theory Morphism Mapper v4.5.6 🐝
+# Category Theory Morphism Mapper v4.5.7 🐝
 
-**版本**: v4.5.6 (Swarm Mode - 运行模式自动侦测)
+**版本**: v4.5.7 (Swarm Mode - 生产模式优先 + 运行时侦测)
 **更新日期**: 2026-02-12
 **领域数量**: 31个内置领域 + 动态新增
 
@@ -28,41 +28,52 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
    - **全自动扩展**: 无需用户确认，自动引入1-2个新领域
    - **硬边界限制**: 最多10领域、6轮(3次往返)强制终止
    - **专用Prompt**: 扩展阶段Agent使用特殊Prompt，强调互补性而非重复
-5. **模拟模式持久化强制规范** (v4.5.4)
-   - **明确模拟模式也必须自动持久化**: 无论生产还是模拟，持久化都是强制要求
-   - **执行时机表**: Step 0-8每个步骤对应的保存文件清单
-   - **自动执行代码模板**: Python代码示例，确保每个步骤后立即保存
-   - **验证检查点**: 保存后必须验证文件完整性
-6. **模拟模式必须读取领域文件** (v4.5.5) ⭐
-   - **关键缺陷修复**: 之前的模拟模式分析没有读取 `references/{domain}_v2.md`
-   - **强制读取流程**: 扮演 Domain Agent 前必须读取并解析领域文件
-   - **V2 标准强制引用**: 分析必须包含 100基本基石、14 Core Objects、14 Core Morphisms、18 Theorems 的引用
-   - **未读取则分析无效**: 如果没有引用领域文件，分析被视为不完整
+5. **持久化强制规范** (v4.5.4)
+   - 无论生产还是 Fallback，持久化都是强制要求
+   - Step 0-8 每个步骤对应保存文件清单
+6. **领域文件强制读取** (v4.5.5)
+   - Domain Agent 必须读取 `references/{domain}_v2.md`
+   - 分析必须引用 V2 标准内容 (Core Objects, Core Morphisms, Theorems)
+7. **生产模式优先 + 运行时侦测** (v4.5.7) ⭐
+   - SKILL.md 默认为 Agent Swarm 生产模式编写
+   - 运行时主动侦测环境，仅在不可用时降级到 Fallback
 
 ---
 
-## ⚠️ 运行模式与 Lead Agent 职责
+## 🚨 运行时模式侦测 — 必须首先执行 (v4.5.7)
 
-> **详细指南**: 请参阅 [Simulation Mode Guide](references/docs/simulation_mode_guide.md) 获取模拟模式下的完整执行规范和自动持久化时机表。
+> **本文档默认为 Agent Swarm 生产模式编写。** 仅当环境不支持时才降级。
 
-### 🔄 运行模式自动侦测 (v4.5.6)
+### Step 0: 运行时环境检测（启动后立即执行）
 
-**系统将根据环境自动判定运行模式**:
+**在执行任何分析之前，必须先确认运行模式：**
 
-| 模式 | 触发条件 | 行为 |
-|------|---------|------|
-| 🟢 **Agent Swarm** | `Claude Code >= 2.1.34` **且** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = 1` | 真实多 Agent 协同，Lead Agent **主动驱动**全流程 |
-| 🔴 **模拟演示** (Fallback) | 上述条件不满足 | 单个 AI 分饰多角，按角色顺序执行 |
+```
+检测流程:
+1. 尝试执行 Task(name="env-check", prompt="回复 OK") 创建一个测试 Agent
+2. 如果 Task() 成功 → ✅ 进入 Agent Swarm 模式（下文所有流程适用）
+3. 如果 Task() 失败或不可用 → ⚠️ 降级到 Fallback 模式
+   → 读取 references/docs/simulation_mode_guide.md 获取完整 Fallback 流程
+   → 按该文件中的「单 AI 顺序执行」步骤操作
+```
+
+**⚠️ 关键规则**:
+- **永远先尝试生产模式**，不要预判环境不可用
+- **只有 Task() 确实失败时**才降级
+- **用户明确要求生产模式时**，必须使用 Agent Swarm，不得自行降级
+- **降级后的完整 Fallback 流程不在本文档中**，请参阅 [Simulation Mode Guide](references/docs/simulation_mode_guide.md)
 
 ---
 
-### 🟢 Agent Swarm 模式 — Lead Agent 主动驱动职责
+## 🟢 Agent Swarm 模式 — Lead Agent 主动驱动工作流
 
-> ⚠️ **核心原则**: Lead Agent 是流程**驱动者**，不是被动等待者。每个 Step 完成后必须**立即推进**下一步。
+> ⚠️ **核心原则**: Lead Agent 是流程**驱动者**，不是被动等待者。接收用户问题后必须**一口气推进到最终报告**。
+
+### Lead Agent 职责清单
 
 | Step | Lead Agent 动作 | 产出 | 通信方式 |
 |------|-----------------|------|---------|
-| 0 | 创建探索目录，初始化持久化 | `metadata.json` | — |
+| 0 | 环境检测 + 创建探索目录 + 初始化持久化 | `metadata.json` | — |
 | 1 | **主动提取范畴骨架** (Objects, Morphisms, Tags) | Category Skeleton JSON | — |
 | 2 | 调用 `domain_selector.py` 选择领域 + Tier Balance | 领域列表 | — |
 | 3 | 启动核心成员 (`obstruction-theorist`, `synthesizer`) | Agent 实例 | `Task()` |
@@ -72,31 +83,13 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 | 7 | **召集三人决策会议** (Synthesizer + Obstruction + Lead) | 会议记录 | `SendMessage` 循环 |
 | 8 | 指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
 
-**❌ Lead Agent 禁止行为**:
+### ❌ Lead Agent 禁止行为
+- 未经 Task() 测试就直接采用 Fallback 模式
 - 完成骨架提取后停下来等待用户指令
 - 领域选择后不启动 Domain Agents
 - Domain Agents 完成后不触发 Obstruction 审查
 - 被动等待而不主动催促超时的 Agent
-
----
-
-### 🔴 模拟演示模式 — 单 AI 顺序执行
-
-> 在 Fallback 模式中，单个 AI 必须**按角色切换**顺序执行所有步骤，每个 ✅ 标记必须**立即执行保存代码**。
-
-| Step | 扮演角色 | 动作 | 持久化 |
-|------|---------|------|--------|
-| 0 | Team Lead | 创建探索目录，初始化 | ✅ `metadata.json` |
-| 1 | Team Lead | 提取范畴骨架 (Objects, Morphisms, Tags) | — |
-| 2 | Team Lead | 读取领域文件 `references/{domain}_v2.md` | — |
-| 3 | Team Lead | 选择领域 + Tier Balance | — |
-| 4 | Domain Agent ×N | 逐个执行领域映射分析 (必须引用 V2 定理) | ✅ `round1.json` |
-| 5 | Obstruction | 审查每个 Domain 结果 (五维十四式攻击) | ✅ `obstruction.json` |
-| 6 | Domain Agent ×N | 根据 Obstruction 反馈迭代分析 | ✅ `round2.json` |
-| 7 | Synthesizer | 计算 Limits/Colimits，生成报告 | ✅ `synthesis.json` |
-| 8 | Team Lead | 更新索引 | ✅ `index.json` |
-
-> 详见 [Persistence Guide](references/docs/persistence_guide.md) 获取每个 Agent 的文件格式和保存路径。
+- **一个人分饰多角完成全部分析**（这是 Fallback 行为，生产模式禁止）
 
 ---
 
@@ -188,9 +181,9 @@ Team Lead 发送最终报告
 
 ---
 
-## 🔍 模拟模式领域文件读取规范 (v4.5.5+)
+## 🔍 领域文件读取规范 (v4.5.5+)
 
-> **详细指南**: 请参阅 [Simulation Mode Guide](references/docs/simulation_mode_guide.md) 获取模拟模式下的领域文件读取规范和代码示例。
+> 无论哪种运行模式，Domain Agent 都必须基于领域知识库进行分析。
 
 **关键要求**:
 - **必须读取**: `references/{domain}_v2.md`
@@ -882,6 +875,7 @@ morphism-mapper/
 
 | 版本 | 日期 | 核心更新 |
 |-----|------|---------|
+| **v4.5.7** | **2026-02-12** | **生产模式优先** - SKILL.md 默认为 Agent Swarm 编写，运行时 Task() 测试侦测，仅失败时降级到 Fallback；移除文档中的模拟模式偏向 |
 | **v4.5.6** | **2026-02-12** | **运行模式自动侦测** - 自动识别 Agent Swarm 环境，智能降级到模拟模式 |
 | **v4.5.5** | **2026-02-10** | **模拟模式必须读取领域文件** - 修复之前未读取 references/{domain}_v2.md 的严重缺陷、强制读取流程、V2标准引用要求 |
 | **v4.5.4** | **2026-02-10** | **模拟模式持久化强制规范** - 明确模拟模式(一人分饰多角)也必须自动持久化、添加执行时机表、自动执行代码模板 |

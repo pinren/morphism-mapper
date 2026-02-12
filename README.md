@@ -5,7 +5,7 @@
 > 将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v4.5.6-green.svg)](https://github.com/pinren/morphism-mapper/releases)
+[![Version](https://img.shields.io/badge/version-v4.5.7-green.svg)](https://github.com/pinren/morphism-mapper/releases)
 [![Domains](https://img.shields.io/badge/domains-31+-orange.svg)](#built-in-domains)
 
 ---
