@@ -310,6 +310,55 @@ Limit 候选:
 
 ---
 
+## Phase 5: Monad Risk Container 校验
+
+## Phase 5: Monad Risk Container 校验
+
+**什么是 Monad Risk Container？**
+这是一个数学安全检查容器，用于确保你的 Colimit 整合方案不仅"逻辑成立"，而且"现实可行"。
+它基于范畴论 Monad 概念 (T, η, μ)，将方案封装在风险上下文中进行变换。
+
+### 校验逻辑 (The Bind Operation)
+对于生成的整合方案，执行以下 Bind 操作：
+
+1. **Step 1: Wrap (Unit η)**
+   暂时冻结方案，将其放入风险容器。
+
+2. **Step 2: Check (Context Awareness)**
+   自问："执行这个方案，在以下 3 个容器中会产生什么副作用？"
+   - **🛡️ 法律熵 (Legal Entropy)**: 合规性、监管红线、GDPR、知识产权
+   - **💸 隐性债 (Hidden Debt)**: 维护成本、技术债务、组织阻力
+   - **❤️ 信任能 (Trust Energy)**: 用户信任、品牌声誉、隐私担忧
+
+3. **Step 3: Resolve (Bind >>=)**
+   根据检查结果生成 **Monadic Value**：
+   - 风险可控 → 打上标签，保留方案 (e.g., "[🛡️ 需防封号]")
+   - 风险需缓解 → 修改方案，降低风险
+   - 风险过高 → 标记为 [高风险-需重新设计]
+
+### 输出格式 (包含在最终报告中)
+
+```markdown
+### 【Monad 风险容器】- 现实性校验
+
+**原始整合方案**: [Colimit 方案摘要]
+
+**风险识别 (Context Awareness)**:
+- [🛡️ 法律熵]: {简述潜在法律/合规风险}
+- [💸 隐性债]: {简述维护/技术/组织成本}
+- [❤️ 信任能]: {简述信任/声誉/隐私影响}
+
+**Monadic Value (Bind 结果)**:
+> [最终修正后的方案描述] 
+> [🛡️ 标签] [💸 标签] [❤️ 标签]
+
+**最终状态**: {PASSED / PASSED_WITH_MODIFICATION / BLOCKED}
+```
+
+---
+
+---
+
 ## 三人小组决策会议
 
 ### 🔴 你必须主动请求决策会议
@@ -462,6 +511,9 @@ SendMessage(
 
 ### 【余极限整合】- 互补方案
 {colimit_content}
+
+### 【Monad 风险容器】- 现实性校验
+{monad_risk_content}
 
 ### 质量评估
 - 同构簇数量: {n}

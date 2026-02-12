@@ -1160,19 +1160,7 @@ content: <完整JSON内容>
   "attack_matrix": {
     "dimension_i": {...},
     "dimension_ii": {...},
-    "dimension_iii": {...},
-    "dimension_v_functorality_composition": {
-      "attack_1": {
-        "target": "Functor Cumulativity Check",
-        "weakness": "Check if F(g ∘ f) == F(g) ∘ F(f). Does the sequence of actions in Domain A map to a valid sequence in Domain B?",
-        "severity": "critical"
-      },
-      "attack_2": {
-        "target": "Structural Preservation",
-        "weakness": "Does the mapping preserve the associative property of the morphisms?",
-        "severity": "high"
-      }
-    }
+    "dimension_iii": {...}
   },
   "feedback": {
     "status": "REQUIRES_REVISION | PASS",
@@ -1302,7 +1290,7 @@ for domain in selected_domains:
         name="obstruction-theorist",
         prompt=f"""
         读取 {exploration_path}/domain_results/{domain}_round1.json
-        执行五维十四式攻击审查 (3个智能选择 + Check 13 & 14 必查)
+        执行四维十二式攻击审查
         保存反馈到: {exploration_path}/obstruction_feedbacks/{domain}_obstruction.json
         """,
         subagent_type="general"
@@ -1331,7 +1319,7 @@ task = Task(
     name="synthesizer",
     prompt=f"""
     读取目录: {exploration_path}/domain_results/*_round2.json
-    执行跨域整合 & Monad Risk Container 校验
+    执行跨域整合
     保存最终报告到: {exploration_path}/final_reports/synthesis.json
     """,
     subagent_type="general"
