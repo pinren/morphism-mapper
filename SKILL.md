@@ -225,12 +225,14 @@ prompts = generator.generate_batch(
     }
 )
 
-# 启动 Domain Agents
+# 启动 Domain Agents - 必须传入 team_name
+team_name = get_current_team_name()  # 获取当前 Team 名称
+
 for domain, prompt in prompts.items():
     Task(
         name=f"{domain}-agent",
         prompt=prompt,  # 已包含完整领域知识 + 范畴骨架
-        ...
+        team_name=team_name  # ⚠️ 必需参数
     )
 ```
 

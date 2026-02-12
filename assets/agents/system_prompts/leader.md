@@ -286,7 +286,27 @@ Step 2.5.3: 确认两个核心成员都已启动
 
 ## Phase 3: 第一轮信息流协调
 
-### Step 3.1: 启动 Domain Agents
+### Step 3.1: 启动 Domain Agents ⚠️ 同样必须传入 team_name
+
+> **关键**: 与核心成员一样，所有 Domain Agents 也必须作为 Team 成员创建。
+
+**错误示范**（会创建独立 Agent）:
+```python
+for domain in selected_domains:
+    Task(name=f"{domain}-agent", prompt=generate_prompt(domain))
+```
+
+**正确示范**（创建 Team 成员）:
+```python
+team_name = get_current_team_name()  # 获取当前 Team 名称
+
+for domain in selected_domains:
+    Task(
+        name=f"{domain}-agent",
+        prompt=generate_prompt(domain, category_skeleton),
+        team_name=team_name  # ⚠️ 必需参数
+    )
+```
 
 向所有种子 Domain Agents 注入范畴骨架：
 
