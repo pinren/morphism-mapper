@@ -11,6 +11,29 @@
 
 ---
 
+## 单 AI 顺序执行 — 完整工作流
+
+> ⚠️ **本流程仅在 `Task()` 测试失败、确认无法使用 Agent Swarm 时才采用。**
+
+| Step | 扮演角色 | 动作 | 持久化 |
+|------|---------|------|--------|
+| 0 | Team Lead | 创建探索目录，初始化 metadata | ✅ `metadata.json` |
+| 1 | Team Lead | 提取范畴骨架 (Objects, Morphisms, Tags) | — |
+| 2 | Team Lead | 读取领域文件 `references/{domain}_v2.md` | — |
+| 3 | Team Lead | 选择领域 + Tier Balance | — |
+| 4 | Domain Agent ×N | 逐个执行领域映射分析 (必须引用 V2 定理) | ✅ `{domain}_round1.json` |
+| 5 | Obstruction | 审查每个 Domain 结果 (五维十四式攻击) | ✅ `{domain}_obstruction.json` |
+| 6 | Domain Agent ×N | 根据 Obstruction 反馈迭代分析 | ✅ `{domain}_round2.json` |
+| 7 | Synthesizer | 计算 Limits/Colimits，生成报告 | ✅ `synthesis.json` |
+| 8 | Team Lead | 更新索引，创建 latest 软链接 | ✅ `index.json` + `latest` |
+
+**执行要求**：
+- 每个 ✅ 标记的步骤必须**立即执行保存代码**，不可延迟到后面统一保存
+- 角色切换时在输出中**明确标注**当前扮演的角色（如 `[Obstruction Theorist]`）
+- Step 4-6 中，每个领域必须**逐一完成**（先完成领域 A 的 Round 1 → Obstruction → Round 2，再做领域 B）
+
+---
+
 ## 核心原则：模拟模式也必须自动持久化
 
 **无论生产模式还是模拟模式，持久化都是强制要求。**
