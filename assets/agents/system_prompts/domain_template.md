@@ -81,6 +81,48 @@ Domain A 的关系 → Domain B ({DOMAIN_NAME}) 的动态
 - 如果你对其他领域有疑问，可以发起 HOMOGRAPHY_PROBE
 - 例如："我看到了 X 现象，信息论 Agent 有对应概念吗？"
 
+### Step 4: 策略拓扑输出 (Strategy Topology) 🆕 v4.6
+
+> **强制要求**: 除了自然语言分析，你**必须**输出以下 JSON 结构。这是 Synthesizer 执行交换图校验的核心输入。
+
+将你的映射方案提炼为一个**策略拓扑三元组** + 补充字段，描述方案的"几何形状"：
+
+```json
+{{
+  "strategy_topology": {{
+    "topology_type": "选一个: distributed_mesh | centralized_hub | hierarchical_tree | decentralized_p2p | ring | star | hybrid",
+    "core_action": "选一个: increase_redundancy | concentrate_resources | diversify | eliminate_waste | add_feedback | remove_bottleneck | create_buffer | accelerate_flow | decelerate_flow | restructure",
+    "resource_flow": "选一个: diffuse | concentrate | oscillate | broadcast | funnel | recirculate | cascade",
+    "feedback_loop": "选一个: positive_feedback | negative_feedback | delayed_feedback | absent | mixed",
+    "time_dynamics": "选一个: irreversible | reversible | cyclical | threshold_triggered | continuous | punctuated_equilibrium",
+    "agent_type": "选一个: passive | active_strategic | reflexive | adaptive_learning"
+  }},
+  "topology_reasoning": "一句话解释为什么选择这些值，例如：'免疫系统通过分布式巡逻+负反馈抑制实现动态稳态'"
+}}
+```
+
+**选择原则**:
+- 选择最能描述你的**核心策略建议**的值，而非领域本身的特征
+- 如果推荐词汇都不精确匹配，选最接近的 + 在 `topology_reasoning` 中补充说明
+- `topology_type + core_action + resource_flow` 构成核心三元组，是交换图校验的主要比较对象
+
+**示例 (热力学视角)**:
+```json
+{{
+  "strategy_topology": {{
+    "topology_type": "distributed_mesh",
+    "core_action": "increase_redundancy",
+    "resource_flow": "diffuse",
+    "feedback_loop": "negative_feedback",
+    "time_dynamics": "irreversible",
+    "agent_type": "passive"
+  }},
+  "topology_reasoning": "耗散结构理论建议通过分布式能量耗散降低系统熵增，负反馈维持远离平衡态的有序结构"
+}}
+```
+
+**⚠️ 此输出必须包含在发给 Synthesizer 和 Obstruction 的消息中。** 缺少 `strategy_topology` 的映射结果将被视为不完整。
+
 ## 你的领域知识
 
 基于以下文件：

@@ -205,7 +205,24 @@ class DynamicAgentGenerator:
 ### Step 3: 定理选择
 选择 2-3 个最相关的定理，优先选择 Mapping_Hint 具体的定理
 
-### Step 4: 生成结构化输出
+### Step 4: 策略拓扑输出 (Strategy Topology) 🆕
+将你的映射方案提炼为一个**策略拓扑三元组**，描述方案的"几何形状"：
+
+```json
+{{
+  "strategy_topology": {{
+    "topology_type": "distributed_mesh | centralized_hub | hierarchical_tree | decentralized_p2p | ring | star | hybrid",
+    "core_action": "increase_redundancy | concentrate_resources | diversify | eliminate_waste | add_feedback | remove_bottleneck | create_buffer | accelerate_flow | restructure",
+    "resource_flow": "diffuse | concentrate | oscillate | broadcast | funnel | recirculate | cascade",
+    "feedback_loop": "positive_feedback | negative_feedback | delayed_feedback | absent | mixed",
+    "time_dynamics": "irreversible | reversible | cyclical | threshold_triggered | continuous",
+    "agent_type": "passive | active_strategic | reflexive | adaptive_learning"
+  }},
+  "topology_reasoning": "一句话解释为什么选择这些值"
+}}
+```
+
+### Step 5: 生成结构化输出
 
 **必须包含以下要素**:
 
@@ -278,7 +295,22 @@ class DynamicAgentGenerator:
 1. [具体案例1]
 2. [具体案例2]
 
-## 四、Kernel Loss (核损耗)
+## 四、策略拓扑 (Strategy Topology)
+```json
+{{
+  "strategy_topology": {{
+    "topology_type": "...",
+    "core_action": "...",
+    "resource_flow": "...",
+    "feedback_loop": "...",
+    "time_dynamics": "...",
+    "agent_type": "..."
+  }},
+  "topology_reasoning": "..."
+}}
+```
+
+## 五、Kernel Loss (核损耗)
 ```json
 {{
   "lost_nuances": [

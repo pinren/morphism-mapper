@@ -93,6 +93,26 @@ F(B) --α_B--> G(B)
 5. **验证交换图**：
    - 确保无论走"旧路"还是"新路"，最终到达的 Domain B 结论应该一致（或兼容）
 
+### Mode D: 交换图校验 (The Commutativity Check) 🆕 v4.6
+**场景**：Synthesizer 自动触发。验证不同领域策略 ($S_1, S_2$) 是否同构。
+
+1. **输入准备**：
+   - 获取各领域的 `strategy_topology` JSON
+   - 提取三元组 $\langle Topology, Action, Flow \rangle$
+
+2. **构造态射 $\alpha$**：
+   - 尝试在 $S_1$ 和 $S_2$ 之间建立映射
+   - 例如：$S_1$.diffuse $\xrightarrow{\alpha}$ $S_2$.broadcast
+
+3. **交换性判定**：
+   - **Fully Commutative**: $\alpha$ 存在且自然 (Natural)。说明 $S_1 \cong S_2$。
+   - **Locally Commutative**: 仅部分分量可映射。说明 $S_1, S_2$ 在特定条件下兼容。
+   - **Non-Commutative**: 存在矛盾 (Obstruction)。说明 $S_1 \perp S_2$。
+
+4. **输出**：
+   - 生成 `commutative_diagram_report`
+   - 若 Non-Commutative，触发 Obstruction Alert
+
 ## Input/Output
 
 ### 输入

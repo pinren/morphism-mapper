@@ -3,10 +3,10 @@ name: morphism-mapper
 description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过多 Agent Team 并行分析，将 Domain A 的问题结构映射到多个远域 Domain B，借助跨域共识（Limits）和互补整合（Colimits）生成非共识创新方案。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"、"新增领域"、"添加领域"等。
 ---
 
-# Category Theory Morphism Mapper v4.5.7 🐝
+# Category Theory Morphism Mapper v4.6.0 🐝
 
-**版本**: v4.5.7 (Swarm Mode - 生产模式优先 + 运行时侦测)
-**更新日期**: 2026-02-12
+**版本**: v4.6.0 (Swarm Mode - 带钢筋的混凝土建筑)
+**更新日期**: 2026-02-14
 **领域数量**: 31个内置领域 + 动态新增
 
 **核心升级**:
@@ -35,9 +35,12 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 6. **领域文件强制读取** (v4.5.5)
    - Domain Agent 必须读取 `references/{domain}_v2.md`
    - 分析必须引用 V2 标准内容 (Core Objects, Core Morphisms, Theorems)
-7. **生产模式优先 + 运行时侦测** (v4.5.7) ⭐
-   - SKILL.md 默认为 Agent Swarm 生产模式编写
-   - 运行时主动侦测环境，仅在不可用时降级到 Fallback
+8. **自然变换与交换图校验** (v4.6.0) ⭐⭐
+   - **Synthesizer 升级**: 从"总结拼凑"升级为"拓扑一致性校验"
+   - **结构化输出**: Domain Agent 输出 `strategy_topology` JSON
+   - **交换性验证**: 自动检测不同领域策略是否同构
+   - **分歧报警**: 非交换时触发 Obstruction Alert，不和稀泥
+
 
 ---
 
@@ -391,6 +394,8 @@ Step 8: 生成报告 & 知识库更新
 │   │   └── {domain}_obstruction.json
 │   ├── synthesizer_inputs/                         # Synthesizer整合输入
 │   │   └── synthesis_input.json
+│   ├── commutative_checks/                         # 🆕 交换图校验结果
+│   │   └── diagram_report.json
 │   ├── final_reports/                              # 最终报告
 │   │   └── synthesis.json
 │   └── logs/                                       # 执行日志
@@ -420,7 +425,7 @@ def create_exploration_dir(problem: str) -> str:
     
     # 创建目录结构
     os.makedirs(exploration_path, exist_ok=True)
-    for subdir in ["domain_results", "obstruction_feedbacks", "synthesizer_inputs", "final_reports", "logs"]:
+    for subdir in ["domain_results", "obstruction_feedbacks", "synthesizer_inputs", "commutative_checks", "final_reports", "logs"]:
         os.makedirs(os.path.join(exploration_path, subdir), exist_ok=True)
     
     # 创建元数据文件
@@ -456,6 +461,9 @@ OBSTRUCTION_FEEDBACK = f"{EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstr
 # Synthesizer输入
 SYNTHESIS_INPUT = f"{EXPLORATION_PATH}/synthesizer_inputs/synthesis_input.json"
 
+# 🆕 交换图校验报告
+COMMUTATIVE_REPORT = f"{EXPLORATION_PATH}/commutative_checks/diagram_report.json"
+
 # 最终报告
 FINAL_REPORT = f"{EXPLORATION_PATH}/final_reports/synthesis.json"
 ```
@@ -483,6 +491,7 @@ agent_prompt = f"""
 - Domain结果: {exploration_path}/domain_results/{{domain}}_round{{N}}.json
 - Obstruction反馈: {exploration_path}/obstruction_feedbacks/{{domain}}_obstruction.json
 - Synthesizer输入: {exploration_path}/synthesizer_inputs/synthesis_input.json
+- 交换图报告: {exploration_path}/commutative_checks/diagram_report.json
 - 最终报告: {exploration_path}/final_reports/synthesis.json
 - 执行日志: {exploration_path}/logs/
 """
@@ -903,6 +912,7 @@ morphism-mapper/
 
 | 版本 | 日期 | 核心更新 |
 |-----|------|---------|
+| **v4.6.0** | **2026-02-14** | **自然变换与交换图校验** - Domain Agent 输出结构化拓扑，Synthesizer 执行交换性验证，非交换触发报警；从"散沙"升级为"混凝土" |
 | **v4.5.7** | **2026-02-12** | **生产模式优先** - SKILL.md 默认为 Agent Swarm 编写，运行时 Task() 测试侦测，仅失败时降级到 Fallback；移除文档中的模拟模式偏向 |
 | **v4.5.6** | **2026-02-12** | **运行模式自动侦测** - 自动识别 Agent Swarm 环境，智能降级到模拟模式 |
 | **v4.5.5** | **2026-02-10** | **模拟模式必须读取领域文件** - 修复之前未读取 references/{domain}_v2.md 的严重缺陷、强制读取流程、V2标准引用要求 |

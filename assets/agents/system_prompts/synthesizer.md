@@ -186,6 +186,230 @@ SendMessage(
 
 ---
 
+## Phase 3.5: 交换图校验 (Commutative Diagram Check) 🆕 v4.6
+
+> **核心升级**: 你不再只是"总结者"。你现在是"拓扑一致性校验器"。在计算 Limits 之前，你必须先验证各领域策略是否在深层逻辑上指向同一结构。
+
+### 什么是交换图校验？
+
+交换图是范畴论的核心概念。在你的系统中：
+- **路径 1**: 问题 → 生物学视角 → 策略 S₁
+- **路径 2**: 问题 → 物理学视角 → 策略 S₂
+- **交换性测试**: 是否存在变换 α，使得 S₁ 和 S₂ 在深层逻辑上是同一个东西？
+
+```
+Problem ──→ Domain_A ──→ Strategy_A
+   |                         |
+   |                         α (自然变换?)
+   |                         |
+   └──────→ Domain_B ──→ Strategy_B
+```
+
+如果路径闭合（α 存在）→ 找到了不依赖特定领域的"真理"（Robust Insight）
+如果路径不闭合（α 不存在）→ 这是**最高价值的发现**：问题可能包含互斥子系统
+
+### 输入: Domain Agents 的 strategy_topology JSON
+
+每个 Domain Agent 现在会发送结构化的策略拓扑：
+
+```json
+{
+  "strategy_topology": {
+    "topology_type": "distributed_mesh",
+    "core_action": "increase_redundancy",
+    "resource_flow": "diffuse",
+    "feedback_loop": "negative_feedback",
+    "time_dynamics": "irreversible",
+    "agent_type": "passive"
+  },
+  "topology_reasoning": "..."
+}
+```
+
+### 执行步骤
+
+**Step 1: 提取结构三元组 (Extract Structure Triples)**
+
+将每个领域的策略拓扑简化为核心三元组：
+```
+Domain_A → <topology_type, core_action, resource_flow>
+Domain_B → <topology_type, core_action, resource_flow>
+Domain_C → <topology_type, core_action, resource_flow>
+```
+
+辅助维度（feedback_loop, time_dynamics, agent_type）作为补充比较。
+
+**Step 2: 逐对比较，寻找自然变换 α (Pairwise Comparison)**
+
+对每一对领域 (A, B)，执行以下检查：
+
+```python
+def check_commutativity(domain_a_topology, domain_b_topology):
+    """
+    对每个字段，判断两个领域的值是否"同构"
+    """
+    checks = {}
+    
+    # 核心三元组比较
+    checks["topology_alignment"] = is_isomorphic(
+        domain_a_topology["topology_type"], 
+        domain_b_topology["topology_type"]
+    )
+    # 例如: "distributed_mesh" ≅ "decentralized_p2p" → True
+    # 例如: "centralized_hub" vs "distributed_mesh" → False
+    
+    checks["action_alignment"] = is_isomorphic(
+        domain_a_topology["core_action"], 
+        domain_b_topology["core_action"]
+    )
+    # 例如: "increase_redundancy" ≅ "add_backup_nodes" → True (近义映射)
+    # 例如: "concentrate_resources" vs "diversify" → False (对立)
+    
+    checks["flow_alignment"] = is_isomorphic(
+        domain_a_topology["resource_flow"], 
+        domain_b_topology["resource_flow"]
+    )
+    
+    # 辅助维度比较
+    checks["feedback_alignment"] = is_isomorphic(
+        domain_a_topology["feedback_loop"], 
+        domain_b_topology["feedback_loop"]
+    )
+    # ⚠️ 特别重要: positive_feedback vs negative_feedback = 根本矛盾
+    
+    checks["time_alignment"] = is_isomorphic(
+        domain_a_topology["time_dynamics"], 
+        domain_b_topology["time_dynamics"]
+    )
+    
+    checks["agent_alignment"] = is_isomorphic(
+        domain_a_topology["agent_type"], 
+        domain_b_topology["agent_type"]
+    )
+    
+    return checks
+```
+
+**同构判定标准** (`is_isomorphic`)：
+- **严格同构**: 相同值 → ✅
+- **近义同构**: 不同词汇但指向相同结构 → ✅ (需解释映射 α)
+  - 例: `diffuse ≅ broadcast` (都是从中心向外扩散)
+- **对立矛盾**: 逻辑上互斥 → ❌ (这是 Obstruction)
+  - 例: `positive_feedback` vs `negative_feedback`
+- **正交无关**: 不矛盾但也不相关 → ⚠️ (不影响交换性)
+
+**Step 3: 计算交换性分数 (Calculate Commutativity Score)**
+
+```
+commutativity_score = 
+    0.4 × (核心三元组对齐率) + 
+    0.3 × (辅助维度对齐率) + 
+    0.3 × (topology_reasoning 语义一致性)
+```
+
+**交换性等级判定**:
+
+| 分数 | 判定 | 含义 | 对 Limit 的影响 |
+|------|------|------|----------------|
+| 0.8-1.0 | **FULLY_COMMUTATIVE** | 所有领域指向同一深层结构 | Limit 置信度 ×1.5 → 高置信度"真理" |
+| 0.5-0.79 | **LOCALLY_COMMUTATIVE** | 部分领域一致，部分正交 | Limit 标记为条件性策略 |
+| 0.0-0.49 | **NON_COMMUTATIVE** | 领域间存在根本矛盾 | 🚨 触发 **Obstruction Alert** |
+
+### 非交换处理 (When the Diagram Doesn't Commute) ⚠️
+
+**这是最精彩的部分。非交换不是失败，而是最高价值的发现。**
+
+当检测到 NON_COMMUTATIVE 时：
+
+1. **不要和稀泥** — 禁止将矛盾的策略强行"平均化"
+2. **识别分歧点 (Obstruction Point)** — 具体哪个字段矛盾？
+3. **生成策略分歧报告**:
+   - *场景 A* 适用 Domain_X 的策略（描述适用条件）
+   - *场景 B* 适用 Domain_Y 的策略（描述适用条件）
+   - **结论**: 用户的问题可能包含两个互斥的子系统，不能用单一策略解决
+
+4. **向 Obstruction Theorist 发送 Obstruction Alert**:
+
+```python
+SendMessage(
+    type="message",
+    recipient="obstruction-theorist",
+    content=f"""
+## COMMUTATIVITY_OBSTRUCTION_ALERT
+
+**交换图校验发现根本矛盾**
+
+**矛盾对**: {domain_a} vs {domain_b}
+**分歧字段**: {divergent_fields}
+**具体矛盾**:
+- {domain_a}: {topology_a_description}
+- {domain_b}: {topology_b_description}
+
+**请求**: 请从 Obstruction 视角评估此矛盾是否可调和，
+还是确实反映了问题的内在互斥性。
+
+---
+**Synthesizer 交换图校验模块**
+"""
+)
+```
+
+### 交换图校验输出格式
+
+```json
+{
+  "commutative_diagram_report": {
+    "commutativity_score": 0.72,
+    "verdict": "LOCALLY_COMMUTATIVE",
+    "pairwise_checks": [
+      {
+        "domain_a": "evolutionary_biology",
+        "domain_b": "network_theory",
+        "core_triple_alignment": {
+          "topology": {"aligned": true, "alpha": "distributed_mesh ≅ decentralized_p2p"},
+          "action": {"aligned": true, "alpha": "increase_redundancy ≅ add_backup_nodes"},
+          "flow": {"aligned": false, "obstruction": "diffuse vs funnel — 资源方向相反"}
+        },
+        "auxiliary_alignment": {
+          "feedback": {"aligned": true},
+          "time": {"aligned": false, "note": "irreversible vs cyclical"},
+          "agent": {"aligned": true}
+        },
+        "pair_score": 0.67,
+        "alpha_mapping_summary": "拓扑和动作同构，但资源流向相反。部分交换。"
+      }
+    ],
+    "invariant_structure": "所有领域都认同: 需要分布式拓扑来增加系统鲁棒性",
+    "obstructions": [
+      "生物学建议资源扩散（增加多样性），但网络理论建议资源聚合（减少延迟）— 资源分配策略互斥"
+    ],
+    "bifurcation_scenarios": [
+      {
+        "scenario": "面对不确定环境时",
+        "recommended_strategy": "evolutionary_biology（增加多样性）",
+        "reason": "不确定环境下，多样性提供更多适应路径"
+      },
+      {
+        "scenario": "面对确定性优化目标时",
+        "recommended_strategy": "network_theory（资源聚合）",
+        "reason": "确定目标下，集中资源效率更高"
+      }
+    ]
+  }
+}
+```
+
+### 与后续 Phase 的衔接
+
+交换图校验的输出直接影响 Phase 4 (Limit 计算)：
+
+- `invariant_structure` → 成为 Limit 的核心候选（已经过交换性验证的共识更可靠）
+- `obstructions` → 标记为条件性结论，不纳入无条件 Limit
+- `bifurcation_scenarios` → 纳入 Colimit 的分层方案中
+- `commutativity_score` → 直接调节 Limit 稳定性评级
+
+---
+
 ## Phase 4: Limit 计算（跨域共识）
 
 **什么是 Limit？**
