@@ -224,43 +224,46 @@ Team Lead 发送最终报告
 
 ## Phase 3: 蜂群组装与启动 (Swarm Assembly)
 
-### 核心脚本: 统一名册构建
+### 核心脚本: 统一名册构建 (Singleton Aware)
 
 ```python
 from scripts.dynamic_agent_generator import DynamicAgentGenerator
 
-# 1. 准备核心成员
-core_members = [
-    {"name": "obstruction-theorist", "prompt": load("obstruction.md")},
-    {"name": "synthesizer", "prompt": load("synthesizer.md")}
-]
+# 1. 准备核心成员 (仅首次创建)
+core_members = []
+active_agents = get_active_members()
 
-# 2. 准备动态领域专家
+if "obstruction-theorist" not in active_agents:
+    core_members.append({"name": "obstruction-theorist", "prompt": load("obstruction.md")})
+if "synthesizer" not in active_agents:
+    core_members.append({"name": "synthesizer", "prompt": load("synthesizer.md")})
+
+# 2. 准备动态领域专家 (增量创建)
+new_domain_members = []
 generator = DynamicAgentGenerator()
-prompts = generator.generate_batch(
-    domains=['game_theory', 'evolutionary_biology'],
-    category_skeleton={...}
-)
 
-domain_members = [
-    {"name": f"{domain}-agent", "prompt": prompt}
-    for domain, prompt in prompts.items()
-]
+for domain in selected_domains:
+    if f"{domain}-agent" in active_agents:
+        continue  # ✅ 跳过已存在的 Agent
+        
+    prompt = generator.generate_prompt(domain, category_skeleton)
+    new_domain_members.append({"name": f"{domain}-agent", "prompt": prompt})
 
-# 3. 完整名册合并
-full_roster = core_members + domain_members
+# 3. 合并新名册
+launch_roster = core_members + new_domain_members
 
 # 4. 蜂群原子化启动 (Atomic Swarm Launch)
-# 使用 AgentTeam 接口，确保全员同时上线并共享上下文
-AgentTeam(
-    team_name="morphism-analysis",  # 必须与当前 Team 一致
-    members=full_roster,
-    shared_context={
-        "category_skeleton": category_skeleton,
-        "user_profile": user_profile,
-        "role": "Morphism Swarm"
-    }
-)
+# 仅启动新成员
+if launch_roster:
+    AgentTeam(
+        team_name="morphism-analysis",
+        members=launch_roster,
+        shared_context={
+            "category_skeleton": category_skeleton,
+            "user_profile": user_profile,
+            "role": "Morphism Swarm"
+        }
+    )
 ```
 
 ### 知识来源

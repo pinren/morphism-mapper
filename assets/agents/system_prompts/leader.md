@@ -304,32 +304,42 @@ Tier Balance 选择:
 
 ## Phase 3: 蜂群组装与启动 (Swarm Assembly & Launch)
 
-> **核心变更**: 不再分批启动。你必须构建完整的 Agent 列表，然后统一同步启动。
+> **核心变更**: 必须构建完整的 Agent 列表，然后统一同步启动。
 
 ### Step 3.1: 构建完整蜂群名册 (Roster Construction)
 
-准备所有成员的配置信息，同时处理可能缺失的领域知识（补盲）：
+准备**新成员**的配置信息。
+
+> **⚠️ Singleton 模式**: 必须检查 Agent 是否已存在，**严禁重复创建**，只为**新增**的领域创建 Agent。
 
 ```python
-# 1. 准备核心成员
-core_members = [
-    {
+# 1. 核心成员 (仅首次运行时创建)
+core_members = []
+active_agents = get_active_team_members() # 从上下文或记忆中获取
+
+if "obstruction-theorist" not in active_agents:
+    core_members.append({
         "name": "obstruction-theorist", 
         "prompt": load_system_prompt("assets/agents/system_prompts/obstruction.md")
-    },
-    {
+    })
+if "synthesizer" not in active_agents:
+    core_members.append({
         "name": "synthesizer", 
         "prompt": load_system_prompt("assets/agents/system_prompts/synthesizer.md")
-    }
-]
+    })
 
-# 2. 准备领域专家 (Domain Agents)
-domain_members = []
+# 2. 领域专家 (增量创建)
+new_domain_members = []
 
 for domain in selected_domains:
+    agent_name = f"{domain}-agent"
+    
+    # ✅ 单例检查: 如果已存在，直接跳过
+    if agent_name in active_agents:
+        continue
+        
     # 尝试生成 Prompt
     prompt_or_request = generate_prompt(domain, category_skeleton)
-    
     final_prompt = prompt_or_request
     
     # ⚠️ 补盲处理: 如果领域知识不存在
@@ -340,38 +350,33 @@ for domain in selected_domains:
         # 2. 重新生成 Prompt
         final_prompt = generate_prompt(domain, category_skeleton)
         
-    domain_members.append({
-        "name": f"{domain}-agent",
+    new_domain_members.append({
+        "name": agent_name,
         "prompt": final_prompt
     })
 
-# 3. 合并为完整名册
-full_roster = core_members + domain_members
+# 3. 合并新名册
+launch_roster = core_members + new_domain_members
 ```
 
 ### Step 3.2: 蜂群原子化启动 (Atomic Swarm Launch) 🚀
 
-> **核心修正**: 必须使用 `AgentTeam` 接口批量启动，**严禁**使用 `Task` 循环一个个创建。这将消除启动延迟并建立初始连接。
+> **核心修正**: 必须使用 `AgentTeam` 接口批量启动。
 
-**错误示范 (Legacy Mode)**:
 ```python
-# ❌ 不要这样做！这会导致成员割裂
-for member in full_roster:
-    Task(name=member["name"], team_name=team_name, ...)
-```
-
-**正确示范 (Agent Team Mode)**:
-```python
-# ✅ 使用 AgentTeam 原子化启动
-AgentTeam(
-    team_name=team_name,      # 必须与当前 Team 一致
-    members=full_roster,      # 包含核心成员 + 领域专家
-    shared_context={          # 自动注入的共享上下文
-        "category_skeleton": category_skeleton,
-        "user_profile": user_profile,
-        "role": "Morphism Swarm"
-    }
-)
+# ✅ 仅当有新成员时才启动
+if len(launch_roster) > 0:
+    AgentTeam(
+        team_name=team_name,      # 必须与当前 Team 一致
+        members=launch_roster,    # 仅包含新成员
+        shared_context={          # 自动注入的共享上下文
+            "category_skeleton": category_skeleton,
+            "user_profile": user_profile,
+            "role": "Morphism Swarm"
+        }
+    )
+else:
+    print("所有必要 Agent 已就绪，跳过启动步骤。")
 ```
 
 ### Step 3.3: 蜂群监控 (Swarm Monitoring)
