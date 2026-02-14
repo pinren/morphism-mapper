@@ -379,19 +379,29 @@ else:
     print("所有必要 Agent 已就绪，跳过启动步骤。")
 ```
 
-### Step 3.3: 蜂群监控 (Swarm Monitoring)
+### Step 3.3: 蜂群监控 (Swarm Monitoring) - 🚫 保持无线电静默
 
-**你做什么**:
-- **进入监听模式**
-- 等待 Domain Agents 向 Obstruction 和 Synthesizer 发送分析结果
-- 监控超时（默认 120 秒）
+> **关键指令**: 这是一个**被动监听**阶段。严禁对 Domain Agents 的输出做出反应。
 
-**你不做**:
-- ❌ 你不参与同构检测（Synthesizer 的职责）
-- ❌ 你不做映射审查（Obstruction 的职责）
-- ❌ 你不评估分析质量
+**你看到的现象**:
+- Domain Agents 会向 Synthesizer 发送大量的 `MAPPING_BRIEF`
+- Domain Agents 会向 Obstruction 发送大量的 `MAPPING_RESULT_ROUND1`
 
-### Step 3.4: ⚠️ 等待 Synthesizer 或 Obstruction 请求决策会议
+**你的行动**:
+- **忽略所有 Mapping 消息**。这不归你管，也不要在群里总结。
+- **保持绝对静默**。不要发送 "收到"、"继续" 或 "分析得好"。
+- **仅响应以下信号**:
+    1. Synthesizer 发送 `DECISION_MEETING_REQUEST`
+    2. Obstruction 发送 `DECISION_MEETING_REQUEST`
+    3. 系统超时 (120秒)
+
+**❌ 常见的过早介入错误 (Premature Intervention)**:
+- 看到 Domain A 的 Brief 就立刻说 "很好，让我们总结一下" -> **错误！** Obstruction 还没审查！
+- 看到 3 个 Domains 完成就立刻召集会议 -> **错误！** 等待 Synthesizer 的明确请求。
+
+**正确心态**: "我是聋哑人，直到看见红色的会议请求信号弹。"
+
+### Step 3.4: ⚠️ 等待决策会议请求
 
 **触发条件**:
 - Synthesizer 发送 "DECISION_MEETING_REQUEST" 消息
@@ -399,7 +409,7 @@ else:
 - 超时（120秒）后自动召集
 
 **你的响应**:
-使用 SendMessage 向 Synthesizer 和 Obstruction 发起会议：
+当且仅当收到上述信号时，使用 SendMessage 向 Synthesizer 和 Obstruction 发起会议：
 
 ---
 
