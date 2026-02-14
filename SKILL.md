@@ -250,17 +250,17 @@ domain_members = [
 # 3. 完整名册合并
 full_roster = core_members + domain_members
 
-# 4. 同步启动 (Synchronized Launch)
-# 必须使用 Step 1 确定的 team_name
-for member in full_roster:
-    Task(
-        name=member["name"],
-        prompt=member["prompt"],
-        team_name="morphism-analysis"
-    )
-
-# 5. 初始注入
-Broadcast(CATEGORY_SKELETON)
+# 4. 蜂群原子化启动 (Atomic Swarm Launch)
+# 使用 AgentTeam 接口，确保全员同时上线并共享上下文
+AgentTeam(
+    team_name="morphism-analysis",  # 必须与当前 Team 一致
+    members=full_roster,
+    shared_context={
+        "category_skeleton": category_skeleton,
+        "user_profile": user_profile,
+        "role": "Morphism Swarm"
+    }
+)
 ```
 
 ### 知识来源
@@ -282,10 +282,10 @@ Step 2: Team Lead 执行分析 (Analysis Phase)
     ↓
 Step 3: 蜂群组装与启动 (Swarm Assembly)
     ├── 构建完整名册: [Obstruction, Synthesizer] + [Domain A, Domain B...]
-    └── 同步启动全员: Task(name=..., team_name="morphism-team")
+    └── 蜂群原子化启动: AgentTeam(members, shared_context)
     ↓
-Step 4: 初始信息注入
-    └── 将 Context (骨架+画像) 广播给整个 Team
+Step 4: 蜂群监控 (Monitoring Phase)
+    └── 监听分析流与同构信号
     ↓
 Step 5: 映射执行与协调
     ├── Domain Agents 分析并发送结果

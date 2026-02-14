@@ -349,39 +349,35 @@ for domain in selected_domains:
 full_roster = core_members + domain_members
 ```
 
-### Step 3.2: 同步启动 (Synchronized Launch) ⚠️ 
+### Step 3.2: 蜂群原子化启动 (Atomic Swarm Launch) 🚀
 
-使用 Phase -1 确定的 `team_name`，**一次性启动所有成员**：
+> **核心修正**: 必须使用 `AgentTeam` 接口批量启动，**严禁**使用 `Task` 循环一个个创建。这将消除启动延迟并建立初始连接。
 
+**错误示范 (Legacy Mode)**:
 ```python
-# team_name = "morphism-analysis" (示例)
-
+# ❌ 不要这样做！这会导致成员割裂
 for member in full_roster:
-    Task(
-        name=member["name"],
-        prompt=member["prompt"],
-        team_name=team_name  # ⚠️ 关键：所有人必须在同一个 Team
-    )
+    Task(name=member["name"], team_name=team_name, ...)
 ```
 
-### Step 3.3: 初始信息注入 (Context Injection)
-
-向**整个 Team** 广播核心上下文（范畴骨架 + 用户画像）：
-
-```json
-{
-  "type": "CATEGORY_SKELETON",
-  "target": "BROADCAST_TO_TEAM", 
-  "payload": {
-    "category_skeleton": { ... },
-    "user_profile": { ... }
-  }
-}
+**正确示范 (Agent Team Mode)**:
+```python
+# ✅ 使用 AgentTeam 原子化启动
+AgentTeam(
+    team_name=team_name,      # 必须与当前 Team 一致
+    members=full_roster,      # 包含核心成员 + 领域专家
+    shared_context={          # 自动注入的共享上下文
+        "category_skeleton": category_skeleton,
+        "user_profile": user_profile,
+        "role": "Morphism Swarm"
+    }
+)
 ```
 
-> 注意：虽然 Domain Agents 的 Prompt 里已经包含骨架，但显式的消息注入可以确保所有 Agent（包括核心成员）都在最新的上下文中对齐。
+### Step 3.3: 蜂群监控 (Swarm Monitoring)
 
 **你做什么**:
+- **进入监听模式**
 - 等待 Domain Agents 向 Obstruction 和 Synthesizer 发送分析结果
 - 监控超时（默认 120 秒）
 
@@ -390,7 +386,7 @@ for member in full_roster:
 - ❌ 你不做映射审查（Obstruction 的职责）
 - ❌ 你不评估分析质量
 
-### Step 3.3: ⚠️ 等待 Synthesizer 或 Obstruction 请求决策会议
+### Step 3.4: ⚠️ 等待 Synthesizer 或 Obstruction 请求决策会议
 
 **触发条件**:
 - Synthesizer 发送 "DECISION_MEETING_REQUEST" 消息
