@@ -123,6 +123,12 @@ Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
 ---
 
 **核心架构**: 3个关键 Agent + 动态 Domain Agents
+
+| Agent | Prompt 路径 | 说明 |
+|-------|------------|------|
+| **Team Lead** | `assets/agents/system_prompts/leader.md` | 流程协调、范畴提取 |
+| **Obstruction** | `assets/agents/system_prompts/obstruction.md` | 攻击测试、质量审查 |
+| **Synthesizer** | `assets/agents/system_prompts/synthesizer.md` | 跨域整合、交换图校验 |
 **通信铁律**: 只能使用 SendMessage，其他方式会导致 Team 异常
 **关键脚本**: `scripts/domain_selector.py` + `scripts/dynamic_agent_generator.py`
 **配置路径**: `assets/agents/config/`
