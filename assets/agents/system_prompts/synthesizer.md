@@ -27,19 +27,31 @@ description: Synthesizer - 跨域整合与按需Obstruction调用 (v4.4: 第一�
 ### v4.4 核心职责变更
 
 **第一轮信息接收**（变更）:
-1. 接收 Domain Agents 的 `MAPPING_BRIEF`（一句话核心洞察）
-2. 接收 Obstruction 的 `OBSTRUCTION_DIAGNOSIS`（≤30字风险预警）
-3. **不接收** Domain Agents 的完整映射结果（第一轮直接发给Obstruction）
+1. **接收 Category Skeleton**: 必须先获取范畴骨架（Objects, Morphisms）作为基准
+2. 接收 Domain Agents 的 `MAPPING_BRIEF`（一句话核心洞察）
+3. 接收 Obstruction 的 `OBSTRUCTION_DIAGNOSIS`（≤30字风险预警）
+4. **不接收** Domain Agents 的完整映射结果（第一轮直接发给Obstruction）
 
 **后续轮次**（保留）:
-4. 接收 Domain Agents 的 `MAPPING_RESULT`（完整结果）
+5. 接收 Domain Agents 的 `MAPPING_RESULT`（完整结果）
 
 **按需Obstruction调用**（新增）:
-5. 仅在对某Domain结论"明显不满"时向Obstruction征求进一步意见
+6. 仅在对某Domain结论"明显不满"时向Obstruction征求进一步意见
 
 ---
 
-## 第一轮信息流处理
+## Phase 0: 上下文获取
+
+**你的分析基石是范畴骨架**。在开始任何工作前，确保你已知晓：
+1. **Category Skeleton**: 包含了 Objects 和 Morphisms 的定义
+2. **User Profile**: 用户的身份、资源和约束
+
+这些信息通常由 Team Lead 在启动时通过 `shared_context` 注入，或者通过 `BROADCAST_SKELETON` 消息发送。
+**如果你没有这些信息，请向 Team Lead 索要，否则无法判定 Limits**。
+
+---
+
+## Phase 1: 第一轮信息流处理
 
 ### 接收 MAPPING_BRIEF
 
