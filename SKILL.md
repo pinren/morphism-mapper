@@ -222,35 +222,45 @@ Team Lead 发送最终报告
 
 ---
 
-## 动态 Agent 生成机制
+## Phase 3: 蜂群组装与启动 (Swarm Assembly)
 
-### 核心脚本
+### 核心脚本: 统一名册构建
 
 ```python
 from scripts.dynamic_agent_generator import DynamicAgentGenerator
 
-# 初始化
-generator = DynamicAgentGenerator()
+# 1. 准备核心成员
+core_members = [
+    {"name": "obstruction-theorist", "prompt": load("obstruction.md")},
+    {"name": "synthesizer", "prompt": load("synthesizer.md")}
+]
 
-# 批量生成（推荐）
+# 2. 准备动态领域专家
+generator = DynamicAgentGenerator()
 prompts = generator.generate_batch(
     domains=['game_theory', 'evolutionary_biology'],
-    category_skeleton={
-        "objects": [...],
-        "morphisms": [...],
-        "核心问题": "..."
-    }
+    category_skeleton={...}
 )
 
-# 启动 Domain Agents - 必须传入 team_name
-# 使用 Step 0 中确定的 team_name（例如 "morphism-analysis"）
+domain_members = [
+    {"name": f"{domain}-agent", "prompt": prompt}
+    for domain, prompt in prompts.items()
+]
 
-for domain, prompt in prompts.items():
+# 3. 完整名册合并
+full_roster = core_members + domain_members
+
+# 4. 同步启动 (Synchronized Launch)
+# 必须使用 Step 1 确定的 team_name
+for member in full_roster:
     Task(
-        name=f"{domain}-agent",
-        prompt=prompt,  # 已包含完整领域知识 + 范畴骨架
-        team_name="morphism-analysis"  # ⚠️ 使用 Step 0 确定的 team_name
+        name=member["name"],
+        prompt=member["prompt"],
+        team_name="morphism-analysis"
     )
+
+# 5. 初始注入
+Broadcast(CATEGORY_SKELETON)
 ```
 
 ### 知识来源
@@ -259,44 +269,29 @@ for domain, prompt in prompts.items():
 2. **自定义领域**: `references/custom/{domain}_v2.md`
 3. **动态创建**: 如果不存在，自动生成 V2 标准格式
 
-### V2 标准结构
-
-每个领域文件包含：
-- **100基本基石**: 哲学观(18) + 原则(22) + 心智模型(28) + 方法论(22) + 避坑(10)
-- **14 Core Objects**: 领域核心概念
-- **14 Core Morphisms**: 领域动态关系
-- **18 Theorems**: 每个含 Applicable_Structure + Mapping_Hint + Case_Study
-
 ---
 
 ## 执行流程
 
 ```
-Step 1: TeamCreate(team_name="morphism-team")  # 创建 Team 并自动启动 team-lead
+Step 1: TeamCreate(team_name="morphism-team")  # 创建 Team Context
     ↓
-Step 2: Team Lead 启动核心成员（必须传入 team_name）
-    ├── Task(name="obstruction-theorist", team_name="morphism-team")
-    └── Task(name="synthesizer", team_name="morphism-team")
+Step 2: Team Lead 执行分析 (Analysis Phase)
+    ├── 2.1 提取 Category Skeleton (Objects, Morphisms)
+    └── 2.2 选择 Domains (Tier Balance Selection)
     ↓
-Step 3: Team Lead 提取 Category Skeleton
-    ├── Objects: 问题中的实体
-    └── Morphisms: 实体间动态关系
+Step 3: 蜂群组装与启动 (Swarm Assembly)
+    ├── 构建完整名册: [Obstruction, Synthesizer] + [Domain A, Domain B...]
+    └── 同步启动全员: Task(name=..., team_name="morphism-team")
     ↓
-Step 4: 领域选择 (domain_selector.py)
-    ├── 分析 Morphisms 提取标签
-    ├── 匹配 16 个动态标签
-    └── Tier Balance 选择 Top 3-5
+Step 4: 初始信息注入
+    └── 将 Context (骨架+画像) 广播给整个 Team
     ↓
-Step 5: Team Lead 动态生成 Domain Agents
-
-    ```python
-    from scripts.dynamic_agent_generator import DynamicAgentGenerator
-    from scripts.domain_selector import DomainSelector
-
-    # 5.1 领域选择
-    selector = DomainSelector()
-    result = selector.select_domains(objects, morphisms)
-    selected_domains = [d['domain'] for d in result['top_domains'][:3]]
+Step 5: 映射执行与协调
+    ├── Domain Agents 分析并发送结果
+    ├── Synthesizer 执行交换图校验 (Phase 3.5)
+    └── Obstruction 审查
+```
 
     # 5.2 初始化生成器（启用补盲模式）
     generator = DynamicAgentGenerator()

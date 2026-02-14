@@ -302,102 +302,84 @@ Tier Balance 选择:
 
 ---
 
-## Phase 2.5: 创建核心 Team 成员 ⚠️ 必须先于 Domain Agents
+## Phase 3: 蜂群组装与启动 (Swarm Assembly & Launch)
 
-> **关键**: Domain Agents 需要将结果发送给 Obstruction 和 Synthesizer，因此必须**先创建这两个核心成员**。
+> **核心变更**: 不再分批启动。你必须构建完整的 Agent 列表，然后统一同步启动。
 
-### ⚠️ 强制要求：必须传入 team_name 参数
+### Step 3.1: 构建完整蜂群名册 (Roster Construction)
 
-**错误示范**（会创建独立 Agent，无法通信）:
+准备所有成员的配置信息，同时处理可能缺失的领域知识（补盲）：
+
 ```python
-Task(name="obstruction-theorist", prompt="...")
-Task(name="synthesizer", prompt="...")
-```
+# 1. 准备核心成员
+core_members = [
+    {
+        "name": "obstruction-theorist", 
+        "prompt": load_system_prompt("assets/agents/system_prompts/obstruction.md")
+    },
+    {
+        "name": "synthesizer", 
+        "prompt": load_system_prompt("assets/agents/system_prompts/synthesizer.md")
+    }
+]
 
-**正确示范**（创建 Team 成员）:
-```python
-# 使用 Phase -1 中确定的 team_name（例如 "morphism-analysis"）
-# 这个 team_name 来自：
-# 1. TeamCreate 成功时你指定的名称
-# 2. 或从 "Already leading team XXX" 错误中提取的 XXX
-
-# 创建核心成员 - 必须传入 team_name
-Task(
-    name="obstruction-theorist",
-    prompt=load_system_prompt("assets/agents/system_prompts/obstruction.md"),
-    team_name="morphism-analysis"  # ⚠️ 使用 Phase -1 确定的 team_name
-)
-
-Task(
-    name="synthesizer", 
-    prompt=load_system_prompt("assets/agents/system_prompts/synthesizer.md"),
-    team_name="morphism-analysis"  # ⚠️ 必须与上面一致
-)
-```
-
-### 创建顺序
-
-```
-Step 2.5.1: 创建 Obstruction Theorist（接收 Domain Agent 的完整报告）
-    ↓
-Step 2.5.2: 创建 Synthesizer（接收 Domain Agent 的一句话洞察 + Obstruction 的诊断）
-    ↓
-Step 2.5.3: 确认两个核心成员都已启动
-    ↓
-[继续 Phase 3: 创建 Domain Agents]
-```
-
----
-
-## Phase 3: 第一轮信息流协调
-
-### Step 3.1: 启动 Domain Agents ⚠️ 同样必须传入 team_name
-
-> **关键**: 与核心成员一样，所有 Domain Agents 也必须作为 Team 成员创建。
-
-**错误示范**（会创建独立 Agent）:
-```python
-for domain in selected_domains:
-    Task(name=f"{domain}-agent", prompt=generate_prompt(domain))
-```
-
-**正确示范**（创建 Team 成员）:
-```python
-# 使用 Phase -1 中确定的 team_name（例如 "morphism-analysis"）
+# 2. 准备领域专家 (Domain Agents)
+domain_members = []
 
 for domain in selected_domains:
+    # 尝试生成 Prompt
+    prompt_or_request = generate_prompt(domain, category_skeleton)
+    
+    final_prompt = prompt_or_request
+    
+    # ⚠️ 补盲处理: 如果领域知识不存在
+    if isinstance(prompt_or_request, dict) and prompt_or_request.get('action') == 'CREATE_DOMAIN':
+        # 1. 生成领域知识文件
+        content = generate_content(prompt_or_request['generation_prompt'])
+        create_domain_file(domain, content)
+        # 2. 重新生成 Prompt
+        final_prompt = generate_prompt(domain, category_skeleton)
+        
+    domain_members.append({
+        "name": f"{domain}-agent",
+        "prompt": final_prompt
+    })
+
+# 3. 合并为完整名册
+full_roster = core_members + domain_members
+```
+
+### Step 3.2: 同步启动 (Synchronized Launch) ⚠️ 
+
+使用 Phase -1 确定的 `team_name`，**一次性启动所有成员**：
+
+```python
+# team_name = "morphism-analysis" (示例)
+
+for member in full_roster:
     Task(
-        name=f"{domain}-agent",
-        prompt=generate_prompt(domain, category_skeleton),
-        team_name="morphism-analysis"  # ⚠️ 与核心成员使用同一个 team_name
+        name=member["name"],
+        prompt=member["prompt"],
+        team_name=team_name  # ⚠️ 关键：所有人必须在同一个 Team
     )
 ```
 
-向所有种子 Domain Agents 注入范畴骨架：
+### Step 3.3: 初始信息注入 (Context Injection)
+
+向**整个 Team** 广播核心上下文（范畴骨架 + 用户画像）：
 
 ```json
 {
   "type": "CATEGORY_SKELETON",
-  "timestamp": "2026-02-09T10:30:00Z",
+  "target": "BROADCAST_TO_TEAM", 
   "payload": {
-    "category_skeleton": {
-      "objects": ["产品", "用户", "增长"],
-      "morphisms": [
-        {"from": "产品", "to": "用户", "dynamics": "价值传递"},
-        {"from": "用户", "to": "产品", "dynamics": "反馈驱动"}
-      ],
-      "tags": ["feedback_regulation", "flow_exchange"]
-    },
-    "user_profile": {
-      "identity": "创业者",
-      "resources": ["技术", "小团队"],
-      "constraints": ["资金有限"]
-    }
+    "category_skeleton": { ... },
+    "user_profile": { ... }
   }
 }
 ```
 
-### Step 3.2: ⚠️ 等待 Domain Agents 完成分析
+> 注意：虽然 Domain Agents 的 Prompt 里已经包含骨架，但显式的消息注入可以确保所有 Agent（包括核心成员）都在最新的上下文中对齐。
 
 **你做什么**:
 - 等待 Domain Agents 向 Obstruction 和 Synthesizer 发送分析结果
