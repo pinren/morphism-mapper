@@ -279,6 +279,38 @@ class DynamicAgentGenerator:
 - `confidence` 取值 0-1
 - 不要用 markdown 表格作为主输出
 
+发送前必须执行 `PRE_SEND_SCHEMA_GATE`：
+
+```text
+必须同时满足:
+1) 必填字段全部存在:
+   - schema_version, domain, domain_file_path, domain_file_hash, evidence_refs
+   - objects_map, morphisms_map, theorems_used
+   - kernel_loss, strategy_topology, topology_reasoning, confidence
+2) schema_version == "domain_mapping_result.v1"
+3) domain_file_path 匹配 references/(custom/)?*_v2.md
+4) domain_file_hash 为 64 位十六进制
+5) evidence_refs 为数组且 >= 3 条
+6) objects_map >= 1, morphisms_map >= 1, theorems_used >= 2
+7) kernel_loss 是对象，且包含:
+   - lost_nuances(数组, >=1)
+   - preservation_score(0~1)
+8) strategy_topology 存在且包含 6 个字段:
+   - topology_type, core_action, resource_flow
+   - feedback_loop, time_dynamics, agent_type
+9) topology_reasoning 非空字符串
+10) confidence 为 0~1 数值
+
+若任一不满足:
+- 不得发送消息
+- 立即修复 JSON 后重新自检
+```
+
+常见错误（禁止）:
+- ❌ `"kernel_loss": 0.12`（标量错误）
+- ❌ 缺失 `"schema_version"`
+- ❌ 缺失 `"strategy_topology"`
+
 ---
 
 ## SendMessage 协议（强制）
@@ -291,6 +323,11 @@ class DynamicAgentGenerator:
 ```
 MAPPING_RESULT_ROUND1
 {{JSON主体验证通过后粘贴在这里}}
+```
+
+```
+MAPPING_RESULT_JSON
+{{同一份JSON主体验证通过后粘贴在这里}}
 ```
 
 ⚠️ **重要**: 两个消息都必须发送，缺一不可！

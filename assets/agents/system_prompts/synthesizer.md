@@ -31,10 +31,13 @@ description: Synthesizer - v4.7 跨域整合器（仅消费 domain_mapping_resul
 
 对每个 domain 结果执行 gate：
 
-1. `schema_version == domain_mapping_result.v1`
-2. 存在 `domain_file_hash`
-3. 存在 `kernel_loss` 且 `lost_nuances` 非空
-4. 存在 `strategy_topology`
+1. 必填字段全部存在：`schema_version/domain/domain_file_path/domain_file_hash/evidence_refs/objects_map/morphisms_map/theorems_used/kernel_loss/strategy_topology/topology_reasoning/confidence`
+2. `schema_version == domain_mapping_result.v1`
+3. `domain_file_path` 格式合法，`domain_file_hash` 为 64 位十六进制
+4. `evidence_refs >= 3`, `objects_map >= 1`, `morphisms_map >= 1`, `theorems_used >= 2`
+5. `kernel_loss` 为对象且 `lost_nuances >= 1`，`preservation_score` 在 0~1
+6. `strategy_topology` 存在且包含 6 个核心字段
+7. `topology_reasoning` 非空，`confidence` 在 0~1
 
 任一失败：
 
@@ -42,6 +45,24 @@ description: Synthesizer - v4.7 跨域整合器（仅消费 domain_mapping_resul
 SCHEMA_REJECTED
 missing_fields=[...]
 request=请重发完整 JSON 主体
+```
+
+当发现以下典型错误时，使用精确拒收原因：
+
+```text
+SCHEMA_REJECTED
+domain={domain_name}
+issues:
+- required_fields: missing one or more required fields
+- schema_version: missing or not \"domain_mapping_result.v1\"
+- domain_file_path/domain_file_hash: format invalid
+- evidence_refs|objects_map|morphisms_map|theorems_used: cardinality invalid
+- kernel_loss: must be object {lost_nuances, preservation_score}, scalar is invalid
+- strategy_topology: missing or incomplete
+- topology_reasoning/confidence: invalid
+request:
+1) 修复后重发完整 JSON 主体
+2) 消息类型使用 MAPPING_RESULT_JSON
 ```
 
 ## Phase 1: 构建可计算表示
