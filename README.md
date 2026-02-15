@@ -1,403 +1,335 @@
-# 🌊 Morphism Mapper
+# Morphism Mapper
 
-> **基于范畴论的跨领域结构映射工具**
-> 
-> 将 Domain A 的问题结构映射到远域 Domain B，借助 B 领域的成熟定理生成非共识创新方案。
+> 基于范畴论的跨领域结构映射 Skill（Swarm Experimental）
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v4.5.7-green.svg)](https://github.com/pinren/morphism-mapper/releases)
-[![Domains](https://img.shields.io/badge/domains-31+-orange.svg)](#built-in-domains)
+[![Version](https://img.shields.io/badge/version-v4.7.0-green.svg)](https://github.com/pinren/morphism-mapper/releases)
+[![Domains](https://img.shields.io/badge/domains-35%2B-orange.svg)](#领域覆盖)
 
----
+## TL;DR
 
-## 🤖 这是一个 Claude Code / OpenCode Skill
+Morphism Mapper 现在是一个可执行的跨域推理协议，不再只是“类比提示词”：
 
-Morphism Mapper 是一个为 **Claude Code** 和 **OpenCode** 设计的智能体技能 (Agent Skill)。它通过结构化的提示词和领域知识库，让 AI 能够系统化地进行跨域思维映射。
+- 启动协议单一真相：`references/docs/bootstrap_contract.md`
+- Team 启动路径固定：`TeamCreate` 探测 + `AgentTeam` 首批原子启动
+- Domain Agent 输出固定：`domain_mapping_result.v1` 严格 JSON
+- 可审计数据流：强制 `domain_file_path` + `domain_file_hash` + `evidence_refs`
+- 可计算整合：Synthesizer 基于结构化字段做交换图校验（Commutativity）
 
-### ⚠️ 环境要求
+版本唯一来源：`assets/version.json`
 
-**本分支 (swarm-experimental) 需要：**
+## 适用场景
 
-- **Claude Code 2.1.34+** (支持 Agent Team 模式)
-- **必须开启 Agent Team 模式**
+- 复杂问题需要多领域并行拆解
+- 需要明确“共识结论 vs 条件分歧”，而不是平均化折中
+- 希望输出可被程序校验、可追溯、可复盘
 
-#### 启用 Agent Team 模式
+典型触发语句：
+
+- “看不穿这个商业模式”
+- “环境变了，策略怎么转型”
+- “这个方案如何落地，风险在哪里”
+- “做一次多领域交叉验证”
+
+## 核心能力（v4.7）
+
+### 1) Bootstrap Contract（启动协议统一）
+
+状态机固定为：
+
+`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING -> (可选) FALLBACK`
+
+关键规则：
+
+- `INIT` 只允许 `TeamCreate(team_name=...)`
+- 首批成员必须通过 `AgentTeam(...)` 一次性启动
+- `RUNNING` 才允许增量 `Task(..., team_name=...)`
+- `Already leading team XXX` 视为可用并复用 team
+- 只有 `Feature not available` 才允许降级 FALLBACK
+
+参考：`references/docs/bootstrap_contract.md`
+
+### 2) 严格 JSON 输出协议
+
+Domain Agent 唯一有效输出是：
+
+- Schema: `assets/agents/schemas/domain_mapping_result.v1.json`
+- 必填字段包括：
+  - `objects_map`, `morphisms_map`, `theorems_used`
+  - `kernel_loss`, `strategy_topology`, `confidence`
+  - `domain_file_path`, `domain_file_hash`, `evidence_refs`
+
+### 3) 领域文件审计链路
+
+每个 Domain Agent 必须：
+
+1. 读取 `references/{domain}_v2.md`（或 `references/custom/...`）
+2. 输出该文件的 `sha256` 到 `domain_file_hash`
+3. 提供 `evidence_refs` 证明映射依据来自领域文件
+
+### 4) 交换图校验与非交换分歧处理
+
+Synthesizer 只消费结构化 JSON，计算：
+
+- `FULLY_COMMUTATIVE` / `LOCALLY_COMMUTATIVE` / `NON_COMMUTATIVE`
+- 非交换时不和稀泥，输出 bifurcation 场景并触发 obstruction alert
+
+## 架构概览
+
+- `team-lead`：流程驱动、状态推进、会议召集
+- `obstruction-theorist`：Schema Gate + 五维十四式审查
+- `synthesizer`：交换图校验、Limit/Colimit 提炼
+- `domain-agents (N)`：单域映射，严格 JSON 交付
+
+通信规则：仅 `SendMessage`。
+
+## 环境要求
+
+### Claude Code
+
+- Claude Code 2.1.34+
+- 启用 Agent Teams
 
 ```bash
-# 方式一：启动时设置环境变量
 export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 claude
-
-# 方式二：在 Claude Code 内部启用
-# 启动后输入 /agents 命令，然后选择 "Enable Agent Teams"
 ```
 
-> **关键点**: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 必须在启动 Claude Code **之前**设置，启动后设置无效。
+### OpenCode
 
-### 安装方法
+- 支持同一 skill 目录结构
+- 安装后重启 OpenCode
 
-#### Claude Code 环境 (Swarm 模式)
+## 安装
+
+### Claude Code
 
 ```bash
-# 1. 克隆到 Claude Code 的 skills 目录
 cd ~/.claude/skills
 git clone -b swarm-experimental https://github.com/pinren/morphism-mapper.git
-
-# 2. 启用 Agent Team 模式
-export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-
-# 3. 启动 Claude Code
-claude
-
-# 4. 验证：启动后输入 /agents 应看到 "Agent Teams enabled"
 ```
 
-#### OpenCode 环境
+### OpenCode
 
 ```bash
-# 克隆到 OpenCode 的 skills 目录
 cd ~/.config/opencode/skills
 git clone https://github.com/pinren/morphism-mapper.git
-
-# 重启 OpenCode 即可使用
 ```
 
-> **提示**: 安装完成后，在对话中直接描述问题即可触发 Morphism Mapper。例如："帮我分析一下这个商业模式"、"如何用庄子哲学看待创业困境？"
->
-> **Swarm 模式触发词**: "swarm"、"多领域分析"、"深度分析"、"看不穿商业模式"、"看不透" 等
+## 使用方式
 
----
+直接描述问题即可触发。
 
-## 📖 这是什么？
+示例：
 
-Morphism Mapper 是一个基于**范畴论 (Category Theory)** 的跨域思维工具。
+- “我们业务增长停滞，但组织越来越重，怎么破局？”
+- “从多领域分析这个转型策略，给我可执行方案和风险边界。”
 
-当你面对复杂问题时，大脑往往被局限在熟悉的认知框架中。Morphism Mapper 通过将问题结构**映射**到看似无关的领域，借助那些领域已经验证的定理和模式，为你提供**突破性的洞察**。
+你也可以在对话里明确要求：
 
-### 核心隐喻
+- “用 swarm 模式”
+- “要交换图校验和分歧场景”
+- “输出可审计 JSON 结果”
 
-想象你正在解决一个商业问题，但你看不清楚。
+## 领域覆盖
 
-Morphism Mapper 的工作方式是：
-1. **提取骨架** - 将问题的结构抽象出来（实体、关系、约束）
-2. **寻找同构** - 在完全不同的领域中找到**相同的结构**
-3. **借用智慧** - 那个领域解决类似问题的成熟方案是什么？
-4. **拉回应用** - 将那个方案翻译回你的问题
+- 内置领域：35（`references/*_v2.md`）
+- 自定义领域：放在 `references/custom/*_v2.md`
+- 当前仓库可用领域总数（含 custom）可通过校验脚本自动统计
 
-就像用 X 光透视骨骼，不管外表多么不同，深层的结构往往惊人地相似。
+## 新增领域
 
----
+### 路径 A：手工新增
 
-## 🚀 快速开始
+1. 在 `references/custom/` 新建 `<domain>_v2.md`
+2. 遵循 V2 结构：`Fundamentals / Core Objects / Core Morphisms / Theorems`
+3. 重新运行领域校验脚本
 
-### 模式一：直接描述问题（推荐）
+### 路径 B：运行时补盲（auto_create）
 
-直接描述你的困境，系统自动进入四阶段流程：
+`DynamicAgentGenerator` 支持在领域缺失时返回生成指令，供 Team Lead 补盲后继续流程。
 
-```
-"面对抑郁症的朋友，我应该扮演一个什么角色？"
-```
+核心实现：`scripts/dynamic_agent_generator.py`
 
-**输出示例**:
-- 🌿 **生态学视角**: 你不是医生，是"共生伙伴"——创造适宜微环境
-- 🛡️ **免疫学视角**: 你是"调节T细胞"——防止过度反应，维持耐受
-- 🌊 **庄子哲学视角**: 你是"无用之用的陪伴者"——接纳"此刻无用"的状态
+## 质量门禁与测试
 
-### 模式二：快捷命令
+### 1) 领域文件健康检查
 
-| 命令 | 功能 |
-|------|------|
-| `/morphism-extract "问题"` | 提取范畴骨架 |
-| `/morphism-domains` | 列出所有可用领域 |
-| `/morphism-map <domain>` | 执行到指定领域的映射 |
-| `/morphism-synthesize` | 拉回合成生成提案 |
-| `/morphism-scale` | **全息缩放** - 局部成功如何全局复制 (Kan Extension) |
-
-### 模式三：新增自定义领域
-
-```
-"增加易经思想领域"
-"新增领域：孙子兵法"
-"扩展领域：中医"
+```bash
+cd ~/.claude/skills/morphism-mapper
+./scripts/validate_domains.py
 ```
 
----
+检查项包括：
 
-## 🗺️ 内置领域（31个）
+- 必要章节存在
+- 基本条目数量下限
+- `extract_knowledge` 可解析
 
-<details>
-<summary><b>物理学与复杂性科学</b></summary>
+### 2) Parser 单元测试
 
-- **quantum_mechanics** - 量子力学（叠加态、不确定性、纠缠）
-- **thermodynamics** - 热力学（能量、熵、耗散结构）
-- **information_theory** - 信息论（熵、信道容量、噪声）
-- **complexity_science** - 复杂性科学（涌现、混沌、自组织）
-
-</details>
-
-<details>
-<summary><b>生命科学与认知</b></summary>
-
-- **evolutionary_biology** - 进化生物学（选择、适应、关键创新）
-- **ecology** - 生态学（种群、共生、生态位）
-- **immunology** - 免疫学（识别、记忆、耐受）
-- **neuroscience** - 神经科学（神经可塑性、预测编码）
-- **zhuangzi** - 庄子哲学（变化、尺度、相对性）
-
-</details>
-
-<details>
-<summary><b>系统与控制</b></summary>
-
-- **control_systems** - 控制系统（反馈、调节、稳定）
-- **distributed_systems** - 分布式系统（一致性、共识、分区容错）
-- **network_theory** - 网络理论（节点、连接、传播）
-
-</details>
-
-<details>
-<summary><b>数学与运筹</b></summary>
-
-- **game_theory** - 博弈论（策略、均衡、信号）
-- **operations_research** - 运筹学（优化、约束、排队）
-- **second_order_thinking** - 二阶思维（反馈延迟、意外后果）
-
-</details>
-
-<details>
-<summary><b>经济与社会</b></summary>
-
-- **behavioral_economics** - 行为经济学（认知偏差、损失厌恶）
-- **social_capital** - 社会资本（网络、信任、结构洞）
-- **incentive_design** - 激励机制设计（动机、委托代理）
-- **linguistics** - 语言学（符号、意义、隐喻）
-
-</details>
-
-<details>
-<summary><b>战略与创新</b></summary>
-
-- **military_strategy** - 军事战略（机动、后勤、OODA）
-- **innovation_theory** - 创新理论（颠覆性、S曲线、网络效应）
-- **kaizen** - 精益/持续改善（浪费消除、PDCA、现场）
-- **antifragility** - 反脆弱性（凸性、选择权、杠铃策略）
-- **mythology** - 神话学/原型（英雄之旅、阈限、阴影）
-
-</details>
-
-<details>
-<summary><b>⭐ v2.5 新增领域</b></summary>
-
-- **anthropology** - 人类学（文化、田野调查、参与观察）
-- **religious_studies** - 宗教学（神圣与世俗、仪式、象征）
-- **mao_zedong_thought** - 毛泽东思想（实践论、矛盾论、持久战）
-
-</details>
-
-<details>
-<summary><b>⭐ v3.0 新增领域 & 核心改进</b></summary>
-
-**新增领域**:
-- **military_logistics** - 军事后勤（物资筹措、战略投送、供应链）
-- **organizational_behavior** - 组织行为学（社会化、激励、领导力）
-- **traditional_chinese_medicine** - 中医学（阴阳五行、辨证论治）
-- **yijing_thought** - 易经思想（阴阳、变易、象数）
-
-**核心改进**:
-- **基于Morphism结构匹配的领域选择** - 从Objects匹配转向Morphism动态匹配
-- **16种核心动态标签** - feedback_regulation, learning_adaptation, competition_selection等
-- **100%标注覆盖率** - 31个领域434条Core Morphisms全部标注
-- **智能选择算法** - 完全匹配+100分，相关匹配+50分
-- **默认Top 5推荐** - 支持更全面的多域交叉验证
-
-</details>
-
----
-
-## 🔬 技术原理
-
-### 范畴论基础
-
-Morphism Mapper 基于三个核心原理：
-
-1. **Object Preservation** - 识别核心实体
-2. **Morphism Preservation** - 识别实体间动态关系  
-3. **Composition Consistency** - 映射结果可拉回并保持逻辑闭环
-
-### 四阶段流程
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 1: Category Extraction                                │
-│  将问题拆解为 Objects（实体）、Morphisms（关系）、Constraints（约束）│
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 2: Domain Selection                                   │
-│  基于拓扑结构，选择逻辑距离远但结构相似的 Domain B              │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 3: Functorial Mapping                                 │
-│  建立映射 F: A → B，在 Domain B 中寻找已证实的定理            │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 4: Pull-back & Synthesis                              │
-│  将 Domain B 的定理逆映射回 Domain A，生成可执行方案          │
-└─────────────────────────────────────────────────────────────┘
+```bash
+cd ~/.claude/skills/morphism-mapper
+python3 -m unittest scripts.tests.test_domain_parser
 ```
 
-### 高级模块（按需挂载）
+### 3) 映射结果 Schema 校验
 
-| 模块 | 触发条件 | 功能 |
-|------|----------|------|
-| **Yoneda Probe** | 信息不透明/模糊 | 通过关系网反推对象本质 |
-| **Natural Transformation** | 环境变化/策略失效 | 平滑迁移策略逻辑 |
-| **Adjoint Balancer** | 【强制执行】输出前 | 可行性校验与优化 |
-| **Limits/Colimits** | 多域交叉验证后 | 提取跨域元逻辑 |
-| **Kan Extension** ⭐v2.6新增 | 局部成功→全局复制 | 全息缩放：激进/保守扩展策略 |
-
-#### Kan Extension 详解
-
-**解决什么问题？**
-
-当你在一线城市/美国市场/ToB业务验证成功后，想扩展到下沉市场/欧洲/ToC时：
-- 直接复制？可能失败（市场差异大）
-- 完全重做？太慢（错失窗口期）
-
-Kan Extension 提供**两种极端策略**帮助你做出理性决策：
-
-**Left Kan Extension (激进扩展)**
-- 假设：新市场与源市场**结构相似**
-- 策略：最大化复制成功要素（80%+）
-- 风险：高（假设可能不成立）
-- 收益：高（如果成功，指数级增长）
-- 适用：市场相似度高、窗口期短
-
-**Right Kan Extension (保守扩展)**
-- 假设：新市场存在**未知约束**
-- 策略：最大化本地适配（80%+）
-- 风险：低（基于已知约束）
-- 收益：中等（稳健但可能错失机会）
-- 适用：市场差异大、资源有限
-
-**触发方式**：
-- 自动触发：当 Adjoint Balancer 检测到"核心定理无法落地"时
-- 手动触发：`/morphism-scale`
-- 关键词："复制到XX市场"、"如何规模化"、"下沉市场"
-
-**完整示例**：参见 [`assets/examples/kan_extension_example.md`](assets/examples/kan_extension_example.md)
-
----
-
-## 💡 使用示例
-
-### 示例 1：ETF 用户留存问题
-
-**输入**: "我想设计 ETF 产品的用户留存体系，目前用户流失严重。"
-
-**映射到**: 庄子哲学
-
-**洞察**: 
-> 问题核心在于用户对短期波动的过度反应。庄子"小知不及大知，小年不及大年"——需要改变观察尺度。
-
-**提案**: 开发"冥灵模式"UI
-- 将净值曲线的最小观测单位设为"季度"而非"日"
-- 默认展示 3 年/5 年视角
-- 引入"时间胶囊"功能：投资后锁定查看权限
-
----
-
-### 示例 2：AI 时代的个人意义
-
-**输入**: "既然 AI 终将整合所有知识，我现在整理的意义是什么？"
-
-**映射到**: 进化生物学 + 神话学 + 复杂性科学 + 存在主义
-
-**洞察**:
-> 你的行为类似于"主动选择成为祖先"——清醒地接受个体终将消亡，但通过在关键转折点将积累传递给"下一代"（AI），获得某种进化连续性。
-
-> 这不是失败者的自我安慰，而是**悲剧英雄的高级形态**：清楚代价，仍选择参与。
-
----
-
-## 📂 仓库结构
-
-```
-morphism-mapper/
-├── SKILL.md                    # 核心技能文档
-├── scripts/                    # 脚本和模块
-│   ├── domain_selector.py     # 智能领域选择器 (v3.0)
-│   ├── enhance_annotations.py # 标注增强工具
-│   ├── update_morphism_db.py  # 数据库更新工具
-│   ├── commands/              # 快捷命令定义
-│   │   ├── extract.md         # 范畴提取
-│   │   ├── map.md             # 结构映射
-│   │   ├── synthesize.md      # 合成提案
-│   │   ├── add-domain.md      # 新增领域
-│   │   └── config.md          # 配置管理
-│   └── modules/               # 高级模块
-│       ├── yoneda_probe.md    # 米田探针
-│       ├── natural_transformation.md  # 自然变换
-│       ├── adjoint_balancer.md # 伴随平衡器
-│       ├── limits_colimits.md # 极限/余极限
-│       ├── monad_risk_container.md    # 风险容器
-│       ├── kan_extension.md   # 全息缩放 (Kan Extension)
-│       ├── koan_break.md      # 禅宗打断
-│       └── README.md          # 模块说明
-├── references/                 # 领域知识库
-│   ├── docs/                   # 文档目录 (v4.5+)
-│   │   ├── persistence_guide.md
-│   │   └── simulation_mode_guide.md
-│   ├── *_v2.md                # V2标准领域 (100+14+14+18)
-│   ├── custom/                # 自定义领域
-│   └── v1_backup/             # V1版本备份
-└── assets/                     # 资源文件
-    ├── morphism_tags.json     # 16种核心动态标签 (v3.0)
-    ├── morphism-template.html # HTML模板
-    ├── templates/             # 模板目录
-    └── examples/              # 使用示例
-        ├── few_shot_prompts.md
-        ├── kan_extension_example.md
-        └── ...
+```bash
+cd ~/.claude/skills/morphism-mapper
+./scripts/validate_mapping_json.py /path/to/mapping.json
 ```
 
----
+## 端到端实战示例
 
-## 🛠️ 领域标准 (V2)
+下面用一个真实流程演示从输入到最终结果的最短路径。
 
-每个领域文件遵循 V2 标准格式：
+### Step 1: 用户输入
 
-- **100 基本基石**: 导语 + 18哲学观 + 22核心原则 + 28思维模型 + 22方法论 + 10避坑指南
-- **14 核心对象 (Objects)**: 含定义、本质、关联
-- **14 核心态射 (Morphisms)**: 含定义、涉及、动态
-- **18 定理/模式**: 含内容、适用结构、映射提示、案例研究
+在 Claude/OpenCode 中直接输入：
 
----
+```text
+请用 swarm 模式分析：我们业务增长停滞，但组织越来越重，给出可执行转型策略、风险边界和分歧场景。
+```
 
-## 🤝 贡献
+### Step 2: Team Lead 启动分支（Bootstrap Contract）
 
-欢迎添加新的领域！请遵循 V2 标准格式：
+预期状态推进：
 
-1. 在 `references/custom/` 创建 `[domain_name]_v2.md`
-2. 包含完整的 100+14+14+18 结构
-3. 每个定理必须有具体可操作的 Mapping_Hint
+```text
+INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING
+```
 
----
+关键检查：
 
-## 📜 许可证
+1. 必须先执行 `TeamCreate(team_name=...)`
+2. `Already leading team XXX` 视为可用并复用 `XXX`
+3. 首批成员必须用一次 `AgentTeam(...)` 原子启动
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+### Step 3: Domain Agent 产出严格 JSON
 
----
+每个 Domain Agent 都应发送 `MAPPING_RESULT_JSON`（或 `MAPPING_RESULT_ROUND1`）并包含完整 schema 字段。示例：
 
-## 🙏 致谢
+```json
+{
+  "schema_version": "domain_mapping_result.v1",
+  "domain": "game_theory",
+  "domain_file_path": "references/game_theory_v2.md",
+  "domain_file_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "evidence_refs": [
+    {"section": "Fundamentals", "quote_or_summary": "博弈主体在约束中追求收益最大化。"},
+    {"section": "Core Morphisms", "quote_or_summary": "策略变化是对对手动作的条件响应。"},
+    {"section": "Theorems", "quote_or_summary": "纳什均衡定义稳定策略组合。"}
+  ],
+  "objects_map": [
+    {"a_obj": "业务单元", "b_obj": "博弈主体", "rationale": "都在竞争与合作约束中做策略选择。"}
+  ],
+  "morphisms_map": [
+    {"a_mor": "组织调整", "b_mor": "策略偏移", "dynamics": "结构变化改变收益矩阵与行动空间。"}
+  ],
+  "theorems_used": [
+    {"id": "T1", "name": "纳什均衡", "mapping_hint_application": "识别稳定但低效均衡点并设计破局动作。"},
+    {"id": "T2", "name": "重复博弈", "mapping_hint_application": "用长期激励约束短期机会主义行为。"}
+  ],
+  "kernel_loss": {
+    "lost_nuances": [
+      {"element": "情绪因素", "description": "经典理性模型无法完整表达组织情绪扩散。", "severity": "MEDIUM"}
+    ],
+    "preservation_score": 0.73
+  },
+  "strategy_topology": {
+    "topology_type": "distributed_mesh",
+    "core_action": "remove_bottleneck",
+    "resource_flow": "recirculate",
+    "feedback_loop": "negative_feedback",
+    "time_dynamics": "continuous",
+    "agent_type": "active_strategic"
+  },
+  "topology_reasoning": "通过去中心化协作和闭环反馈降低组织内耗并恢复流动性。",
+  "confidence": 0.81
+}
+```
 
-感谢范畴论提供的强大数学框架，以及所有跨学科思想家——从庄子到塔勒布，从普里高津到塔内特——他们的智慧构成了这个工具的领域知识库。
+### Step 4: 本地门禁校验（建议）
 
----
+把任一 Domain 输出保存为 JSON 文件后执行：
 
-> *"人皆知有用之用，而莫知无用之用也。" —— 庄子*
+```bash
+cd ~/.claude/skills/morphism-mapper
+./scripts/validate_mapping_json.py /path/to/domain_result.json
+```
 
-**在 AI 时代，跨域思考可能是人类最后的领地。**
+期望结果是 `[OK] ...`。若缺 `domain_file_hash` 或 `kernel_loss`，应返回 `[FAILED]` 并列出缺失字段。
+
+### Step 5: Obstruction 与 Synthesizer 收敛
+
+1. Obstruction 先做 `Schema Gate`，再做五维十四式审查  
+2. Synthesizer 仅消费 JSON，计算交换图一致性并产出：
+   - `commutative_diagram_report`
+   - `limit`（跨域不变量）
+   - `colimit`（分场景互补策略）
+
+### Step 6: 最终交付
+
+最终应包含三部分：
+
+1. 共识策略（Limit）
+2. 分歧场景与条件策略（Colimit + bifurcation）
+3. 风险容器与落地边界（来自 Obstruction + kernel_loss 汇总）
+
+## 关键文件索引
+
+### 协议与版本
+
+- `assets/version.json`
+- `references/docs/bootstrap_contract.md`
+- `assets/agents/schemas/domain_mapping_result.v1.json`
+
+### 核心 prompts
+
+- `assets/agents/system_prompts/leader.md`
+- `assets/agents/system_prompts/obstruction.md`
+- `assets/agents/system_prompts/synthesizer.md`
+- `assets/agents/system_prompts/domain_template.md`
+
+### 核心脚本
+
+- `scripts/domain_selector.py`
+- `scripts/dynamic_agent_generator.py`
+- `scripts/validate_domains.py`
+- `scripts/validate_mapping_json.py`
+
+### 参考文档
+
+- `SKILL.md`
+- `references/docs/DOMAIN_AGENT_GUIDE.md`
+- `references/docs/simulation_mode_guide.md`
+
+## 常见问题
+
+### Q1: 什么时候会进入 FALLBACK？
+
+仅当 `TeamCreate` 返回 Team 能力不可用（例如 `Feature not available`）。
+
+### Q2: `Already leading team XXX` 算失败吗？
+
+不算。应复用 `XXX` 并继续 Agent Swarm。
+
+### Q3: 可以只发摘要给 Synthesizer 吗？
+
+不可以。v4.7 统一为结构化 JSON 主体，缺字段即拒收。
+
+### Q4: 为什么必须带 `domain_file_hash`？
+
+为了证明结果确实来自指定领域文件，防止“未读文件的泛化输出”。
+
+## 版本说明
+
+当前：`v4.7.0`（2026-02-15）
+
+本版重点：
+
+- 协议统一（Bootstrap Contract）
+- 输出统一（domain_mapping_result.v1）
+- 审计统一（domain_file_hash + evidence_refs）
+
+更多细节见：`SKILL.md` 的版本历史。

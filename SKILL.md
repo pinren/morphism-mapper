@@ -1,13 +1,14 @@
 ---
 name: morphism-mapper
-description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过多 Agent Team 并行分析，将 Domain A 的问题结构映射到多个远域 Domain B，借助跨域共识（Limits）和互补整合（Colimits）生成非共识创新方案。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"增加易经思想领域"、"新增领域"、"添加领域"等。
+description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论的跨领域并行探索系统。通过 TeamCreate 探测 + AgentTeam 原子启动 + 严格 JSON Schema 输出，构建可审计、可计算的跨域推理流程。触发关键词包括"看不穿商业模式"、"环境变了需要转型"、"方案如何落地"、"多领域交叉验证"、"新增领域"、"添加领域"等。
 ---
 
-# Category Theory Morphism Mapper v4.6.0 🐝
+# Category Theory Morphism Mapper v4.7.0 🐝
 
-**版本**: v4.6.0 (Swarm Mode - 带钢筋的混凝土建筑)
-**更新日期**: 2026-02-14
-**领域数量**: 31个内置领域 + 动态新增
+**版本**: v4.7.0 (Swarm Mode - 协议统一与可审计数据流)
+**更新日期**: 2026-02-15
+**版本源**: `assets/version.json`
+**领域数量**: 35个内置领域 + 动态新增
 
 **核心升级**:
 1. **Obstruction Theorist 升级为五维十四式智能攻击矩阵**
@@ -44,9 +45,10 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 
 ---
 
-## 🚨 运行时模式侦测 — 必须首先执行 (v4.5.7)
+## 🚨 运行时模式侦测 — 必须首先执行 (v4.7)
 
 > **本文档默认为 Agent Swarm 生产模式编写。** 仅当环境不支持时才降级。
+> **启动协议唯一真相**: `references/docs/bootstrap_contract.md`
 
 ### Step 0: 运行时环境检测（启动后立即执行）
 
@@ -94,9 +96,9 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 | 0 | 环境检测 + 创建探索目录 + 初始化持久化 | `metadata.json` | — |
 | 1 | **主动提取范畴骨架** (Objects, Morphisms, Tags) | Category Skeleton JSON | — |
 | 2 | 调用 `domain_selector.py` 选择领域 + Tier Balance | 领域列表 | — |
-| 3 | 启动核心成员 (`obstruction-theorist`, `synthesizer`) | Agent 实例 | `Task()` |
-| 4 | **动态生成 Domain Agents，注入骨架** | Domain Agent Tasks | `Task()` + `SendMessage` |
-| 5 | 监听 Domain Agent 完成 → **推动** Obstruction 审查 | 审查触发 | `SendMessage` |
+| 3 | 构建首批名册（`obstruction-theorist` + `synthesizer` + 首轮 Domain Agents） | `launch_roster` | — |
+| 4 | **AgentTeam 原子化启动首批成员** | Team 会话 | `AgentTeam()` |
+| 5 | 监听 Domain Agent JSON 完成 → **推动** Obstruction 审查 | 审查触发 | `SendMessage` |
 | 6 | 收集 Obstruction 反馈 → **推动** Domain Agent Round 2 | 迭代指令 | `SendMessage` |
 | 7 | **召集三人决策会议** (Synthesizer + Obstruction + Lead) | 会议记录 | `SendMessage` 循环 |
 | 8 | 指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
@@ -116,8 +118,8 @@ description: Category Theory Morphism Mapper v4.5 Swarm Mode - 基于范畴论�
 # ❌ 错误示范 - 会创建独立 Agent，不属于 Team
 Task(name="obstruction-theorist", prompt="...")
 
-# ✅ 正确示范 - 创建 Team 成员
-Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
+# ✅ 正确示范 - 在 RUNNING 阶段增量创建 Team 成员
+Task(name="new-domain-agent", prompt="...", team_name="morphism-team")
 ```
 
 ---
@@ -139,7 +141,7 @@ Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              Morphism Mapper v4.4 核心架构                   │
+│              Morphism Mapper v4.7 核心架构                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  🔴 核心成员（3个）                                          │
@@ -174,9 +176,9 @@ Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
 | Agent | 创建方式 | 核心职责 | 通信对象 |
 |-------|---------|---------|---------|
 | **Team Lead** | `TeamCreate` 自动创建 | 范畴提取、领域选择、Agent生成、决策协调 | 所有成员 |
-| **Obstruction Theorist** | `Task(name="obstruction-theorist", team_name="morphism-team")` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
-| **Synthesizer** | `Task(name="synthesizer", team_name="morphism-team")` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
-| **Domain Agent** | `Task(name="{domain}-agent", team_name="morphism-team")` | 领域分析、映射执行 | Obstruction, Synthesizer |
+| **Obstruction Theorist** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
+| **Synthesizer** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
+| **Domain Agent** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | 领域分析、映射执行 | Obstruction, Synthesizer |
 
 ---
 
@@ -216,15 +218,15 @@ Team Lead 发送最终报告
 
 ---
 
-## 🔍 领域文件读取规范 (v4.5.5+)
+## 🔍 领域文件读取规范 (v4.7+)
 
 > 无论哪种运行模式，Domain Agent 都必须基于领域知识库进行分析。
 
 **关键要求**:
 - **必须读取**: `references/{domain}_v2.md`
-- **必须引用**: 2-3个定理 + Core Objects + Core Morphisms
-- **必须包含**: Case_Study
-- **违规后果**: 未读取领域文件的分析将被视为无效
+- **必须输出**: `domain_file_path` + `domain_file_hash` + `evidence_refs`
+- **必须符合**: `assets/agents/schemas/domain_mapping_result.v1.json`
+- **违规后果**: 缺失 `domain_file_hash` 或 `kernel_loss` 的结果将被视为无效
 
 ---
 
@@ -274,7 +276,7 @@ if launch_roster:
 
 ### 知识来源
 
-1. **内置领域**: `references/{domain}_v2.md` (31个)
+1. **内置领域**: `references/{domain}_v2.md` (35个)
 2. **自定义领域**: `references/custom/{domain}_v2.md`
 3. **动态创建**: 如果不存在，自动生成 V2 标准格式
 
@@ -694,9 +696,12 @@ Team Lead 在启动扩展阶段 Domain Agent 时，必须加载此 Prompt 而非
 ### 1. Agent 启动约束
 ```python
 # ✅ 正确
-TeamCreate(team_name="xxx")  # 自动创建 team-lead
-Task(name="obstruction-theorist", team_name="xxx")
-Task(name="synthesizer", team_name="xxx")
+TeamCreate(team_name="xxx")
+AgentTeam(
+    team_name="xxx",
+    members=[obstruction_member, synthesizer_member, domain_members...],
+    shared_context={...}
+)
 
 # ❌ 错误：重复创建 team-lead
 Task(name="team-lead", team_name="xxx")
@@ -749,12 +754,12 @@ selected = ['game_theory', 'thermodynamics']  # 跳过智能选择
 /morphism-mapper "美国抓捕马杜罗对国际局势的影响"
 
 # 系统自动：
-# 1. TeamCreate
-# 2. 启动 Obstruction + Synthesizer
-# 3. 提取 Category Skeleton
-# 4. domain_selector 选择领域
-# 5. DynamicAgentGenerator 生成 Prompts
-# 6. 启动 Domain Agents
+# 1. TeamCreate 探测（含 Already leading team 分支）
+# 2. 提取 Category Skeleton
+# 3. domain_selector 选择领域
+# 4. DynamicAgentGenerator 生成 Prompts（注入 domain_file_path/hash）
+# 5. AgentTeam 原子启动首批成员（Core + Domain）
+# 6. Domain Agents 发送严格 JSON 映射结果
 # 7. 等待 SendMessage 通信
 # 8. 触发三人决策会议
 # 9. 生成报告
@@ -768,7 +773,7 @@ selected_domains = result['top_domains'][:1]
 
 ### 新增领域
 
-当内置的31个领域无法满足分析需求时，可以通过以下方式新增领域：
+当内置的35个领域无法满足分析需求时，可以通过以下方式新增领域：
 
 **方式1**: 自然语言触发（推荐）
 ```
@@ -916,6 +921,7 @@ morphism-mapper/
 
 | 版本 | 日期 | 核心更新 |
 |-----|------|---------|
+| **v4.7.0** | **2026-02-15** | **协议统一与可审计输出** - 新增 Bootstrap Contract 单一真相；Domain Agent 强制输出 `domain_mapping_result.v1` JSON（含 `domain_file_hash`/`evidence_refs`）；Synthesizer/Obstruction 仅消费结构化数据 |
 | **v4.6.0** | **2026-02-14** | **自然变换与交换图校验** - Domain Agent 输出结构化拓扑，Synthesizer 执行交换性验证，非交换触发报警；从"散沙"升级为"混凝土" |
 | **v4.5.7** | **2026-02-12** | **生产模式优先** - SKILL.md 默认为 Agent Swarm 编写，运行时 Task() 测试侦测，仅失败时降级到 Fallback；移除文档中的模拟模式偏向 |
 | **v4.5.6** | **2026-02-12** | **运行模式自动侦测** - 自动识别 Agent Swarm 环境，智能降级到模拟模式 |

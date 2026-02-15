@@ -1,0 +1,10 @@
+{
+  "version": "4.7.0",
+  "release_date": "2026-02-15",
+  "codename": "protocol-unification",
+  "notes": [
+    "Bootstrap Contract 单一真相",
+    "Domain Agent 严格 JSON Schema",
+    "领域文件读取 + 哈希审计"
+  ]
+}

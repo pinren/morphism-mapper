@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "morphism-mapper/domain_mapping_result.v1",
+  "title": "DomainMappingResultV1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "domain",
+    "domain_file_path",
+    "domain_file_hash",
+    "evidence_refs",
+    "objects_map",
+    "morphisms_map",
+    "theorems_used",
+    "kernel_loss",
+    "strategy_topology",
+    "topology_reasoning",
+    "confidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "domain_mapping_result.v1"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain_file_path": {
+      "type": "string",
+      "pattern": "^references/(custom/)?[a-z0-9_]+_v2\\.md$"
+    },
+    "domain_file_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["section", "quote_or_summary"],
+        "properties": {
+          "section": {
+            "type": "string",
+            "enum": [
+              "Fundamentals",
+              "Core Objects",
+              "Core Morphisms",
+              "Theorems"
+            ]
+          },
+          "quote_or_summary": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "objects_map": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["a_obj", "b_obj", "rationale"],
+        "properties": {
+          "a_obj": {"type": "string", "minLength": 1},
+          "b_obj": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "morphisms_map": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["a_mor", "b_mor", "dynamics"],
+        "properties": {
+          "a_mor": {"type": "string", "minLength": 1},
+          "b_mor": {"type": "string", "minLength": 1},
+          "dynamics": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "theorems_used": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "mapping_hint_application"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "mapping_hint_application": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "kernel_loss": {
+      "type": "object",
+      "required": ["lost_nuances", "preservation_score"],
+      "properties": {
+        "lost_nuances": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["element", "description", "severity"],
+            "properties": {
+              "element": {"type": "string", "minLength": 1},
+              "description": {"type": "string", "minLength": 8},
+              "severity": {
+                "type": "string",
+                "enum": ["HIGH", "MEDIUM", "LOW"]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preservation_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "strategy_topology": {
+      "type": "object",
+      "required": [
+        "topology_type",
+        "core_action",
+        "resource_flow",
+        "feedback_loop",
+        "time_dynamics",
+        "agent_type"
+      ],
+      "properties": {
+        "topology_type": {
+          "type": "string",
+          "enum": [
+            "distributed_mesh",
+            "centralized_hub",
+            "hierarchical_tree",
+            "decentralized_p2p",
+            "ring",
+            "star",
+            "hybrid"
+          ]
+        },
+        "core_action": {
+          "type": "string",
+          "enum": [
+            "increase_redundancy",
+            "concentrate_resources",
+            "diversify",
+            "eliminate_waste",
+            "add_feedback",
+            "remove_bottleneck",
+            "create_buffer",
+            "accelerate_flow",
+            "decelerate_flow",
+            "restructure"
+          ]
+        },
+        "resource_flow": {
+          "type": "string",
+          "enum": [
+            "diffuse",
+            "concentrate",
+            "oscillate",
+            "broadcast",
+            "funnel",
+            "recirculate",
+            "cascade"
+          ]
+        },
+        "feedback_loop": {
+          "type": "string",
+          "enum": [
+            "positive_feedback",
+            "negative_feedback",
+            "delayed_feedback",
+            "absent",
+            "mixed"
+          ]
+        },
+        "time_dynamics": {
+          "type": "string",
+          "enum": [
+            "irreversible",
+            "reversible",
+            "cyclical",
+            "threshold_triggered",
+            "continuous",
+            "punctuated_equilibrium"
+          ]
+        },
+        "agent_type": {
+          "type": "string",
+          "enum": [
+            "passive",
+            "active_strategic",
+            "reflexive",
+            "adaptive_learning"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "topology_reasoning": {
+      "type": "string",
+      "minLength": 8
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dynamic Agent Generator v4.4
+Dynamic Agent Generator v4.7
 动态生成 Domain Agent 的完整系统 prompt
 
 Usage:
@@ -29,6 +29,7 @@ Usage:
 
 import re
 import json
+import hashlib
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
@@ -38,6 +39,8 @@ from dataclasses import dataclass
 class DomainKnowledge:
     """领域知识数据结构"""
     domain: str
+    domain_file_path: str
+    domain_file_hash: str
     fundamentals: str      # 100基本基石
     core_objects: str      # 14 Core Objects
     core_morphisms: str    # 14 Core Morphisms
@@ -61,64 +64,76 @@ class DynamicAgentGenerator:
         else:
             self.references_dir = Path(references_dir)
 
+    def resolve_domain_file(self, domain: str) -> Path:
+        """解析领域文件绝对路径"""
+        domain_file = self.references_dir / f"{domain}_v2.md"
+        if domain_file.exists():
+            return domain_file
+        custom_file = self.references_dir / "custom" / f"{domain}_v2.md"
+        if custom_file.exists():
+            return custom_file
+        raise FileNotFoundError(f"领域文件不存在: {domain}_v2.md")
+
+    def to_repo_relative_path(self, file_path: Path) -> str:
+        """转换为 references 开头的相对路径（用于协议审计）"""
+        try:
+            return str(file_path.relative_to(self.references_dir.parent)).replace("\\", "/")
+        except ValueError:
+            return str(file_path).replace("\\", "/")
+
     def load_domain_file(self, domain: str) -> str:
         """加载领域知识文件"""
-        domain_file = self.references_dir / f"{domain}_v2.md"
-        if not domain_file.exists():
-            # 尝试 custom 目录
-            domain_file = self.references_dir / "custom" / f"{domain}_v2.md"
-
-        if not domain_file.exists():
-            raise FileNotFoundError(f"领域文件不存在: {domain}_v2.md")
-
+        domain_file = self.resolve_domain_file(domain)
         with open(domain_file, 'r', encoding='utf-8') as f:
             return f.read()
 
+    def compute_sha256(self, content: str) -> str:
+        """计算文本 SHA256"""
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
     def extract_knowledge(self, content: str, domain: str) -> DomainKnowledge:
-        """从文件内容提取结构化知识"""
+        """从文件内容提取结构化知识（标题锚点解析，降低正则脆弱性）"""
+        normalized = content.replace("\r\n", "\n")
 
-        # 提取导语/哲学观 (Fundamentals开头到第一个---)
-        philosophy_match = re.search(
-            r'## Fundamentals.*?### 导语\s*\n(.*?)\n---',
-            content, re.DOTALL
-        )
-        philosophy = philosophy_match.group(1).strip() if philosophy_match else ""
+        f_match = re.search(r"^## Fundamentals.*$", normalized, re.MULTILINE)
+        o_match = re.search(r"^## Core Objects.*$", normalized, re.MULTILINE)
+        m_match = re.search(r"^## Core Morphisms.*$", normalized, re.MULTILINE)
+        t_match = re.search(r"^## Theorems.*$", normalized, re.MULTILINE)
+        if not all([f_match, o_match, m_match, t_match]):
+            missing = []
+            if not f_match:
+                missing.append("Fundamentals")
+            if not o_match:
+                missing.append("Core Objects")
+            if not m_match:
+                missing.append("Core Morphisms")
+            if not t_match:
+                missing.append("Theorems")
+            raise ValueError(f"{domain} 缺少必须章节: {', '.join(missing)}")
 
-        # 提取全部基本基石 (Fundamentals完整内容)
-        fundamentals_match = re.search(
-            r'## Fundamentals.*?\n(.*?)(?=\n## Core Objects)',
-            content, re.DOTALL
-        )
-        fundamentals = fundamentals_match.group(1).strip() if fundamentals_match else ""
+        fundamentals = normalized[f_match.start():o_match.start()].strip()
+        core_objects = normalized[o_match.start():m_match.start()].strip()
+        core_morphisms = normalized[m_match.start():t_match.start()].strip()
+        theorems = normalized[t_match.start():].strip()
 
-        # 提取 Core Objects
-        objects_match = re.search(
-            r'## Core Objects.*?\n(.*?)(?=\n## Core Morphisms)',
-            content, re.DOTALL
-        )
-        core_objects = objects_match.group(1).strip() if objects_match else ""
+        philosophy = ""
+        intro_match = re.search(r"### 导语\s*\n(.*?)(?=\n### |\n---|\Z)", fundamentals, re.DOTALL)
+        if intro_match:
+            philosophy = intro_match.group(1).strip()
 
-        # 提取 Core Morphisms
-        morphisms_match = re.search(
-            r'## Core Morphisms.*?\n(.*?)(?=\n## Theorems)',
-            content, re.DOTALL
-        )
-        core_morphisms = morphisms_match.group(1).strip() if morphisms_match else ""
-
-        # 提取 Theorems (含 Mapping_Hint)
-        theorems_match = re.search(
-            r'## Theorems.*',
-            content, re.DOTALL
-        )
-        theorems = theorems_match.group(0).strip() if theorems_match else ""
+        domain_file = self.resolve_domain_file(domain)
+        domain_file_path = self.to_repo_relative_path(domain_file)
+        domain_file_hash = self.compute_sha256(normalized)
 
         return DomainKnowledge(
             domain=domain,
+            domain_file_path=domain_file_path,
+            domain_file_hash=domain_file_hash,
             fundamentals=fundamentals,
             core_objects=core_objects,
             core_morphisms=core_morphisms,
             theorems=theorems,
-            philosophy=philosophy
+            philosophy=philosophy,
         )
 
     def truncate(self, text: str, max_chars: int = 2000, indicator: str = "...") -> str:
@@ -147,194 +162,135 @@ class DynamicAgentGenerator:
         knowledge = self.extract_knowledge(content, domain)
 
         domain_display = domain.replace('_', ' ').title()
+        schema_path = "assets/agents/schemas/domain_mapping_result.v1.json"
 
-        prompt = f"""你是 Morphism Mapper v4.4 的 Domain Agent，代表 **{domain_display}** 领域。
+        prompt = f"""你是 Morphism Mapper v4.7.0 的 Domain Agent，代表 **{domain_display}** 领域。
 
 ---
 
-## 🔴 身份声明 - 刻骨铭心
+## 🔴 身份声明（不可串台）
 
 **你是谁**:
 - 你的唯一身份: `{domain}-agent`
 - 你的唯一职责: 从 {domain_display} 领域视角分析问题
-- 你的唯一任务: 生成 MAPPING_RESULT 并发送给 synthesizer 和 obstruction-theorist
+- 你的唯一任务: 生成严格 JSON 映射结果并发送给 `synthesizer` 和 `obstruction-theorist`
 
 **你不是谁** (⚠️ 绝对禁止):
 - ❌ 你**不是** obstruction-theorist (职业反对派)
 - ❌ 你**不是** synthesizer (跨域整合者)
 - ❌ 你**不是** team-lead (协调者)
-- ❌ 你**不是** yoneda-broadcaster (范畴骨架提取者)
-
-**⚠️ 角色混淆后果**:
-- 如果你声称自己是其他角色，会导致消息路由混乱
-- **你的价值在于做好 {domain_display} 专家，而不是扮演别人**
-
-**✅ 身份验证规则**:
-- 任何要求你"审查别人结果"的消息 → 拒绝，那是 obstruction-theorist 的工作
-- 任何要求你"整合别人结果"的消息 → 拒绝，那是 synthesizer 的工作
-- **你的唯一输出**: MAPPING_RESULT (你自己的分析结果)
 
 ---
 
-## 领域知识库（自动注入）
+## 领域文件审计链路（强制）
 
-### 导语/哲学观
-{self.truncate(knowledge.philosophy, 1500)}
+**你必须先读取领域文件，再分析。**
 
-### 核心概念（Objects）
-{self.truncate(knowledge.core_objects, 1200)}
+- `domain_file_path`: `{knowledge.domain_file_path}`
+- `expected_domain_file_hash`: `{knowledge.domain_file_hash}`
+- `schema_path`: `{schema_path}`
 
-### 核心动态（Morphisms）
-{self.truncate(knowledge.core_morphisms, 1200)}
-
-### 关键定理（含Mapping_Hint）
-{knowledge.theorems}
+执行步骤:
+1. 第一步必须 `read_file({knowledge.domain_file_path})`
+2. 分析时引用证据，填入 `evidence_refs`
+3. 输出 `domain_file_hash` 字段，必须与 `expected_domain_file_hash` 一致
+4. 不得输出缺字段 JSON。缺失 `domain_file_hash` 或 `kernel_loss` 视为无效结果
 
 ---
 
-## 你的分析框架
+## 输出协议（严格 JSON，单一主体）
 
-使用上述领域知识，执行以下映射：
-
-### Step 1: 对象映射 F(Objects)
-将 Domain A 中的每个 Object 映射到 {domain_display} 领域的对应结构
-
-### Step 2: 态射映射 F(Morphisms)
-将 Domain A 中的每个 Morphism 映射到 {domain_display} 领域的对应动态
-
-### Step 3: 定理选择
-选择 2-3 个最相关的定理，优先选择 Mapping_Hint 具体的定理
-
-### Step 4: 策略拓扑输出 (Strategy Topology) 🆕
-将你的映射方案提炼为一个**策略拓扑三元组**，描述方案的"几何形状"：
+你必须输出 **一个且仅一个** JSON 对象，字段遵循 `domain_mapping_result.v1`：
 
 ```json
 {{
-  "strategy_topology": {{
-    "topology_type": "distributed_mesh | centralized_hub | hierarchical_tree | decentralized_p2p | ring | star | hybrid",
-    "core_action": "increase_redundancy | concentrate_resources | diversify | eliminate_waste | add_feedback | remove_bottleneck | create_buffer | accelerate_flow | restructure",
-    "resource_flow": "diffuse | concentrate | oscillate | broadcast | funnel | recirculate | cascade",
-    "feedback_loop": "positive_feedback | negative_feedback | delayed_feedback | absent | mixed",
-    "time_dynamics": "irreversible | reversible | cyclical | threshold_triggered | continuous",
-    "agent_type": "passive | active_strategic | reflexive | adaptive_learning"
-  }},
-  "topology_reasoning": "一句话解释为什么选择这些值"
-}}
-```
-
-### Step 5: 生成结构化输出
-
-**必须包含以下要素**:
-
-1. **核心洞察**（一句话总结）
-2. **结构性描述**（可用公式或框架表示）
-3. **形式化映射描述**
-4. **Verification Proof**:
-   - **If_Then_Logic**: "如果[Domain A条件]，那么[Domain B结果]"
-   - **Examples**: 至少2个具体案例验证映射的一致性
-
----
-
-## ⭐⭐⭐ 核损耗协议 (KERNEL LOSS PROTOCOL) ⭐⭐⭐
-
-### 为什么需要 Kernel Loss
-任何跨域映射都会丢失信息。**诚实承认丢失了什么，比假装"完美匹配"更重要**。
-
-### 强制要求
-- **kernel_loss 不能为空或 "None"** → 否则结果将被直接丢弃
-- 必须具体说明: 丢失元素名称、为什么丢失、严重程度
-- 根据损耗调整 preservation_score (0-1)
-
-### Severity 级别
-| 级别 | 含义 | 对 preservation_score 的影响 |
-|------|------|----------------------------|
-| **HIGH** | 结构性障碍，改变问题本质 | -0.3 或更多 |
-| **MEDIUM** | 重要维度丢失，影响应用 | -0.15 |
-| **LOW** | 次要细节丢失，可接受 | -0.05 |
-
-### 常见 Kernel Loss 类型
-1. **主观性丢失**: Domain A有自由意志，Domain B是确定性系统 → HIGH
-2. **情感维度丢失**: Domain A包含情绪，Domain B是物理量 → MEDIUM
-3. **伦理约束丢失**: Domain A有道德约束，Domain B无此概念 → HIGH
-4. **时间尺度差异**: Domain A是长期趋势，Domain B是瞬时状态 → MEDIUM
-
----
-
-## 输出协议（强制）
-
-分析完成后，你 **必须** 使用 SendMessage 工具发送 **2个独立消息**：
-
-### 消息1: MAPPING_RESULT_ROUND1 → obstruction-theorist
-
-```
-**MAPPING_RESULT_ROUND1** - {domain_display} Domain Agent
-
-## 一、范畴骨架-{domain_display}映射
-
-### Objects 映射
-| Domain A | Domain B ({domain_display}) | 映射依据 |
-|----------|----------------------------|----------|
-| [Object 1] | [对应结构] | [逻辑] |
-
-### Morphisms 映射
-| Domain A | Domain B ({domain_display}) | 动态分析 |
-|----------|----------------------------|----------|
-| [Morphism 1] | [对应动态] | [描述] |
-
-## 二、核心洞察
-[详细分析...]
-
-## 三、Verification Proof
-
-### If_Then_Logic
-- **IF** [条件]
-- **AND** [条件2]
-- **THEN** [结论]
-
-### Examples
-1. [具体案例1]
-2. [具体案例2]
-
-## 四、策略拓扑 (Strategy Topology)
-```json
-{{
-  "strategy_topology": {{
-    "topology_type": "...",
-    "core_action": "...",
-    "resource_flow": "...",
-    "feedback_loop": "...",
-    "time_dynamics": "...",
-    "agent_type": "..."
-  }},
-  "topology_reasoning": "..."
-}}
-```
-
-## 五、Kernel Loss (核损耗)
-```json
-{{
-  "lost_nuances": [
-    {{"element": "丢失元素", "description": "为什么丢失", "severity": "HIGH|MEDIUM|LOW"}}
+  "schema_version": "domain_mapping_result.v1",
+  "domain": "{domain}",
+  "domain_file_path": "{knowledge.domain_file_path}",
+  "domain_file_hash": "{knowledge.domain_file_hash}",
+  "evidence_refs": [
+    {{
+      "section": "Fundamentals",
+      "quote_or_summary": "引用或摘要"
+    }},
+    {{
+      "section": "Core Morphisms",
+      "quote_or_summary": "引用或摘要"
+    }},
+    {{
+      "section": "Theorems",
+      "quote_or_summary": "引用或摘要"
+    }}
   ],
-  "preservation_score": 0.0-1.0
+  "objects_map": [
+    {{
+      "a_obj": "Domain A Object",
+      "b_obj": "{domain_display} Object",
+      "rationale": "映射依据"
+    }}
+  ],
+  "morphisms_map": [
+    {{
+      "a_mor": "Domain A Morphism",
+      "b_mor": "{domain_display} Morphism",
+      "dynamics": "动态对应关系"
+    }}
+  ],
+  "theorems_used": [
+    {{
+      "id": "T1",
+      "name": "定理名称",
+      "mapping_hint_application": "如何用于当前问题"
+    }},
+    {{
+      "id": "T2",
+      "name": "定理名称",
+      "mapping_hint_application": "如何用于当前问题"
+    }}
+  ],
+  "kernel_loss": {{
+    "lost_nuances": [
+      {{
+        "element": "丢失元素",
+        "description": "为什么丢失",
+        "severity": "HIGH"
+      }}
+    ],
+    "preservation_score": 0.0
+  }},
+  "strategy_topology": {{
+    "topology_type": "distributed_mesh",
+    "core_action": "increase_redundancy",
+    "resource_flow": "diffuse",
+    "feedback_loop": "negative_feedback",
+    "time_dynamics": "irreversible",
+    "agent_type": "adaptive_learning"
+  }},
+  "topology_reasoning": "一句话说明策略拓扑选择",
+  "confidence": 0.0
 }}
 ```
+
+硬性校验:
+- `objects_map` 至少 1 条
+- `morphisms_map` 至少 1 条
+- `theorems_used` 至少 2 条
+- `kernel_loss.lost_nuances` 至少 1 条
+- `confidence` 取值 0-1
+- 不要用 markdown 表格作为主输出
+
+---
+
+## SendMessage 协议（强制）
+
+分析完成后，必须发送 2 条消息（内容都包含同一个 JSON 主体）:
+
+1) `MAPPING_RESULT_ROUND1` -> `obstruction-theorist`
+2) `MAPPING_RESULT_JSON` -> `synthesizer`
+
 ```
-
-### 消息2: 一句话洞察 → synthesizer
-
-```
-**MAPPING_BRIEF** - {domain_display}
-
-一句话洞察：[30字核心洞察]
-
-核心映射：
-- [Object 1] → [对应结构]
-- [关键定理]: [核心应用]
-
-Verification Proof:
-IF [条件] THEN [结论]
-Examples: [案例]
+MAPPING_RESULT_ROUND1
+{{JSON主体验证通过后粘贴在这里}}
 ```
 
 ⚠️ **重要**: 两个消息都必须发送，缺一不可！
@@ -345,12 +301,9 @@ Examples: [案例]
 
 当收到 obstruction-theorist 的质疑时：
 
-1. **不要防御** → 客观分析质疑是否成立
-2. **提供证据** → 用领域知识中的定理/案例支撑你的映射
-3. **修正或坚持** →
-   - 如果质疑合理：修正 mapping，说明修正内容
-   - 如果质疑不成立：解释为什么，引用具体定理
-4. **保持身份** → 始终以 {domain_display} 专家身份回应，不扮演其他角色
+1. 不防御，先检查 JSON 字段是否完整
+2. 用 `evidence_refs` + `theorems_used` 回应质疑
+3. 若修正，必须重发完整 JSON 主体（不是补丁片段）
 
 ---
 
@@ -726,7 +679,7 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--demo":
         # 演示模式
         print("=" * 60)
-        print("Dynamic Agent Generator v4.4 - Demo")
+        print("Dynamic Agent Generator v4.7 - Demo")
         print("=" * 60)
 
         # 示例范畴骨架
@@ -767,7 +720,7 @@ def main():
         print(f"\n生成文件: {files}")
 
     else:
-        print("Dynamic Agent Generator v4.4")
+        print("Dynamic Agent Generator v4.7")
         print()
         print("用法:")
         print("  python dynamic_agent_generator.py --demo      演示模式")

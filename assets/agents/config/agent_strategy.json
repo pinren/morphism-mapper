@@ -1,7 +1,7 @@
 {
   "agent_strategy": "dynamic_only",
-  "version": "4.4.1",
-  "description": "纯动态生成模式：所有Domain Agent运行时从references提取结构生成prompt",
+  "version": "4.7.0",
+  "description": "纯动态生成模式：所有Domain Agent运行时读取 references 文件并输出严格 JSON schema",
   "implementation": {
     "mode": "dynamic_generation",
     "source": "references/{domain}_v2.md",
@@ -10,7 +10,7 @@
   },
   "domains": {
     "all_dynamic": true,
-    "count": 31,
+    "count": 35,
     "source_files": "references/*_v2.md"
   },
   "generation_config": {
@@ -18,11 +18,11 @@
     "objects_section": "14 Core Objects",
     "morphisms_section": "14 Core Morphisms",
     "theorems_section": "18 Theorems（含Mapping_Hint）",
-    "output_format": "标准化Domain Agent系统prompt"
+    "output_format": "domain_mapping_result.v1 严格 JSON"
   },
   "notes": {
     "deprecated": ["tier_1_full_agents", "tier_2_lightweight_agents", "tier_3_dynamic_generation"],
-    "migration": "v4.4.1起所有Domain Agent统一走动态生成，不再区分高频/中频/低频",
-    "rationale": "简化架构，减少维护成本，所有领域享受同等的动态生成质量"
+    "migration": "v4.7.0起所有Domain Agent统一走动态生成 + 领域文件哈希审计 + 严格 JSON schema",
+    "rationale": "简化架构并保证可审计、可计算、可验证"
   }
 }
