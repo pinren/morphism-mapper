@@ -74,3 +74,18 @@ Task(name="new-domain-agent", prompt=prompt, team_name=team_name)
 - 无法解析 `Already leading team` 的 team 名称：中止并请求用户确认，不允许猜测。
 - `AgentTeam` 原子启动失败：记录失败成员并整体重试，不允许回退为首批 `Task` 逐个启动。
 - 增量 Task 未传 `team_name`：视为严重协议违规。
+
+## 7. Obstruction -> Synthesizer 时序门禁（必须）
+
+- Domain Round 1 JSON 产出后，必须先进入 Obstruction Round 1。
+- `obstruction_round1_coverage = reviewed_domains / active_domains`。
+- 当 `obstruction_round1_coverage < 100%` 时，禁止触发 `FINAL_SYNTHESIS_REQUEST`。
+- 若任一域被判定 `REVISE/REJECT`，必须先完成修正轮并复审，再考虑最终整合。
+- 仅当 active domains 全部通过 Obstruction（`PASS`）或被显式剔除并记录原因，才允许 `OBSTRUCTION_GATE_CLEARED`。
+
+## 8. 堵点提效策略（标准流程）
+
+- Obstruction 先执行 Stage A 批量 Schema Gate，快速筛出 `SCHEMA_BLOCKER`。
+- 再执行 Stage B 风险分层：`LOW/MEDIUM/HIGH`，按风险决定审查深度。
+- Synthesizer 可在 `OBSTRUCTION_ROUND1_COMPLETE` 后做 `PRELIMINARY_SYNTHESIS` 草稿计算。
+- 最终结论（Limit/Colimit + verdict）必须等 `OBSTRUCTION_GATE_CLEARED` 后输出。

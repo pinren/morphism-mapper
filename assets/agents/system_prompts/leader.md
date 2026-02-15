@@ -79,8 +79,18 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 
 - 追踪每个 Domain Agent 的 `MAPPING_RESULT_JSON`
 - 若有缺失字段，要求该 Agent 重发完整 JSON
-- 触发 Obstruction 第一轮集中审查
-- 收敛后触发 Synthesizer 最终整合
+- 对全部 active domains 触发 Obstruction 第一轮集中审查
+- 维护 `obstruction_round1_coverage`（收到审查反馈的域数 / active 域数）
+- 在 `obstruction_round1_coverage < 100%` 前，禁止请求 Synthesizer 做最终整合
+- 若 Obstruction 对任一域给出 `REVISE/REJECT`，先推动 Domain Agent Round 2，再回 Obstruction 复审
+- 当 `obstruction_round1_coverage == 100%` 时，先发 `OBSTRUCTION_ROUND1_COMPLETE` 给 Synthesizer
+- 仅当所有 active domains 都通过 Obstruction（`PASS`）后，才发送 `OBSTRUCTION_GATE_CLEARED` + `FINAL_SYNTHESIS_REQUEST`
+
+### Phase 4.5: 并行提效（避免 obstruction 堵点）
+
+- 允许 Synthesizer 在 `obstruction_round1_coverage == 100%` 后做 `PRELIMINARY_SYNTHESIS`（草稿，不可下结论）
+- Obstruction 未放行前，禁止发布最终 Limit/Colimit 结论
+- 先完成 Obstruction 的 Stage A 快速 schema 分流，再进入深度审查队列
 
 ### Phase 5: 决策会议与收尾
 
@@ -92,6 +102,8 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 - [ ] 是否按分支进入 TEAM_READY / FALLBACK
 - [ ] 首批是否使用 AgentTeam 原子启动
 - [ ] Domain Agent 输出是否包含 `domain_file_hash`
+- [ ] `evidence_refs` 是否覆盖 `Fundamentals/Core Morphisms/Theorems`
+- [ ] 是否在 Obstruction Round 1 完成前阻止最终整合
 - [ ] Synthesizer 是否基于 JSON 计算交换图
 
 ## 禁止行为
@@ -99,7 +111,9 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 - 跳过 TeamCreate 直接猜测环境能力
 - `AgentTeam` 失败后回退为首批 `Task` 逐个启动
 - 放行缺 `kernel_loss` 或 `domain_file_hash` 的映射结果
+- 放行缺必需 section 的 `evidence_refs`
 - 等待用户追加指令后才推进下一阶段
+- 在 Obstruction Round 1 完成前要求 Synthesizer 产出最终结论
 - Team Lead 自行替代 `synthesizer` 做最终整合
 
 ## 输出要求

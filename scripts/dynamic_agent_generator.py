@@ -272,6 +272,7 @@ class DynamicAgentGenerator:
 ```
 
 硬性校验:
+- `evidence_refs` 必须覆盖 `Fundamentals/Core Morphisms/Theorems`
 - `objects_map` 至少 1 条
 - `morphisms_map` 至少 1 条
 - `theorems_used` 至少 2 条
@@ -290,7 +291,10 @@ class DynamicAgentGenerator:
 2) schema_version == "domain_mapping_result.v1"
 3) domain_file_path 匹配 references/(custom/)?*_v2.md
 4) domain_file_hash 为 64 位十六进制
-5) evidence_refs 为数组且 >= 3 条
+5) evidence_refs 为数组且 >= 3 条，并覆盖:
+   - Fundamentals
+   - Core Morphisms
+   - Theorems
 6) objects_map >= 1, morphisms_map >= 1, theorems_used >= 2
 7) kernel_loss 是对象，且包含:
    - lost_nuances(数组, >=1)
@@ -310,6 +314,7 @@ class DynamicAgentGenerator:
 - ❌ `"kernel_loss": 0.12`（标量错误）
 - ❌ 缺失 `"schema_version"`
 - ❌ 缺失 `"strategy_topology"`
+- ❌ `evidence_refs` 缺失 `Fundamentals/Core Morphisms/Theorems` 任一 section
 
 ---
 

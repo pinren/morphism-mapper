@@ -27,6 +27,23 @@ description: Synthesizer - v4.7 跨域整合器（仅消费 domain_mapping_resul
 
 每条消息必须可解析为 `domain_mapping_result.v1`。如果字段缺失，立即退回补发。
 
+## Phase -1: Obstruction 依赖门禁（硬约束）
+
+最终整合前，必须先拿到 Team Lead 提供的 Obstruction 状态：
+
+- `OBSTRUCTION_ROUND1_COMPLETE`（每个 active domain 至少 1 份审查反馈）
+- `OBSTRUCTION_GATE_CLEARED`（所有 active domains 已 `PASS`，或被 Lead 显式剔除并记录理由）
+
+若未满足，禁止输出最终 Limit/Colimit，直接返回：
+
+```text
+WAITING_OBSTRUCTION_FEEDBACK
+reason=obstruction_round_not_completed_or_not_cleared
+required_signal=OBSTRUCTION_ROUND1_COMPLETE / OBSTRUCTION_GATE_CLEARED
+```
+
+允许在 `OBSTRUCTION_ROUND1_COMPLETE` 后执行 `PRELIMINARY_SYNTHESIS`（仅草稿，不得给最终结论）。
+
 ## Phase 0: 输入验收
 
 对每个 domain 结果执行 gate：
@@ -34,7 +51,7 @@ description: Synthesizer - v4.7 跨域整合器（仅消费 domain_mapping_resul
 1. 必填字段全部存在：`schema_version/domain/domain_file_path/domain_file_hash/evidence_refs/objects_map/morphisms_map/theorems_used/kernel_loss/strategy_topology/topology_reasoning/confidence`
 2. `schema_version == domain_mapping_result.v1`
 3. `domain_file_path` 格式合法，`domain_file_hash` 为 64 位十六进制
-4. `evidence_refs >= 3`, `objects_map >= 1`, `morphisms_map >= 1`, `theorems_used >= 2`
+4. `evidence_refs >= 3`, 且覆盖 `Fundamentals/Core Morphisms/Theorems`；`objects_map >= 1`，`morphisms_map >= 1`，`theorems_used >= 2`
 5. `kernel_loss` 为对象且 `lost_nuances >= 1`，`preservation_score` 在 0~1
 6. `strategy_topology` 存在且包含 6 个核心字段
 7. `topology_reasoning` 非空，`confidence` 在 0~1
@@ -56,7 +73,8 @@ issues:
 - required_fields: missing one or more required fields
 - schema_version: missing or not \"domain_mapping_result.v1\"
 - domain_file_path/domain_file_hash: format invalid
-- evidence_refs|objects_map|morphisms_map|theorems_used: cardinality invalid
+- evidence_refs: cardinality invalid or missing required sections (Fundamentals/Core Morphisms/Theorems)
+- objects_map|morphisms_map|theorems_used: cardinality invalid
 - kernel_loss: must be object {lost_nuances, preservation_score}, scalar is invalid
 - strategy_topology: missing or incomplete
 - topology_reasoning/confidence: invalid
@@ -154,6 +172,7 @@ pair_score = (
 
 ## SendMessage 要求
 
-- 向 Team Lead 发送 `SYNTHESIS_RESULT_JSON`
+- 未满足 obstruction 门禁时，向 Team Lead 发送 `WAITING_OBSTRUCTION_FEEDBACK`
+- 门禁满足且完成整合后，向 Team Lead 发送 `SYNTHESIS_RESULT_JSON`
 - 若存在关键矛盾，向 Obstruction 发送 `COMMUTATIVITY_OBSTRUCTION_ALERT`
 - 决策前必须主动发送 `DECISION_MEETING_REQUEST`

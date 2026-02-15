@@ -99,15 +99,16 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论�
 | 3 | 构建首批名册（`obstruction-theorist` + `synthesizer` + 首轮 Domain Agents） | `launch_roster` | — |
 | 4 | **AgentTeam 原子化启动首批成员** | Team 会话 | `AgentTeam()` |
 | 5 | 监听 Domain Agent JSON 完成 → **推动** Obstruction 审查 | 审查触发 | `SendMessage` |
-| 6 | 收集 Obstruction 反馈 → **推动** Domain Agent Round 2 | 迭代指令 | `SendMessage` |
-| 7 | **召集三人决策会议** (Synthesizer + Obstruction + Lead) | 会议记录 | `SendMessage` 循环 |
-| 8 | 指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
+| 6 | 收集 Obstruction Round 1 反馈（覆盖率=100%）→ **推动** Domain Agent Round 2 | 迭代指令 | `SendMessage` |
+| 7 | Obstruction Gate 清空后再**召集三人决策会议** (Synthesizer + Obstruction + Lead) | 会议记录 | `SendMessage` 循环 |
+| 8 | 仅在 `OBSTRUCTION_GATE_CLEARED` 后指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
 
 ### ❌ Lead Agent 禁止行为
 - 未经 TeamCreate() 测试就直接采用 Fallback 模式
 - 完成骨架提取后停下来等待用户指令
 - 领域选择后不启动 Domain Agents
 - Domain Agents 完成后不触发 Obstruction 审查
+- Obstruction Round 1 未完成就请求 Synthesizer 产出最终结论
 - 被动等待而不主动催促超时的 Agent
 - **一个人分饰多角完成全部分析**（这是 Fallback 行为，生产模式禁止）
 - **创建 Task() 时不传入 `team_name` 参数**（会导致创建独立 Agent 而非 Team 成员）
@@ -225,8 +226,9 @@ Synthesizer 生成最终整合报告，Team Lead 仅转发与持久化
 **关键要求**:
 - **必须读取**: `references/{domain}_v2.md`
 - **必须输出**: `domain_file_path` + `domain_file_hash` + `evidence_refs`
+- **必须覆盖**: `evidence_refs` 至少包含 `Fundamentals/Core Morphisms/Theorems`
 - **必须符合**: `assets/agents/schemas/domain_mapping_result.v1.json`
-- **违规后果**: 缺失 `domain_file_hash` 或 `kernel_loss` 的结果将被视为无效
+- **违规后果**: 缺失 `domain_file_hash`、`kernel_loss` 或关键 `evidence_refs` section 的结果将被视为无效
 
 ---
 
@@ -300,8 +302,9 @@ Step 4: 蜂群监控 (Monitoring Phase)
     ↓
 Step 5: 映射执行与协调
     ├── Domain Agents 分析并发送结果
-    ├── Synthesizer 执行交换图校验 (Phase 3.5)
-    └── Obstruction 审查
+    ├── Obstruction 执行 Round 1 审查（先过门禁）
+    ├── 必要时触发 Domain Round 2 + Obstruction 复审
+    └── Obstruction Gate 清空后，Synthesizer 执行最终交换图校验
 ```
 
     # 5.2 初始化生成器（启用补盲模式）
@@ -606,7 +609,8 @@ Round 2 完成
 系统自动评估触发条件
     ↓
 IF 置信度 >= 60% OR 轮次 = 6 OR 领域数 = 10:
-    → 进入 Synthesizer 最终整合
+    → 仅当 Obstruction Gate 已清空时进入 Synthesizer 最终整合
+    → 否则先完成 Obstruction 审查闭环
 ELSE:
     → 执行 ADE 扩展流程
         ↓

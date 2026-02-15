@@ -223,5 +223,55 @@
       "maximum": 1
     }
   },
+  "allOf": [
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": {
+                "const": "Fundamentals"
+              }
+            }
+          },
+          "minContains": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": {
+                "const": "Core Morphisms"
+              }
+            }
+          },
+          "minContains": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": {
+                "const": "Theorems"
+              }
+            }
+          },
+          "minContains": 1
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }

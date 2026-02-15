@@ -44,7 +44,7 @@ description: 领域专家 Agent 系统提示词模板（严格 JSON v1 + 领域�
   "domain_file_hash": "{DOMAIN_FILE_HASH}",
   "evidence_refs": [
     {{"section": "Fundamentals", "quote_or_summary": "..."}},
-    {{"section": "Core Objects", "quote_or_summary": "..."}},
+    {{"section": "Core Morphisms", "quote_or_summary": "..."}},
     {{"section": "Theorems", "quote_or_summary": "..."}}
   ],
   "objects_map": [
@@ -84,7 +84,7 @@ description: 领域专家 Agent 系统提示词模板（严格 JSON v1 + 领域�
 2. `schema_version == domain_mapping_result.v1`
 3. `domain_file_path` 符合 `references/(custom/)?*_v2.md`
 4. `domain_file_hash` 是 64 位十六进制
-5. `evidence_refs` 数量 >= 3
+5. `evidence_refs` 数量 >= 3，且必须覆盖 `Fundamentals` + `Core Morphisms` + `Theorems`
 6. `objects_map >= 1` 且 `morphisms_map >= 1` 且 `theorems_used >= 2`
 7. `kernel_loss` 必须是对象，且 `lost_nuances >= 1`，`preservation_score` 在 0~1
 8. `strategy_topology` 必须存在且包含 6 个字段
@@ -96,6 +96,7 @@ description: 领域专家 Agent 系统提示词模板（严格 JSON v1 + 领域�
 - 不发送消息
 - 先修复 JSON
 - 再执行一次自检
+- 若 `evidence_refs` 缺任一必需 section，必须补齐后再发
 
 禁止示例：
 

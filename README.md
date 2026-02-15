@@ -64,7 +64,7 @@ Domain Agent 唯一有效输出是：
 
 1. 读取 `references/{domain}_v2.md`（或 `references/custom/...`）
 2. 输出该文件的 `sha256` 到 `domain_file_hash`
-3. 提供 `evidence_refs` 证明映射依据来自领域文件
+3. 提供 `evidence_refs` 证明映射依据来自领域文件（必须覆盖 `Fundamentals/Core Morphisms/Theorems`）
 
 ### 4) 交换图校验与非交换分歧处理
 
@@ -264,8 +264,10 @@ cd ~/.claude/skills/morphism-mapper
 
 ### Step 5: Obstruction 与 Synthesizer 收敛
 
-1. Obstruction 先做 `Schema Gate`，再做五维十四式审查  
-2. Synthesizer 仅消费 JSON，计算交换图一致性并产出：
+1. Obstruction 先做 `Schema Gate`，再做风险分层审查（LOW/MEDIUM/HIGH）  
+2. 至少等待 Obstruction Round 1 对全部 active domains 完成反馈后，才允许进入最终整合  
+3. 若 Obstruction 要求二轮修正，先完成修正+复审，再触发最终整合  
+4. Synthesizer 仅消费 JSON，计算交换图一致性并产出：
    - `commutative_diagram_report`
    - `limit`（跨域不变量）
    - `colimit`（分场景互补策略）
