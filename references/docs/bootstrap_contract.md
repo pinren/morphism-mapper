@@ -80,6 +80,7 @@ Task(
 - `AgentTeam` 原子启动失败：记录失败成员并整体重试，不允许回退为首批 `Task` 逐个启动。
 - 增量 Task 未传 `description` 或 `team_name`：视为严重协议违规。
 - Synthesizer 未按时返回：只允许 `SendMessage` 催促与升级，不允许 Team Lead 直接产出最终整合报告。
+- 若在 `RUNNING` 前出现 `Task(Domain Agent: ...)` 或任意首批逐个 `Task` 启动：标记 `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`，并强制回到 `TEAM_READY` 重建后以 `AgentTeam` 重启。
 
 ## 7. Obstruction -> Synthesizer 时序门禁（必须）
 

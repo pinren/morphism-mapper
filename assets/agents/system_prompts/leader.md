@@ -81,11 +81,21 @@ Task(
 AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 ```
 
+首批启动日志必须体现为单次 `AgentTeam(...)`。  
+若出现逐个启动迹象（如 `Task(Domain Agent: xxx)`）且当前不在 `RUNNING` 增量阶段，视为协议违例。
+
 如果 `launch_roster` 缺少 `obstruction` 或 `synthesizer`：
 
 - 立即停止当前轮次
 - 回到 `TEAM_READY` 重建 roster
 - 禁止让 Team Lead 代替 `synthesizer` 做整合
+
+若检测到 `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`：
+
+- 立即中止本轮启动
+- 清空本轮错误启动计划
+- 回到 `TEAM_READY` 重建完整 `launch_roster`
+- 重新执行一次 `AgentTeam` 原子启动
 
 ### Phase 4: 协议监控与推进
 
@@ -133,6 +143,7 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 - [ ] 是否按分支进入 TEAM_READY / FALLBACK
 - [ ] 首批是否使用 AgentTeam 原子启动
 - [ ] 增量 Task 是否包含 `description` + `team_name`
+- [ ] 是否未在 `RUNNING` 前触发任何 `Task(Domain Agent: ...)`
 - [ ] Domain Agent 输出是否包含 `domain_file_hash`
 - [ ] `evidence_refs` 是否覆盖 `Fundamentals/Core Morphisms/Theorems`
 - [ ] 是否收到每个域的 `OBSTRUCTION_DELIVERY_ACK` 与 `SYNTHESIZER_DELIVERY_ACK`
@@ -144,6 +155,7 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 
 - 跳过 TeamCreate 直接猜测环境能力
 - `AgentTeam` 失败后回退为首批 `Task` 逐个启动
+- 在 `RUNNING` 前使用 `Task` 启动 Domain Agent（包括 `Task(Domain Agent: ...)`）
 - 创建缺少 `description` 的 Task（会触发 InputValidationError）
 - 放行缺 `kernel_loss` 或 `domain_file_hash` 的映射结果
 - 放行缺必需 section 的 `evidence_refs`

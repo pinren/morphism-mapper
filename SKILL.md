@@ -325,62 +325,62 @@ Step 5: 映射执行与协调
     └── Obstruction Gate 清空后，Synthesizer 执行最终交换图校验
 ```
 
-    # 5.2 初始化生成器（启用补盲模式）
-    generator = DynamicAgentGenerator()
+⚠️ **重要边界**：以下 `Task(...)` 代码仅用于 `RUNNING` 阶段的**增量扩展**（例如新增领域补盲），  
+不能用于 Step 3 的首批启动。首批必须是单次 `AgentTeam(...)`。
 
-    # 5.3 批量生成 Prompts（关键：auto_create=True 启用补盲）
-    prompts = generator.generate_batch(
-        domains=selected_domains,
-        category_skeleton=category_skeleton,
-        auto_create=True,  # ✅ 启用自动补盲
-        domain_sources={
-            'domain_name': '领域描述（用于补盲生成）'
-        }
-    )
+```python
+assert state == "RUNNING"
+assert core_members_active(["obstruction-theorist", "synthesizer"])
+```
 
-    # 5.4 处理每个领域
-    for domain, prompt_or_instruction in prompts.items():
+### RUNNING 增量扩展示例（非首批启动）
 
-        # 情况A: 正常返回（字符串）
-        if isinstance(prompt_or_instruction, str):
-            Task(
-                name=f"{domain}-agent",
-                description=f"Round 1 domain mapping for {domain}",
-                prompt=prompt_or_instruction,
-                subagent_type="general-purpose",
-                team_name=team_name
-            )
+```python
+# 仅在 RUNNING 阶段可执行，且核心成员已在线
+assert state == "RUNNING"
+assert core_members_active(["obstruction-theorist", "synthesizer"])
 
-        # 情况B: 需要补盲生成（字典）
-        elif isinstance(prompt_or_instruction, dict):
-            if prompt_or_instruction['action'] == 'CREATE_DOMAIN':
-                # Team Lead 调用 LLM 生成领域知识
-                generation_prompt = prompt_or_instruction['generation_prompt']
+# 5.2 初始化生成器（启用补盲模式）
+generator = DynamicAgentGenerator()
 
-                # 调用 LLM（当前上下文）
-                content = generate_content(generation_prompt)  # Team Lead 执行
+# 5.3 批量生成 Prompts（仅新增领域）
+prompts = generator.generate_batch(
+    domains=selected_domains,
+    category_skeleton=category_skeleton,
+    auto_create=True,
+    domain_sources={"domain_name": "领域描述（用于补盲生成）"},
+)
 
-                # 保存领域文件
-                file_path = generator.create_domain_from_content(domain, content)
+# 5.4 增量启动新领域 Agent（允许 Task）
+for domain, prompt_or_instruction in prompts.items():
+    if isinstance(prompt_or_instruction, str):
+        Task(
+            name=f"{domain}-agent",
+            description=f"Incremental domain mapping for {domain}",
+            prompt=prompt_or_instruction,
+            subagent_type="general-purpose",
+            team_name=team_name,
+        )
+    elif isinstance(prompt_or_instruction, dict) and prompt_or_instruction.get("action") == "CREATE_DOMAIN":
+        generation_prompt = prompt_or_instruction["generation_prompt"]
+        content = generate_content(generation_prompt)
+        generator.create_domain_from_content(domain, content)
+        full_prompt = generator.generate_full_prompt(domain, category_skeleton)
+        Task(
+            name=f"{domain}-agent",
+            description=f"Incremental domain mapping for {domain}",
+            prompt=full_prompt,
+            subagent_type="general-purpose",
+            team_name=team_name,
+        )
+```
 
-                # 重新生成完整 Prompt
-                full_prompt = generator.generate_full_prompt(domain, category_skeleton)
-
-                # 启动 Domain Agent
-                Task(
-                    name=f"{domain}-agent",
-                    description=f"Round 1 domain mapping for {domain}",
-                    prompt=full_prompt,
-                    subagent_type="general-purpose",
-                    team_name=team_name
-                )
-    ```
-
-    **Team Lead 决策逻辑**：
-    - 检查返回类型：`str` = 正常，`dict` = 需要补盲
-    - 如果是补盲：必须先生成领域文件，再启动 Agent
-    - 补盲是阻塞步骤，完成后才能继续
-    ↓
+**Team Lead 决策逻辑**：
+- 检查返回类型：`str` = 正常，`dict` = 需要补盲
+- 如果是补盲：必须先生成领域文件，再启动 Agent
+- 补盲是阻塞步骤，完成后才能继续
+- 若系统尚未进入 `RUNNING`，不得执行上述 `Task(...)`
+↓
 Step 6: Domain Agents 并行分析
     ├── 领域知识映射
     ├── SendMessage → Obstruction (完整)

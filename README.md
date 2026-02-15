@@ -207,6 +207,7 @@ INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING
 4. 首批 `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`
 5. Team Lead 不得代替 `synthesizer` 做最终整合
 6. 若 Synthesizer 延迟/未响应，Lead 只能催促与升级，不得直接输出最终报告
+7. 若在 `RUNNING` 前出现 `Task(Domain Agent: ...)`，视为协议违例并必须回到 `TEAM_READY` 重启
 
 ### Step 3: Domain Agent 产出严格 JSON
 
@@ -317,6 +318,8 @@ cd ~/.claude/skills/morphism-mapper
 ### Q1: 什么时候会进入 FALLBACK？
 
 仅当 `TeamCreate` 返回 Team 能力不可用（例如 `Feature not available`）。
+进入后仍需遵循与 Swarm 等价的 Obstruction 门禁与 Synthesizer 交换图流程，见
+`references/docs/simulation_mode_guide.md`。
 
 ### Q2: `Already leading team XXX` 算失败吗？
 
