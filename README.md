@@ -204,6 +204,8 @@ INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING
 1. 必须先执行 `TeamCreate(team_name=...)`
 2. `Already leading team XXX` 视为可用并复用 `XXX`
 3. 首批成员必须用一次 `AgentTeam(...)` 原子启动
+4. 首批 `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`
+5. Team Lead 不得代替 `synthesizer` 做最终整合
 
 ### Step 3: Domain Agent 产出严格 JSON
 
@@ -275,6 +277,8 @@ cd ~/.claude/skills/morphism-mapper
 1. 共识策略（Limit）
 2. 分歧场景与条件策略（Colimit + bifurcation）
 3. 风险容器与落地边界（来自 Obstruction + kernel_loss 汇总）
+
+职责边界：最终整合结论必须由 `synthesizer` 产出，Lead 只做流程协调与发布。
 
 ## 关键文件索引
 

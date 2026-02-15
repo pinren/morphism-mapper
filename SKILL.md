@@ -204,8 +204,8 @@ SendMessage(
 ```
 Domain Agent 完成分析
     ↓
-SendMessage → Obstruction Theorist (完整报告)
-SendMessage → Synthesizer (一句话洞察)
+SendMessage → Obstruction Theorist (MAPPING_RESULT_ROUND1 + JSON主体)
+SendMessage → Synthesizer (MAPPING_RESULT_JSON + JSON主体)
     ↓
 Obstruction Theorist 审查后
     ↓
@@ -213,7 +213,7 @@ SendMessage → Synthesizer (30字诊断简报)
     ↓
 三人小组决策会议 (SendMessage 循环)
     ↓
-Team Lead 发送最终报告
+Synthesizer 生成最终整合报告，Team Lead 仅转发与持久化
 ```
 
 ---

@@ -34,6 +34,12 @@
 - 首批成员（`obstruction-theorist`、`synthesizer`、首轮 Domain Agents）必须一次性由 `AgentTeam` 原子启动。
 - 仅在 `RUNNING` 的增量扩展场景，才允许 `Task(..., team_name=...)` 添加新成员。
 
+### 4.1 核心成员硬约束（不可跳过）
+
+- `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`。
+- 若任一核心成员缺失，禁止进入 `RUNNING`。
+- 禁止 Team Lead 自行执行跨域整合；整合职责只属于 `synthesizer`。
+
 ## 5. 最小执行模板
 
 ```python
@@ -52,6 +58,9 @@ else:
 
 # TEAM_READY -> MEMBERS_READY
 launch_roster = [obstruction_member, synthesizer_member] + domain_members
+
+if not has_member(launch_roster, "obstruction-theorist") or not has_member(launch_roster, "synthesizer"):
+    raise RuntimeError("Core roster incomplete: obstruction-theorist + synthesizer are required")
 
 # MEMBERS_READY -> RUNNING
 AgentTeam(team_name=team_name, members=launch_roster, shared_context=shared_context)
