@@ -42,7 +42,7 @@ Morphism Mapper 现在是一个可执行的跨域推理协议，不再只是“�
 
 - `INIT` 只允许 `TeamCreate(team_name=...)`
 - 首批成员必须通过 `AgentTeam(...)` 一次性启动
-- `RUNNING` 才允许增量 `Task(..., team_name=...)`
+- `RUNNING` 才允许增量 `Task(..., description=..., team_name=...)`
 - `Already leading team XXX` 视为可用并复用 team
 - 只有 `Feature not available` 才允许降级 FALLBACK
 
@@ -206,6 +206,7 @@ INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING
 3. 首批成员必须用一次 `AgentTeam(...)` 原子启动
 4. 首批 `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`
 5. Team Lead 不得代替 `synthesizer` 做最终整合
+6. 若 Synthesizer 延迟/未响应，Lead 只能催促与升级，不得直接输出最终报告
 
 ### Step 3: Domain Agent 产出严格 JSON
 

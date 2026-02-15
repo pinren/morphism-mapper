@@ -87,7 +87,7 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论�
 
 ## 🟢 Agent Swarm 模式 — Lead Agent 主动驱动工作流
 
-> ⚠️ **核心原则**: Lead Agent 是流程**驱动者**，不是被动等待者。接收用户问题后必须**一口气推进到最终报告**。
+> ⚠️ **核心原则**: Lead Agent 是流程**驱动者**，不是被动等待者。接收用户问题后必须**一口气推进到“由 Synthesizer 产出的最终报告”**。
 
 ### Lead Agent 职责清单
 
@@ -111,16 +111,25 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论�
 - Obstruction Round 1 未完成就请求 Synthesizer 产出最终结论
 - 被动等待而不主动催促超时的 Agent
 - **一个人分饰多角完成全部分析**（这是 Fallback 行为，生产模式禁止）
-- **创建 Task() 时不传入 `team_name` 参数**（会导致创建独立 Agent 而非 Team 成员）
+- **创建 Task() 时缺失 `description` 或 `team_name` 参数**（会触发 InputValidationError 或创建独立 Agent）
+- **Synthesizer 未输出时由 Lead 直接写最终报告**（严重协议违规）
 
-### ✅ 关键提醒：所有 Task() 调用必须传入 team_name
+### ✅ 关键提醒：所有 Task() 调用必须传入 `description` + `team_name`
 
 ```python
-# ❌ 错误示范 - 会创建独立 Agent，不属于 Team
-Task(name="obstruction-theorist", prompt="...")
+# ❌ 错误示范1 - 缺 description，会触发 InputValidationError
+Task(name="obstruction-theorist", prompt="...", team_name="morphism-team")
+
+# ❌ 错误示范2 - 缺 team_name，会创建独立 Agent，不属于 Team
+Task(name="obstruction-theorist", description="Round 1 schema review", prompt="...")
 
 # ✅ 正确示范 - 在 RUNNING 阶段增量创建 Team 成员
-Task(name="new-domain-agent", prompt="...", team_name="morphism-team")
+Task(
+    name="new-domain-agent",
+    description="Analyze selected domain with strict JSON schema",
+    prompt="...",
+    team_name="morphism-team"
+)
 ```
 
 ---
@@ -177,9 +186,9 @@ Task(name="new-domain-agent", prompt="...", team_name="morphism-team")
 | Agent | 创建方式 | 核心职责 | 通信对象 |
 |-------|---------|---------|---------|
 | **Team Lead** | `TeamCreate` 自动创建 | 范畴提取、领域选择、Agent生成、决策协调 | 所有成员 |
-| **Obstruction Theorist** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
-| **Synthesizer** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
-| **Domain Agent** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., team_name=...)` | 领域分析、映射执行 | Obstruction, Synthesizer |
+| **Obstruction Theorist** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., description=..., team_name=...)` | 三道攻击测试、质量审查、风险预警 | Synthesizer, Team Lead |
+| **Synthesizer** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., description=..., team_name=...)` | Limits/Colimits计算、跨域整合、最终报告 | 所有成员 |
+| **Domain Agent** | 首批由 `AgentTeam` 原子启动；仅增量扩展时允许 `Task(..., description=..., team_name=...)` | 领域分析、映射执行 | Obstruction, Synthesizer |
 
 ---
 
@@ -327,6 +336,7 @@ Step 5: 映射执行与协调
         if isinstance(prompt_or_instruction, str):
             Task(
                 name=f"{domain}-agent",
+                description=f"Round 1 domain mapping for {domain}",
                 prompt=prompt_or_instruction,
                 subagent_type="general-purpose",
                 team_name=team_name
@@ -350,6 +360,7 @@ Step 5: 映射执行与协调
                 # 启动 Domain Agent
                 Task(
                     name=f"{domain}-agent",
+                    description=f"Round 1 domain mapping for {domain}",
                     prompt=full_prompt,
                     subagent_type="general-purpose",
                     team_name=team_name
@@ -708,7 +719,7 @@ AgentTeam(
 )
 
 # ❌ 错误：重复创建 team-lead
-Task(name="team-lead", team_name="xxx")
+Task(name="team-lead", description="duplicate lead launch", team_name="xxx")
 ```
 
 ### 2. 通信约束

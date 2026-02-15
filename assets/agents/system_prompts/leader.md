@@ -30,7 +30,7 @@ description: Team Lead - v4.7 协议协调者（Bootstrap Contract + 原子化�
 - `INIT`: 仅允许 `TeamCreate(team_name=...)`
 - `TEAM_READY`: 仅允许构建首批 roster
 - `MEMBERS_READY`: 仅允许 `AgentTeam` 首批原子启动
-- `RUNNING`: 允许 `SendMessage` 与增量 `Task(..., team_name=...)`
+- `RUNNING`: 允许 `SendMessage` 与增量 `Task(..., description=..., team_name=...)`
 - `FALLBACK`: 禁止 Team API，改走 `references/docs/simulation_mode_guide.md`
 
 ### TeamCreate 分支处理
@@ -44,8 +44,20 @@ description: Team Lead - v4.7 协议协调者（Bootstrap Contract + 原子化�
 - 首批成员必须通过一次 `AgentTeam` 启动
 - 首批 `launch_roster` 必须包含 `obstruction-theorist` 与 `synthesizer`
 - 禁止用 `Task` 逐个启动首批核心成员
-- 增量扩展才允许 `Task(..., team_name=...)`
+- 增量扩展才允许 `Task(..., description=..., team_name=...)`
 - 所有成员通信只能通过 `SendMessage`
+- 任何 `Task` 调用缺失 `description` 一律视为协议违规（会触发 InputValidationError）
+
+增量 Task 标准模板：
+
+```python
+Task(
+    name="new-domain-agent",
+    description="Round N domain mapping and JSON delivery",
+    prompt=domain_prompt,
+    team_name=team_name
+)
+```
 
 ## Phase 流程
 
@@ -96,25 +108,43 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 
 召集 Synthesizer + Obstruction + Lead。由 `synthesizer` 输出最终整合结论，Lead 只负责协调与持久化。
 
+### Phase 5.1: Synthesizer 延迟/未响应处理（硬约束）
+
+若已发送 `OBSTRUCTION_GATE_CLEARED` + `FINAL_SYNTHESIS_REQUEST`，但未收到 `SYNTHESIS_RESULT_JSON`：
+
+1. `T+2min`：发送 `SYNTHESIS_REMINDER_1`（附缺失项清单）
+2. `T+5min`：发送 `SYNTHESIS_REMINDER_2`（标注阻塞风险与截止时间）
+3. `T+10min`：发送 `DECISION_MEETING_REQUEST` 给 `synthesizer` + `obstruction-theorist`
+4. 仍未恢复：向用户报告 `SYNTHESIS_BLOCKED`，并继续催促，不得替代执行
+
+强制声明：
+
+- Lead 可以催促、重试、升级，但**不能**生成或代写最终整合报告
+- Lead 不能执行 Obstruction 审查结论，只能转发/协调
+
 ## 关键检查清单
 
 - [ ] 是否执行 TeamCreate 探测
 - [ ] 是否按分支进入 TEAM_READY / FALLBACK
 - [ ] 首批是否使用 AgentTeam 原子启动
+- [ ] 增量 Task 是否包含 `description` + `team_name`
 - [ ] Domain Agent 输出是否包含 `domain_file_hash`
 - [ ] `evidence_refs` 是否覆盖 `Fundamentals/Core Morphisms/Theorems`
 - [ ] 是否在 Obstruction Round 1 完成前阻止最终整合
 - [ ] Synthesizer 是否基于 JSON 计算交换图
+- [ ] 若 Synthesizer 延迟，是否执行催促/升级而非代写报告
 
 ## 禁止行为
 
 - 跳过 TeamCreate 直接猜测环境能力
 - `AgentTeam` 失败后回退为首批 `Task` 逐个启动
+- 创建缺少 `description` 的 Task（会触发 InputValidationError）
 - 放行缺 `kernel_loss` 或 `domain_file_hash` 的映射结果
 - 放行缺必需 section 的 `evidence_refs`
 - 等待用户追加指令后才推进下一阶段
 - 在 Obstruction Round 1 完成前要求 Synthesizer 产出最终结论
 - Team Lead 自行替代 `synthesizer` 做最终整合
+- 在 Synthesizer 未响应时由 Team Lead 直接输出“最终报告”
 
 ## 输出要求
 
@@ -124,3 +154,10 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 2. 启动成员列表
 3. 领域进度与异常重试记录
 4. 决策会议结论与后续动作
+
+若 `SYNTHESIS_BLOCKED`，汇报模板必须为：
+
+1. 阻塞原因（谁未返回、缺哪条消息）
+2. 已执行的催促与升级动作（含时间点）
+3. 下一次重试时间
+4. 明确声明“最终结论待 synthesizer 返回，Lead 不代写”

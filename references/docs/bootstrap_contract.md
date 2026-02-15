@@ -15,7 +15,7 @@
 | `TEAM_PROBED` | 已拿到 TeamCreate 返回 | 解析返回并做分支判定 | 跳过分支判定 |
 | `TEAM_READY` | Team 能力可用，且 team_name 已确定 | 构建首批成员名册 | 用 `Task` 逐个拉首批成员 |
 | `MEMBERS_READY` | 首批成员（Core + 首轮 Domain）名册已构建 | `AgentTeam(team_name, members, shared_context)` | 分批启动首批成员 |
-| `RUNNING` | 蜂群已运行 | `SendMessage`；增量 `Task(..., team_name=...)` | 创建无 `team_name` 的独立 Task |
+| `RUNNING` | 蜂群已运行 | `SendMessage`；增量 `Task(..., description=..., team_name=...)` | 创建无 `description` 或无 `team_name` 的 Task |
 | `FALLBACK` | Team 能力不可用 | 单 AI 顺序执行（参见 `simulation_mode_guide.md`） | 调用 `TeamCreate`/`AgentTeam`/Team `Task` |
 
 ## 3. TeamCreate 分支判定（必须）
@@ -32,7 +32,7 @@
 ## 4. 首批启动规则
 
 - 首批成员（`obstruction-theorist`、`synthesizer`、首轮 Domain Agents）必须一次性由 `AgentTeam` 原子启动。
-- 仅在 `RUNNING` 的增量扩展场景，才允许 `Task(..., team_name=...)` 添加新成员。
+- 仅在 `RUNNING` 的增量扩展场景，才允许 `Task(..., description=..., team_name=...)` 添加新成员。
 
 ### 4.1 核心成员硬约束（不可跳过）
 
@@ -66,14 +66,20 @@ if not has_member(launch_roster, "obstruction-theorist") or not has_member(launc
 AgentTeam(team_name=team_name, members=launch_roster, shared_context=shared_context)
 
 # RUNNING (incremental only)
-Task(name="new-domain-agent", prompt=prompt, team_name=team_name)
+Task(
+    name="new-domain-agent",
+    description="Incremental domain analysis task",
+    prompt=prompt,
+    team_name=team_name
+)
 ```
 
 ## 6. 错误分支
 
 - 无法解析 `Already leading team` 的 team 名称：中止并请求用户确认，不允许猜测。
 - `AgentTeam` 原子启动失败：记录失败成员并整体重试，不允许回退为首批 `Task` 逐个启动。
-- 增量 Task 未传 `team_name`：视为严重协议违规。
+- 增量 Task 未传 `description` 或 `team_name`：视为严重协议违规。
+- Synthesizer 未按时返回：只允许 `SendMessage` 催促与升级，不允许 Team Lead 直接产出最终整合报告。
 
 ## 7. Obstruction -> Synthesizer 时序门禁（必须）
 
@@ -89,3 +95,12 @@ Task(name="new-domain-agent", prompt=prompt, team_name=team_name)
 - 再执行 Stage B 风险分层：`LOW/MEDIUM/HIGH`，按风险决定审查深度。
 - Synthesizer 可在 `OBSTRUCTION_ROUND1_COMPLETE` 后做 `PRELIMINARY_SYNTHESIS` 草稿计算。
 - 最终结论（Limit/Colimit + verdict）必须等 `OBSTRUCTION_GATE_CLEARED` 后输出。
+
+## 9. Synthesizer 阻塞恢复（必须）
+
+- Lead 发送 `FINAL_SYNTHESIS_REQUEST` 后，若未收到 `SYNTHESIS_RESULT_JSON`：
+  - `T+2min` 发送第一次提醒
+  - `T+5min` 发送第二次提醒并声明阻塞
+  - `T+10min` 触发 `DECISION_MEETING_REQUEST`
+- 恢复前，系统状态保持为 `RUNNING`，并标记 `SYNTHESIS_BLOCKED`。
+- 任何情况下都不得由 Lead 代替 Synthesizer 或 Obstruction 输出最终结论。
