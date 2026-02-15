@@ -98,7 +98,7 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论�
 | 2 | 调用 `domain_selector.py` 选择领域 + Tier Balance | 领域列表 | — |
 | 3 | 构建首批名册（`obstruction-theorist` + `synthesizer` + 首轮 Domain Agents） | `launch_roster` | — |
 | 4 | **AgentTeam 原子化启动首批成员** | Team 会话 | `AgentTeam()` |
-| 5 | 监听 Domain Agent JSON 完成 → **推动** Obstruction 审查 | 审查触发 | `SendMessage` |
+| 5 | 监听 Domain Agent JSON 完成 + ACK 矩阵齐全 → **推动** Obstruction 审查 | 审查触发 | `SendMessage` |
 | 6 | 收集 Obstruction Round 1 反馈（覆盖率=100%）→ **推动** Domain Agent Round 2 | 迭代指令 | `SendMessage` |
 | 7 | Obstruction Gate 清空后再**召集三人决策会议** (Synthesizer + Obstruction + Lead) | 会议记录 | `SendMessage` 循环 |
 | 8 | 仅在 `OBSTRUCTION_GATE_CLEARED` 后指示 Synthesizer 生成最终报告，更新索引 | 最终报告 | `SendMessage` |
@@ -108,6 +108,7 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode - 基于范畴论�
 - 完成骨架提取后停下来等待用户指令
 - 领域选择后不启动 Domain Agents
 - Domain Agents 完成后不触发 Obstruction 审查
+- Domain 发送后不校验 ACK 就默认已送达
 - Obstruction Round 1 未完成就请求 Synthesizer 产出最终结论
 - 被动等待而不主动催促超时的 Agent
 - **一个人分饰多角完成全部分析**（这是 Fallback 行为，生产模式禁止）
@@ -214,8 +215,12 @@ SendMessage(
 ```
 Domain Agent 完成分析
     ↓
-SendMessage → Obstruction Theorist (MAPPING_RESULT_ROUND1 + JSON主体)
-SendMessage → Synthesizer (MAPPING_RESULT_JSON + JSON主体)
+SendMessage → Obstruction Theorist (MAPPING_RESULT_ROUND1 + message_id + JSON主体)
+SendMessage → Synthesizer (MAPPING_RESULT_JSON + message_id + JSON主体)
+    ↓
+Obstruction / Synthesizer 回投递 ACK
+    ├── OBSTRUCTION_DELIVERY_ACK → Lead
+    └── SYNTHESIZER_DELIVERY_ACK → Lead
     ↓
 Obstruction Theorist 审查后
     ↓
@@ -225,6 +230,10 @@ SendMessage → Synthesizer (30字诊断简报)
     ↓
 Synthesizer 生成最终整合报告，Team Lead 仅转发与持久化
 ```
+
+**ACK 超时规则**：
+- 90s 内未收到任一 ACK，Domain 必须重发一次并上报 `DELIVERY_ACK_TIMEOUT`
+- Lead 必须优先排障 `DELIVERY_BLOCKED` 域，不得默认“已送达”
 
 ---
 

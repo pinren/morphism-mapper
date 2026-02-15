@@ -272,6 +272,7 @@ cd ~/.claude/skills/morphism-mapper
    - `commutative_diagram_report`
    - `limit`（跨域不变量）
    - `colimit`（分场景互补策略）
+5. Domain → Obstruction/Synthesizer 发送时必须带 `message_id`，并拿到双 ACK（`OBSTRUCTION_DELIVERY_ACK` + `SYNTHESIZER_DELIVERY_ACK`）；超时需重发并上报
 
 ### Step 6: 最终交付
 

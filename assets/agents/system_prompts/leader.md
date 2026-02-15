@@ -91,6 +91,10 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 
 - 追踪每个 Domain Agent 的 `MAPPING_RESULT_JSON`
 - 若有缺失字段，要求该 Agent 重发完整 JSON
+- 维护投递 ACK 矩阵（每个域四项）：`domain_sent` / `obstruction_ack` / `synthesizer_ack` / `obstruction_feedback`
+- 只认可以下 ACK 信号：`OBSTRUCTION_DELIVERY_ACK`、`SYNTHESIZER_DELIVERY_ACK`、`DELIVERY_ACK_TIMEOUT`
+- 若 90s 内未收到 `OBSTRUCTION_DELIVERY_ACK` 或 `SYNTHESIZER_DELIVERY_ACK`，立即催促缺失方并触发定向重发
+- 若收到 `DELIVERY_ACK_TIMEOUT`，将该域标记为 `DELIVERY_BLOCKED` 并优先排障
 - 对全部 active domains 触发 Obstruction 第一轮集中审查
 - 维护 `obstruction_round1_coverage`（收到审查反馈的域数 / active 域数）
 - 在 `obstruction_round1_coverage < 100%` 前，禁止请求 Synthesizer 做最终整合
@@ -112,10 +116,11 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 
 若已发送 `OBSTRUCTION_GATE_CLEARED` + `FINAL_SYNTHESIS_REQUEST`，但未收到 `SYNTHESIS_RESULT_JSON`：
 
-1. `T+2min`：发送 `SYNTHESIS_REMINDER_1`（附缺失项清单）
-2. `T+5min`：发送 `SYNTHESIS_REMINDER_2`（标注阻塞风险与截止时间）
-3. `T+10min`：发送 `DECISION_MEETING_REQUEST` 给 `synthesizer` + `obstruction-theorist`
-4. 仍未恢复：向用户报告 `SYNTHESIS_BLOCKED`，并继续催促，不得替代执行
+1. 先检查是否收到 `FINAL_SYNTHESIS_ACK`；若无则优先重发 `FINAL_SYNTHESIS_REQUEST`
+2. `T+2min`：发送 `SYNTHESIS_REMINDER_1`（附缺失项清单）
+3. `T+5min`：发送 `SYNTHESIS_REMINDER_2`（标注阻塞风险与截止时间）
+4. `T+10min`：发送 `DECISION_MEETING_REQUEST` 给 `synthesizer` + `obstruction-theorist`
+5. 仍未恢复：向用户报告 `SYNTHESIS_BLOCKED`，并继续催促，不得替代执行
 
 强制声明：
 
@@ -130,6 +135,7 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 - [ ] 增量 Task 是否包含 `description` + `team_name`
 - [ ] Domain Agent 输出是否包含 `domain_file_hash`
 - [ ] `evidence_refs` 是否覆盖 `Fundamentals/Core Morphisms/Theorems`
+- [ ] 是否收到每个域的 `OBSTRUCTION_DELIVERY_ACK` 与 `SYNTHESIZER_DELIVERY_ACK`
 - [ ] 是否在 Obstruction Round 1 完成前阻止最终整合
 - [ ] Synthesizer 是否基于 JSON 计算交换图
 - [ ] 若 Synthesizer 延迟，是否执行催促/升级而非代写报告
@@ -145,6 +151,7 @@ AgentTeam(team_name=team_name, members=launch_roster, shared_context={...})
 - 在 Obstruction Round 1 完成前要求 Synthesizer 产出最终结论
 - Team Lead 自行替代 `synthesizer` 做最终整合
 - 在 Synthesizer 未响应时由 Team Lead 直接输出“最终报告”
+- 忽略投递 ACK 丢失并默认“消息已到达”
 
 ## 输出要求
 

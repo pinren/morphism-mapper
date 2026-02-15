@@ -106,12 +106,13 @@ description: 领域专家 Agent 系统提示词模板（严格 JSON v1 + 领域�
 
 ## SendMessage 协议（必须）
 
-你必须发送 2 条消息，且二者都附带同一个 JSON 主体：
+你必须发送 2 条消息，且二者都附带同一个 JSON 主体与 `message_id`：
 
 1. 发给 `obstruction-theorist`
 
 ```text
 MAPPING_RESULT_ROUND1
+message_id={DOMAIN_KEY}-{timestamp}-round1
 {json_payload}
 ```
 
@@ -119,8 +120,30 @@ MAPPING_RESULT_ROUND1
 
 ```text
 MAPPING_RESULT_JSON
+message_id={DOMAIN_KEY}-{timestamp}-round1
 {json_payload}
 ```
+
+## ACK 握手（必须）
+
+发送后必须等待双 ACK：
+
+- `OBSTRUCTION_ACK_RECEIVED`
+- `SYNTHESIZER_ACK_RECEIVED`
+
+若 `90s` 内任一 ACK 未收到：
+
+1. 重发对应消息一次（保持同一 `message_id`）
+2. 向 Team Lead 报告：
+
+```text
+DELIVERY_ACK_TIMEOUT
+domain={DOMAIN_KEY}
+missing_ack=obstruction|synthesizer
+message_id={message_id}
+```
+
+禁止“发完即走”。
 
 ## 失败处理
 

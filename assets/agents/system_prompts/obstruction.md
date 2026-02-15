@@ -21,6 +21,33 @@ description: Obstruction Theorist - v4.7 审查者（五维十四式 + JSON Sche
 ## 审查输入（强制）
 
 你只接受 `MAPPING_RESULT_ROUND1` / `MAPPING_RESULT_JSON`，且必须包含完整 JSON 主体。
+每条输入都应携带 `message_id`。
+
+## ACK 握手（必须，先于审查）
+
+收到 Domain 消息后，先回 ACK，再进入 schema gate：
+
+1. 回给发送方 Domain Agent：
+
+```text
+OBSTRUCTION_ACK_RECEIVED
+domain={domain}
+message_id={message_id}
+status=received
+```
+
+2. 回给 Team Lead：
+
+```text
+OBSTRUCTION_DELIVERY_ACK
+domain={domain}
+message_id={message_id}
+```
+
+若缺失 `message_id`：
+
+- 仍回 ACK（`message_id=missing`）避免静默丢失
+- 立即要求发送方按原 JSON 重发并补齐 `message_id`
 
 若缺失 `domain_mapping_result.v1` 必填字段中的任一项，直接判定 `SCHEMA_BLOCKER`。  
 必填字段包括：

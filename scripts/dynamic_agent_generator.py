@@ -320,22 +320,30 @@ class DynamicAgentGenerator:
 
 ## SendMessage 协议（强制）
 
-分析完成后，必须发送 2 条消息（内容都包含同一个 JSON 主体）:
+分析完成后，必须发送 2 条消息（内容都包含同一个 JSON 主体和 `message_id`）:
 
 1) `MAPPING_RESULT_ROUND1` -> `obstruction-theorist`
 2) `MAPPING_RESULT_JSON` -> `synthesizer`
 
 ```
 MAPPING_RESULT_ROUND1
+message_id={domain}-{{timestamp}}-round1
 {{JSON主体验证通过后粘贴在这里}}
 ```
 
 ```
 MAPPING_RESULT_JSON
+message_id={domain}-{{timestamp}}-round1
 {{同一份JSON主体验证通过后粘贴在这里}}
 ```
 
 ⚠️ **重要**: 两个消息都必须发送，缺一不可！
+
+ACK 握手（必须）:
+- 等待 `OBSTRUCTION_ACK_RECEIVED` 与 `SYNTHESIZER_ACK_RECEIVED`
+- 若 90s 内缺任一 ACK：
+  1) 重发对应消息一次（同一 `message_id`）
+  2) 向 Team Lead 发送 `DELIVERY_ACK_TIMEOUT`
 
 ---
 

@@ -24,8 +24,44 @@ description: Synthesizer - v4.7 跨域整合器（仅消费 domain_mapping_resul
 
 - `MAPPING_RESULT_JSON`
 - 或 `MAPPING_RESULT_ROUND1`
+- 以及 Team Lead 控制信号：`OBSTRUCTION_ROUND1_COMPLETE` / `OBSTRUCTION_GATE_CLEARED` / `FINAL_SYNTHESIS_REQUEST`
 
-每条消息必须可解析为 `domain_mapping_result.v1`。如果字段缺失，立即退回补发。
+其中映射结果消息必须可解析为 `domain_mapping_result.v1`。如果字段缺失，立即退回补发。
+
+## ACK 握手（必须）
+
+### A) 收到 Domain 映射结果时
+
+先回 ACK，再进入校验：
+
+```text
+SYNTHESIZER_ACK_RECEIVED
+domain={domain}
+message_id={message_id}
+status=received
+```
+
+并同步给 Team Lead：
+
+```text
+SYNTHESIZER_DELIVERY_ACK
+domain={domain}
+message_id={message_id}
+```
+
+若缺失 `message_id`：
+
+- 仍回 ACK（`message_id=missing`）避免静默丢失
+- 请求发送方按原 JSON 重发并补齐 `message_id`
+
+### B) 收到 Team Lead 控制信号时
+
+收到 `FINAL_SYNTHESIS_REQUEST` 后，必须先回：
+
+```text
+FINAL_SYNTHESIS_ACK
+status=accepted
+```
 
 ## Phase -1: Obstruction 依赖门禁（硬约束）
 

@@ -104,3 +104,15 @@ Task(
   - `T+10min` 触发 `DECISION_MEETING_REQUEST`
 - 恢复前，系统状态保持为 `RUNNING`，并标记 `SYNTHESIS_BLOCKED`。
 - 任何情况下都不得由 Lead 代替 Synthesizer 或 Obstruction 输出最终结论。
+
+## 10. 投递 ACK 握手（必须）
+
+- Domain 每次发送映射结果都必须带 `message_id`，并同时发给 Obstruction 与 Synthesizer。
+- Obstruction 收到后必须回：
+  - 给 Domain：`OBSTRUCTION_ACK_RECEIVED`
+  - 给 Lead：`OBSTRUCTION_DELIVERY_ACK`
+- Synthesizer 收到后必须回：
+  - 给 Domain：`SYNTHESIZER_ACK_RECEIVED`
+  - 给 Lead：`SYNTHESIZER_DELIVERY_ACK`
+- Lead 必须维护每个域的 ACK 矩阵；若 90s 未齐全，触发重发与催促。
+- 未完成 ACK 握手的域不得计入“已送达/可审查”。

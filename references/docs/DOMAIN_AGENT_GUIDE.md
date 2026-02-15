@@ -17,6 +17,7 @@ Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
 3. 在 `evidence_refs` 中明确引用文件证据
 4. 完整输出 schema 必填字段
 5. 将同一 JSON 主体发送给 `obstruction-theorist` 与 `synthesizer`
+6. 等待双 ACK：`OBSTRUCTION_ACK_RECEIVED` + `SYNTHESIZER_ACK_RECEIVED`
 
 ## 必填字段
 
@@ -42,6 +43,7 @@ Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
 - `kernel_loss.lost_nuances` 为空
 - 仅输出 markdown 表格，未输出 JSON 主体
 - 只给单个 recipient 发送结果
+- 90s 内未收到 ACK 且未重发/上报
 
 ### 通过条件
 
@@ -53,9 +55,11 @@ Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
 
 ```text
 MAPPING_RESULT_JSON
+message_id={domain}-{timestamp}-roundN
 {json_payload}
 ```
 
 ## 审查后修正
 
 收到 `OBSTRUCTION_FEEDBACK` 后，必须重发完整 JSON 主体，不允许只发送增量 diff。
+若 90s 内未收到任一 ACK，必须重发一次并向 Team Lead 上报 `DELIVERY_ACK_TIMEOUT`。
