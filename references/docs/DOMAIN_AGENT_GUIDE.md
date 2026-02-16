@@ -1,4 +1,4 @@
-# DOMAIN_AGENT_GUIDE (v4.7)
+# DOMAIN_AGENT_GUIDE (v4.7, no-ack)
 
 ## 协议优先级
 
@@ -6,20 +6,16 @@
 2. `references/docs/bootstrap_contract.md`
 3. 本指南
 
-## 角色目标
-
-Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
-
 ## 必做步骤
 
-1. 优先读取 skill 内 `references/` 的绝对路径文件（而不是项目 cwd）
-2. 仅当绝对路径不可读时，回退读取 `references/{domain}_v2.md` 或 `references/custom/{domain}_v2.md`
-3. 禁止先在启动项目目录中搜索同名 `references/`
-4. 生成 `domain_file_hash`（sha256）
-5. 在 `evidence_refs` 中明确引用文件证据
-6. 完整输出 schema 必填字段
-7. 将同一 JSON 主体发送给 `obstruction-theorist` 与 `synthesizer`
-8. 等待双 ACK：`OBSTRUCTION_ACK_RECEIVED` + `SYNTHESIZER_ACK_RECEIVED`
+1. 优先读取 skill 内 `references/` 绝对路径文件
+2. 仅绝对路径不可读时回退 `references/...` 相对路径
+3. 生成 `domain_file_hash`（sha256）
+4. 输出完整 `domain_mapping_result.v1` JSON
+5. 双投递：
+   - `MAPPING_RESULT_ROUND1` -> obstruction
+   - `MAPPING_RESULT_JSON` -> synthesizer
+6. 通过 mailbox 等待后续业务消息（审查反馈/修正请求）
 
 ## 必填字段
 
@@ -36,32 +32,14 @@ Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
 - `topology_reasoning`
 - `confidence`
 
-## 严格门禁
-
-### 无效条件（任一触发即无效）
+## 无效条件
 
 - 未读取领域文件
 - 缺失 `domain_file_hash`
-- `kernel_loss.lost_nuances` 为空
-- 仅输出 markdown 表格，未输出 JSON 主体
-- 只给单个 recipient 发送结果
-- 90s 内未收到 ACK 且未重发/上报
+- `kernel_loss` 不是对象
+- 未输出合法 JSON 主体
+- 只发送给单个 recipient
 
-### 通过条件
+## 修正规则
 
-- JSON 可被 `validate_mapping_json.py` 校验通过
-- `evidence_refs` 至少覆盖 Fundamentals + Core Morphisms + Theorems
-- `theorems_used` 至少 2 条，且有 mapping hint 应用
-
-## 推荐发送格式
-
-```text
-MAPPING_RESULT_JSON
-message_id={domain}-{timestamp}-roundN
-{json_payload}
-```
-
-## 审查后修正
-
-收到 `OBSTRUCTION_FEEDBACK` 后，必须重发完整 JSON 主体，不允许只发送增量 diff。
-若 90s 内未收到任一 ACK，必须重发一次并向 Team Lead 上报 `DELIVERY_ACK_TIMEOUT`。
+收到 `OBSTRUCTION_FEEDBACK` 或 `SCHEMA_REJECTED` 后，必须重发完整 JSON 主体，不发送 diff 片段。

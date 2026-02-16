@@ -345,11 +345,12 @@ message_id={domain}-{{timestamp}}-round1
 
 ⚠️ **重要**: 两个消息都必须发送，缺一不可！
 
-ACK 握手（必须）:
-- 等待 `OBSTRUCTION_ACK_RECEIVED` 与 `SYNTHESIZER_ACK_RECEIVED`
-- 若 90s 内缺任一 ACK：
-  1) 重发对应消息一次（同一 `message_id`）
-  2) 向 Team Lead 发送 `DELIVERY_ACK_TIMEOUT`
+mailbox 驱动（无 ACK）:
+- 不等待 ACK 回执
+- 通过 mailbox 观察后续业务消息推进：
+  1) obstruction 返回 `OBSTRUCTION_FEEDBACK`
+  2) synthesizer 返回 `PRELIMINARY_SYNTHESIS` 或 `SCHEMA_REJECTED`
+- 若长时间无后续业务消息，仅向 Team Lead 报告 `DELIVERY_STALLED`（不做 ACK 重发闭环）
 
 ---
 
