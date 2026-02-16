@@ -1,119 +1,123 @@
 # Bootstrap Contract (Single Source of Truth)
 
-> 本文件是 Morphism Mapper 启动协议唯一真相。  
-> 若 `SKILL.md`、`leader.md`、其他文档与本文件冲突，以本文件为准。
+本文件定义 Morphism Mapper 的最小可执行启动协议。  
+若与其他文档冲突，以本文件为准。
 
-## 1. 状态机
+## 1) 状态机
 
-`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING -> (可选) FALLBACK`
+`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> CORE_READY -> RUNNING -> (可选) FALLBACK`
 
-## 2. 状态定义与允许 API
+## 2) 每个状态只做一类事
 
-| 状态 | 含义 | 允许 API | 禁止行为 |
-|---|---|---|---|
-| `INIT` | 尚未探测 Team 能力 | `TeamCreate(team_name=...)` | 直接 `Task` 拉核心成员；直接降级 |
-| `TEAM_PROBED` | 已拿到 TeamCreate 返回 | 解析返回并做分支判定 | 跳过分支判定 |
-| `TEAM_READY` | Team 能力可用，且 team_name 已确定 | 构建首批成员名册 | 用 `Task` 逐个拉首批成员 |
-| `MEMBERS_READY` | 首批成员（Core + 首轮 Domain）名册已构建 | `AgentTeam(team_name, members, shared_context)` | 分批启动首批成员 |
-| `RUNNING` | 蜂群已运行 | `SendMessage`；增量 `Task(..., description=..., team_name=...)` | 创建无 `description` 或无 `team_name` 的 Task |
-| `FALLBACK` | Team 能力不可用 | 单 AI 顺序执行（参见 `simulation_mode_guide.md`） | 调用 `TeamCreate`/`AgentTeam`/Team `Task` |
+| 状态 | 允许动作 | 禁止动作 |
+|---|---|---|
+| `INIT` | `TeamCreate(team_name=...)` | 直接分析、直接拉成员 |
+| `TEAM_PROBED` | 解析 TeamCreate 返回，进入 A/B/C 分支 | 跳过分支判定 |
+| `TEAM_READY` | 构建首批 roster（core + selected domains） | Lead 逐个启动成员 |
+| `MEMBERS_READY` | 一次团队级首批启动（团队级语义，不依赖固定工具名） | 拆成多批首发 |
+| `CORE_READY` | 向 core 发 ping，收双 ACK | 未收双 ACK 就启动 domain 工作 |
+| `RUNNING` | `SendMessage` 协作；团队级增量加人 | Lead 自己分析或代替 core |
+| `FALLBACK` | 走 `simulation_mode_guide.md` | 继续 Team 流程 |
 
-## 3. TeamCreate 分支判定（必须）
+## 3) TeamCreate 三分支
 
-1. **Case A: TeamCreate 成功**  
-   进入 `TEAM_READY`，使用返回的 `team_name`。
+1. Case A: 成功  
+   - 进入 `TEAM_READY`
+   - 使用返回的 `team_name`
+2. Case B: `Already leading team XXX`  
+   - 进入 `TEAM_READY`
+   - 复用 `XXX`
+3. Case C: `Feature not available`（或等效 Team 不可用）  
+   - 进入 `FALLBACK`
 
-2. **Case B: 返回 `Already leading team XXX`**  
-   进入 `TEAM_READY`，复用 `XXX` 作为 `team_name`。这不是失败。
+补充约束：
 
-3. **Case C: 返回 `Feature not available` 或等效不可用错误**  
-   进入 `FALLBACK`，禁止继续 Team API。
+- `TeamCreate` 是唯一必需的显式入口调用。
+- 禁止根据“工具列表里是否出现 AgentTeam/SendMessage”来判定可用性。
+- 只看 `TeamCreate` 返回与后续启动证据。
 
-## 4. 首批启动规则
+## 4) 团队级启动定义（关键）
 
-- 首批成员（`obstruction-theorist`、`synthesizer`、首轮 Domain Agents）必须一次性由 `AgentTeam` 原子启动。
-- 仅在 `RUNNING` 的增量扩展场景，才允许 `Task(..., description=..., team_name=...)` 添加新成员。
+团队级启动的判据是“语义与证据”，不是函数名：
 
-### 4.1 核心成员硬约束（不可跳过）
+- 首批一次覆盖 `core + selected domains`
+- 有可审计 `LAUNCH_EVIDENCE`
+- 有 core 双 ACK
 
-- `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`。
-- 若任一核心成员缺失，禁止进入 `RUNNING`。
-- 禁止 Team Lead 自行执行跨域整合；整合职责只属于 `synthesizer`。
+实现上可表现为：
 
-## 5. 最小执行模板
+- 显式团队 API（若平台暴露）
+- 平台 in-process 自然语言 team invocation
 
-```python
-# INIT
-probe = TeamCreate(team_name="morphism-{timestamp}")
+以下都不算团队级启动：
 
-# TEAM_PROBED -> TEAM_READY
-if probe.ok:
-    team_name = probe.team_name
-elif "Already leading team" in probe.error:
-    team_name = extract_team_name(probe.error)
-elif "Feature not available" in probe.error:
-    goto_fallback()
-else:
-    raise RuntimeError("Unrecognized TeamCreate result")
+- Lead 逐个 `Task(...)` 拉成员
+- `Task(..., team_name, subagent_type)` 伪装团队启动
+- 先 core 后 domain 的分批首发
+- “domain analysis agents”这类聚合任务替代真实队伍拉起
 
-# TEAM_READY -> MEMBERS_READY
-launch_roster = [obstruction_member, synthesizer_member] + domain_members
+## 5) Core 就绪门禁
 
-if not has_member(launch_roster, "obstruction-theorist") or not has_member(launch_roster, "synthesizer"):
-    raise RuntimeError("Core roster incomplete: obstruction-theorist + synthesizer are required")
+首批启动后，Lead 必须先收齐：
 
-# MEMBERS_READY -> RUNNING
-AgentTeam(team_name=team_name, members=launch_roster, shared_context=shared_context)
+- `OBSTRUCTION_CORE_READY_ACK`
+- `SYNTHESIZER_CORE_READY_ACK`
 
-# RUNNING (incremental only)
-Task(
-    name="new-domain-agent",
-    description="Incremental domain analysis task",
-    prompt=prompt,
-    team_name=team_name
-)
+收齐前禁止：
+
+- 启动任何 domain 分析流程
+- 声称 “Agent Swarm 已启动”
+
+## 6) Delegation Mode（简化后硬约束）
+
+- Lead 只做编排、状态推进、催办、仲裁
+- Lead 不得写 domain 分析正文
+- Lead 不得代替 `synthesizer` 产出最终整合
+- 若出现“流程太重，直接分析”，视为协议违规并回滚到最近合法状态
+
+## 7) 最小 LAUNCH_EVIDENCE
+
+进入 `RUNNING` 前，Lead 必须能给出：
+
+```json
+{
+  "launch_mode": "team_launch",
+  "launch_method": "team_api|platform_nl_team_invocation",
+  "team_name": "xxx",
+  "selected_domains": ["..."],
+  "active_core_members": ["obstruction-theorist", "synthesizer"],
+  "core_ready_ack": {
+    "OBSTRUCTION_CORE_READY_ACK": true,
+    "SYNTHESIZER_CORE_READY_ACK": true
+  }
+}
 ```
 
-## 6. 错误分支
+## 8) Obstruction -> Synthesizer 时序
 
-- 无法解析 `Already leading team` 的 team 名称：中止并请求用户确认，不允许猜测。
-- `AgentTeam` 原子启动失败：记录失败成员并整体重试，不允许回退为首批 `Task` 逐个启动。
-- 增量 Task 未传 `description` 或 `team_name`：视为严重协议违规。
-- Synthesizer 未按时返回：只允许 `SendMessage` 催促与升级，不允许 Team Lead 直接产出最终整合报告。
-- 若在 `RUNNING` 前出现 `Task(Domain Agent: ...)` 或任意首批逐个 `Task` 启动：标记 `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`，并强制回到 `TEAM_READY` 重建后以 `AgentTeam` 重启。
+1. Domain Round 1 先提交给 obstruction + synthesizer（双投递，双 ACK）
+2. Obstruction 必须至少完成一轮审查并回 `OBSTRUCTION_ROUND1_COMPLETE`
+3. 若存在 `REVISE/REJECT`，先修正再复审
+4. 仅当 `OBSTRUCTION_GATE_CLEARED` 后，Lead 才能发 `FINAL_SYNTHESIS_REQUEST`
 
-## 7. Obstruction -> Synthesizer 时序门禁（必须）
+## 9) 失败分支（保留最小集合）
 
-- Domain Round 1 JSON 产出后，必须先进入 Obstruction Round 1。
-- `obstruction_round1_coverage = reviewed_domains / active_domains`。
-- 当 `obstruction_round1_coverage < 100%` 时，禁止触发 `FINAL_SYNTHESIS_REQUEST`。
-- 若任一域被判定 `REVISE/REJECT`，必须先完成修正轮并复审，再考虑最终整合。
-- 仅当 active domains 全部通过 Obstruction（`PASS`）或被显式剔除并记录原因，才允许 `OBSTRUCTION_GATE_CLEARED`。
+- `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`: 首批被 Lead 逐个 Task 启动
+- `PROTOCOL_BREACH_INVALID_FALLBACK_REASON`: Team 可用却非法降级
+- `PROTOCOL_BREACH_CORE_NOT_READY`: 未收齐 core 双 ACK
+- `PROTOCOL_BREACH_DOMAIN_BEFORE_CORE_READY`: core 未就绪先跑 domain
+- `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`: Lead 自行分析或代替 core
+- `PROTOCOL_BREACH_PARTIAL_ATOMIC_LAUNCH`: 首批 roster 未一次完整拉起
+- `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`: 团队级启动能力确实不可用
 
-## 8. 堵点提效策略（标准流程）
+## 10) 一页执行清单
 
-- Obstruction 先执行 Stage A 批量 Schema Gate，快速筛出 `SCHEMA_BLOCKER`。
-- 再执行 Stage B 风险分层：`LOW/MEDIUM/HIGH`，按风险决定审查深度。
-- Synthesizer 可在 `OBSTRUCTION_ROUND1_COMPLETE` 后做 `PRELIMINARY_SYNTHESIS` 草稿计算。
-- 最终结论（Limit/Colimit + verdict）必须等 `OBSTRUCTION_GATE_CLEARED` 后输出。
-
-## 9. Synthesizer 阻塞恢复（必须）
-
-- Lead 发送 `FINAL_SYNTHESIS_REQUEST` 后，若未收到 `SYNTHESIS_RESULT_JSON`：
-  - `T+2min` 发送第一次提醒
-  - `T+5min` 发送第二次提醒并声明阻塞
-  - `T+10min` 触发 `DECISION_MEETING_REQUEST`
-- 恢复前，系统状态保持为 `RUNNING`，并标记 `SYNTHESIS_BLOCKED`。
-- 任何情况下都不得由 Lead 代替 Synthesizer 或 Obstruction 输出最终结论。
-
-## 10. 投递 ACK 握手（必须）
-
-- Domain 每次发送映射结果都必须带 `message_id`，并同时发给 Obstruction 与 Synthesizer。
-- Obstruction 收到后必须回：
-  - 给 Domain：`OBSTRUCTION_ACK_RECEIVED`
-  - 给 Lead：`OBSTRUCTION_DELIVERY_ACK`
-- Synthesizer 收到后必须回：
-  - 给 Domain：`SYNTHESIZER_ACK_RECEIVED`
-  - 给 Lead：`SYNTHESIZER_DELIVERY_ACK`
-- Lead 必须维护每个域的 ACK 矩阵；若 90s 未齐全，触发重发与催促。
-- 未完成 ACK 握手的域不得计入“已送达/可审查”。
+1. `TeamCreate`
+2. 解析 A/B/C
+3. 组装首批 roster（core + all selected domains）
+4. 一次团队级首批启动
+5. Core ping + 双 ACK
+6. 进入 `RUNNING`
+7. Domain 双投递 + 双 ACK
+8. Obstruction 一轮审查
+9. Gate cleared 后请求 final synthesis

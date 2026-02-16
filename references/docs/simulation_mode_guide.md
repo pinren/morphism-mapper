@@ -9,6 +9,12 @@
 
 - 若返回 `Already leading team XXX`：必须复用 team，继续 Swarm，禁止进入本模式。
 - 若用户要求“生产模式”，仍应先尝试 TeamCreate，再按上述条件决定。
+- 若出现“流程太重量级/更实用方式/用户只要分析，所以直接分析”：
+  - 这不是合法入口，属于 `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
+  - 必须退出模拟路径，回到 `TEAM_READY`，按团队级首批启动语义继续
+- 若出现“完整流程太复杂/耗时/overkill，所以先用单个 Task 做模拟分析”：
+  - 同样不是合法入口，仍属于 `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
+  - 必须回到 `TEAM_READY`，禁止继续任何 `Task/Explore` 分析动作
 
 ## 2. 协议对齐目标
 

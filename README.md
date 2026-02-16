@@ -1,103 +1,70 @@
 # Morphism Mapper
 
-> 基于范畴论的跨领域结构映射 Skill（Swarm Experimental）
+> 基于范畴论的跨领域推理 Skill（Swarm Experimental）
 
 [![Version](https://img.shields.io/badge/version-v4.7.0-green.svg)](https://github.com/pinren/morphism-mapper/releases)
-[![Domains](https://img.shields.io/badge/domains-35%2B-orange.svg)](#领域覆盖)
+[![Schema](https://img.shields.io/badge/schema-domain_mapping_result.v1-blue.svg)](./assets/agents/schemas/domain_mapping_result.v1.json)
 
-## TL;DR
+## 这次重构做了什么
 
-Morphism Mapper 现在是一个可执行的跨域推理协议，不再只是“类比提示词”：
+目标只有一个：**把提示系统简化成一套最小可执行协议**。
 
-- 启动协议单一真相：`references/docs/bootstrap_contract.md`
-- Team 启动路径固定：`TeamCreate` 探测 + `AgentTeam` 首批原子启动
-- Domain Agent 输出固定：`domain_mapping_result.v1` 严格 JSON
-- 可审计数据流：强制 `domain_file_path` + `domain_file_hash` + `evidence_refs`
-- 可计算整合：Synthesizer 基于结构化字段做交换图校验（Commutativity）
+- 删除重复规则与多处“同义不同文案”
+- 启动逻辑只认一个文件：`references/docs/bootstrap_contract.md`
+- Lead prompt 改为短版：只保留状态机、门禁、ACK
+- Domain/Obstruction/Synthesizer prompts 改为短版
+- `SKILL.md` 从超长手册收敛为可执行清单
 
-版本唯一来源：`assets/version.json`
+## 核心机制（简化后）
 
-## 适用场景
+1. Team 探测：`TeamCreate`
+2. 首批启动：一次团队级启动（语义判定，不依赖固定工具名）
+3. Core 就绪：必须收齐双 ACK
+4. Domain 输出：严格 JSON schema
+5. Obstruction 先审：通过后才能 final synthesis
+6. Synthesizer 负责最终整合，Lead 不代劳
 
-- 复杂问题需要多领域并行拆解
-- 需要明确“共识结论 vs 条件分歧”，而不是平均化折中
-- 希望输出可被程序校验、可追溯、可复盘
+## 状态机
 
-典型触发语句：
+`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> CORE_READY -> RUNNING -> (可选) FALLBACK`
 
-- “看不穿这个商业模式”
-- “环境变了，策略怎么转型”
-- “这个方案如何落地，风险在哪里”
-- “做一次多领域交叉验证”
+详见：`references/docs/bootstrap_contract.md`
 
-## 核心能力（v4.7）
+## 团队级启动说明
 
-### 1) Bootstrap Contract（启动协议统一）
+“团队级启动”看行为证据，不看是否出现 `AgentTeam` 这个工具名。
+在 in-process 模式下，平台可能以托管任务形式展示启动过程。
 
-状态机固定为：
+以下都不算：
 
-`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING -> (可选) FALLBACK`
+- Lead 逐个 `Task(...)` 拉人
+- `Task(..., team_name, subagent_type)` 伪装团队启动
+- 先 core 再 domain 的分批首发
 
-关键规则：
+## 目录结构（关键）
 
-- `INIT` 只允许 `TeamCreate(team_name=...)`
-- 首批成员必须通过 `AgentTeam(...)` 一次性启动
-- `RUNNING` 才允许增量 `Task(..., description=..., team_name=...)`
-- `Already leading team XXX` 视为可用并复用 team
-- 只有 `Feature not available` 才允许降级 FALLBACK
-
-参考：`references/docs/bootstrap_contract.md`
-
-### 2) 严格 JSON 输出协议
-
-Domain Agent 唯一有效输出是：
-
-- Schema: `assets/agents/schemas/domain_mapping_result.v1.json`
-- 必填字段包括：
-  - `objects_map`, `morphisms_map`, `theorems_used`
-  - `kernel_loss`, `strategy_topology`, `confidence`
-  - `domain_file_path`, `domain_file_hash`, `evidence_refs`
-
-### 3) 领域文件审计链路
-
-每个 Domain Agent 必须：
-
-1. 读取 `references/{domain}_v2.md`（或 `references/custom/...`）
-2. 输出该文件的 `sha256` 到 `domain_file_hash`
-3. 提供 `evidence_refs` 证明映射依据来自领域文件（必须覆盖 `Fundamentals/Core Morphisms/Theorems`）
-
-### 4) 交换图校验与非交换分歧处理
-
-Synthesizer 只消费结构化 JSON，计算：
-
-- `FULLY_COMMUTATIVE` / `LOCALLY_COMMUTATIVE` / `NON_COMMUTATIVE`
-- 非交换时不和稀泥，输出 bifurcation 场景并触发 obstruction alert
-
-## 架构概览
-
-- `team-lead`：流程驱动、状态推进、会议召集
-- `obstruction-theorist`：Schema Gate + 五维十四式审查
-- `synthesizer`：交换图校验、Limit/Colimit 提炼
-- `domain-agents (N)`：单域映射，严格 JSON 交付
-
-通信规则：仅 `SendMessage`。
-
-## 环境要求
-
-### Claude Code
-
-- Claude Code 2.1.34+
-- 启用 Agent Teams
-
-```bash
-export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-claude
+```text
+morphism-mapper/
+├── SKILL.md
+├── assets/
+│   ├── version.json
+│   └── agents/
+│       ├── schemas/domain_mapping_result.v1.json
+│       └── system_prompts/
+│           ├── leader.md
+│           ├── domain_template.md
+│           ├── obstruction.md
+│           └── synthesizer.md
+├── references/
+│   ├── docs/bootstrap_contract.md
+│   ├── docs/simulation_mode_guide.md
+│   ├── *_v2.md
+│   └── custom/*_v2.md
+└── scripts/
+    ├── dynamic_agent_generator.py
+    ├── validate_domains.py
+    └── validate_mapping_json.py
 ```
-
-### OpenCode
-
-- 支持同一 skill 目录结构
-- 安装后重启 OpenCode
 
 ## 安装
 
@@ -115,232 +82,71 @@ cd ~/.config/opencode/skills
 git clone https://github.com/pinren/morphism-mapper.git
 ```
 
-## 使用方式
+## 使用
 
-直接描述问题即可触发。
+直接提问复杂问题即可，例如：
 
-示例：
+- “请用多领域分析我们的增长停滞问题，给出策略和风险边界。”
+- “不要单学科答案，要能指出一致结论和冲突结论。”
 
-- “我们业务增长停滞，但组织越来越重，怎么破局？”
-- “从多领域分析这个转型策略，给我可执行方案和风险边界。”
+## Domain 输出契约（必须）
 
-你也可以在对话里明确要求：
+schema: `assets/agents/schemas/domain_mapping_result.v1.json`
 
-- “用 swarm 模式”
-- “要交换图校验和分歧场景”
-- “输出可审计 JSON 结果”
+关键必填字段：
 
-## 领域覆盖
+- `schema_version`
+- `domain_file_path`
+- `domain_file_hash`
+- `evidence_refs`（覆盖 `Fundamentals/Core Morphisms/Theorems`）
+- `objects_map`
+- `morphisms_map`
+- `theorems_used`
+- `kernel_loss`（对象，不可标量）
+- `strategy_topology`
 
-- 内置领域：35（`references/*_v2.md`）
-- 自定义领域：放在 `references/custom/*_v2.md`
-- 当前仓库可用领域总数（含 custom）可通过校验脚本自动统计
+## 质量门禁脚本
 
-## 新增领域
-
-### 路径 A：手工新增
-
-1. 在 `references/custom/` 新建 `<domain>_v2.md`
-2. 遵循 V2 结构：`Fundamentals / Core Objects / Core Morphisms / Theorems`
-3. 重新运行领域校验脚本
-
-### 路径 B：运行时补盲（auto_create）
-
-`DynamicAgentGenerator` 支持在领域缺失时返回生成指令，供 Team Lead 补盲后继续流程。
-
-核心实现：`scripts/dynamic_agent_generator.py`
-
-## 质量门禁与测试
-
-### 1) 领域文件健康检查
+### 校验领域文件
 
 ```bash
 cd ~/.claude/skills/morphism-mapper
 ./scripts/validate_domains.py
 ```
 
-检查项包括：
-
-- 必要章节存在
-- 基本条目数量下限
-- `extract_knowledge` 可解析
-
-### 2) Parser 单元测试
-
-```bash
-cd ~/.claude/skills/morphism-mapper
-python3 -m unittest scripts.tests.test_domain_parser
-```
-
-### 3) 映射结果 Schema 校验
-
-```bash
-cd ~/.claude/skills/morphism-mapper
-./scripts/validate_mapping_json.py /path/to/mapping.json
-```
-
-## 端到端实战示例
-
-下面用一个真实流程演示从输入到最终结果的最短路径。
-
-### Step 1: 用户输入
-
-在 Claude/OpenCode 中直接输入：
-
-```text
-请用 swarm 模式分析：我们业务增长停滞，但组织越来越重，给出可执行转型策略、风险边界和分歧场景。
-```
-
-### Step 2: Team Lead 启动分支（Bootstrap Contract）
-
-预期状态推进：
-
-```text
-INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> RUNNING
-```
-
-关键检查：
-
-1. 必须先执行 `TeamCreate(team_name=...)`
-2. `Already leading team XXX` 视为可用并复用 `XXX`
-3. 首批成员必须用一次 `AgentTeam(...)` 原子启动
-4. 首批 `launch_roster` 必须同时包含 `obstruction-theorist` 与 `synthesizer`
-5. Team Lead 不得代替 `synthesizer` 做最终整合
-6. 若 Synthesizer 延迟/未响应，Lead 只能催促与升级，不得直接输出最终报告
-7. 若在 `RUNNING` 前出现 `Task(Domain Agent: ...)`，视为协议违例并必须回到 `TEAM_READY` 重启
-
-### Step 3: Domain Agent 产出严格 JSON
-
-每个 Domain Agent 都应发送 `MAPPING_RESULT_JSON`（或 `MAPPING_RESULT_ROUND1`）并包含完整 schema 字段。示例：
-
-```json
-{
-  "schema_version": "domain_mapping_result.v1",
-  "domain": "game_theory",
-  "domain_file_path": "references/game_theory_v2.md",
-  "domain_file_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-  "evidence_refs": [
-    {"section": "Fundamentals", "quote_or_summary": "博弈主体在约束中追求收益最大化。"},
-    {"section": "Core Morphisms", "quote_or_summary": "策略变化是对对手动作的条件响应。"},
-    {"section": "Theorems", "quote_or_summary": "纳什均衡定义稳定策略组合。"}
-  ],
-  "objects_map": [
-    {"a_obj": "业务单元", "b_obj": "博弈主体", "rationale": "都在竞争与合作约束中做策略选择。"}
-  ],
-  "morphisms_map": [
-    {"a_mor": "组织调整", "b_mor": "策略偏移", "dynamics": "结构变化改变收益矩阵与行动空间。"}
-  ],
-  "theorems_used": [
-    {"id": "T1", "name": "纳什均衡", "mapping_hint_application": "识别稳定但低效均衡点并设计破局动作。"},
-    {"id": "T2", "name": "重复博弈", "mapping_hint_application": "用长期激励约束短期机会主义行为。"}
-  ],
-  "kernel_loss": {
-    "lost_nuances": [
-      {"element": "情绪因素", "description": "经典理性模型无法完整表达组织情绪扩散。", "severity": "MEDIUM"}
-    ],
-    "preservation_score": 0.73
-  },
-  "strategy_topology": {
-    "topology_type": "distributed_mesh",
-    "core_action": "remove_bottleneck",
-    "resource_flow": "recirculate",
-    "feedback_loop": "negative_feedback",
-    "time_dynamics": "continuous",
-    "agent_type": "active_strategic"
-  },
-  "topology_reasoning": "通过去中心化协作和闭环反馈降低组织内耗并恢复流动性。",
-  "confidence": 0.81
-}
-```
-
-### Step 4: 本地门禁校验（建议）
-
-把任一 Domain 输出保存为 JSON 文件后执行：
+### 校验 domain JSON
 
 ```bash
 cd ~/.claude/skills/morphism-mapper
 ./scripts/validate_mapping_json.py /path/to/domain_result.json
 ```
 
-期望结果是 `[OK] ...`。若缺 `domain_file_hash` 或 `kernel_loss`，应返回 `[FAILED]` 并列出缺失字段。
+## FAQ（精简）
 
-### Step 5: Obstruction 与 Synthesizer 收敛
+### Q1: TeamCreate 成功后还能降级 Fallback 吗？
 
-1. Obstruction 先做 `Schema Gate`，再做风险分层审查（LOW/MEDIUM/HIGH）  
-2. 至少等待 Obstruction Round 1 对全部 active domains 完成反馈后，才允许进入最终整合  
-3. 若 Obstruction 要求二轮修正，先完成修正+复审，再触发最终整合  
-4. Synthesizer 仅消费 JSON，计算交换图一致性并产出：
-   - `commutative_diagram_report`
-   - `limit`（跨域不变量）
-   - `colimit`（分场景互补策略）
-5. Domain → Obstruction/Synthesizer 发送时必须带 `message_id`，并拿到双 ACK（`OBSTRUCTION_DELIVERY_ACK` + `SYNTHESIZER_DELIVERY_ACK`）；超时需重发并上报
+不能。只有 Team 能力不可用（例如 `Feature not available`）才允许。
 
-### Step 6: 最终交付
+### Q2: UI 出现 `Task agents launched` 算违规吗？
 
-最终应包含三部分：
+不一定。以协议证据判定：是否一次性覆盖首批 roster、是否有 `LAUNCH_EVIDENCE`、是否有 core 双 ACK。
 
-1. 共识策略（Limit）
-2. 分歧场景与条件策略（Colimit + bifurcation）
-3. 风险容器与落地边界（来自 Obstruction + kernel_loss 汇总）
+### Q3: obstruction clear 只回一个 “clear” 可以吗？
 
-职责边界：最终整合结论必须由 `synthesizer` 产出，Lead 只做流程协调与发布。
+不可以。必须带 `clear_summary`（通过域、修正域、残余风险、最终条件）。
 
-## 关键文件索引
+### Q4: Lead 可不可以赶时间直接整合？
 
-### 协议与版本
+不可以。Lead 只能编排，final synthesis 只能由 synthesizer 产出。
 
-- `assets/version.json`
-- `references/docs/bootstrap_contract.md`
-- `assets/agents/schemas/domain_mapping_result.v1.json`
+### Q5: `Task(..., team_name, subagent_type)` 能否当团队启动？
 
-### 核心 prompts
+不能。这仍是单成员启动。
 
-- `assets/agents/system_prompts/leader.md`
-- `assets/agents/system_prompts/obstruction.md`
-- `assets/agents/system_prompts/synthesizer.md`
-- `assets/agents/system_prompts/domain_template.md`
+### Q6: 看不到 `AgentTeam` 工具名，是不是就不能走 Swarm？
 
-### 核心脚本
+不是。不要按工具名推断。以 `TeamCreate` 返回、首批团队级启动证据、core 双 ACK 判定。
 
-- `scripts/domain_selector.py`
-- `scripts/dynamic_agent_generator.py`
-- `scripts/validate_domains.py`
-- `scripts/validate_mapping_json.py`
+## 版本
 
-### 参考文档
-
-- `SKILL.md`
-- `references/docs/DOMAIN_AGENT_GUIDE.md`
-- `references/docs/simulation_mode_guide.md`
-
-## 常见问题
-
-### Q1: 什么时候会进入 FALLBACK？
-
-仅当 `TeamCreate` 返回 Team 能力不可用（例如 `Feature not available`）。
-进入后仍需遵循与 Swarm 等价的 Obstruction 门禁与 Synthesizer 交换图流程，见
-`references/docs/simulation_mode_guide.md`。
-
-### Q2: `Already leading team XXX` 算失败吗？
-
-不算。应复用 `XXX` 并继续 Agent Swarm。
-
-### Q3: 可以只发摘要给 Synthesizer 吗？
-
-不可以。v4.7 统一为结构化 JSON 主体，缺字段即拒收。
-
-### Q4: 为什么必须带 `domain_file_hash`？
-
-为了证明结果确实来自指定领域文件，防止“未读文件的泛化输出”。
-
-## 版本说明
-
-当前：`v4.7.0`（2026-02-15）
-
-本版重点：
-
-- 协议统一（Bootstrap Contract）
-- 输出统一（domain_mapping_result.v1）
-- 审计统一（domain_file_hash + evidence_refs）
-
-更多细节见：`SKILL.md` 的版本历史。
+- 单一版本源：`assets/version.json`
