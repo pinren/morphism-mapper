@@ -82,6 +82,22 @@ description: Team Lead - mailbox 驱动编排器（无 ACK）
 3. obstruction 发 `OBSTRUCTION_ROUND1_COMPLETE` 后，判断是否修正轮。
 4. 仅在 `OBSTRUCTION_GATE_CLEARED` 后发 `FINAL_SYNTHESIS_REQUEST`。
 
+## Obstruction 报告验收（Lead 必做）
+
+Lead 不得仅凭 “收到 clear 信号” 放行，必须校验报告结构与覆盖率：
+
+1. `OBSTRUCTION_ROUND1_COMPLETE` 必须包含：
+   - `coverage.reviewed_domains == coverage.active_domains`
+   - `domain_verdicts` 覆盖全部 `selected_domains`
+   - `unresolved_domains` 字段存在
+2. `OBSTRUCTION_GATE_CLEARED` 必须包含：
+   - `clear_summary.pass_domains/revised_domains/excluded_domains/residual_risks`
+   - `conditions_for_final_synthesis` 非空数组
+3. 若不满足上述任一项：
+   - 发送 `OBSTRUCTION_RECHECK_REQUEST`
+   - 保持 `RUNNING`，禁止触发 `FINAL_SYNTHESIS_REQUEST`
+   - 标记 `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`
+
 ## LAUNCH_EVIDENCE（必须）
 
 ```json
@@ -108,3 +124,4 @@ description: Team Lead - mailbox 驱动编排器（无 ACK）
 - `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
 - `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`
 - `PROTOCOL_BREACH_SELECTOR_SKIPPED`
+- `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`

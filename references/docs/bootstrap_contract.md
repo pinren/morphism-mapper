@@ -102,6 +102,16 @@
 3. 有 `REVISE/REJECT` 先修正再复审
 4. `OBSTRUCTION_GATE_CLEARED` 后，Lead 才能发 `FINAL_SYNTHESIS_REQUEST`
 
+Lead 放行前必须做报告验收：
+
+- `OBSTRUCTION_ROUND1_COMPLETE.coverage.reviewed_domains == active_domains`
+- `domain_verdicts` 覆盖全部 active domains
+- `unresolved_domains` 为空（或明确进入修正轮）
+- `OBSTRUCTION_GATE_CLEARED.conditions_for_final_synthesis` 非空
+- `clear_summary` 必含 `pass_domains/revised_domains/excluded_domains/residual_risks`
+
+任一不满足：禁止 final synthesis，标记 `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`。
+
 ## 8) 最小 LAUNCH_EVIDENCE
 
 ```json
@@ -128,6 +138,7 @@
 - `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
 - `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`
 - `PROTOCOL_BREACH_SELECTOR_SKIPPED`
+- `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`
 
 ## 10) 一页执行清单
 

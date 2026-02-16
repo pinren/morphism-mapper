@@ -29,6 +29,7 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode（no-ack）。用�
 4. `Task(..., team_name, subagent_type)` 不是团队级首批启动。
 5. 流程推进不使用 ACK，不做 ACK 超时重发闭环。
 6. Lead 只编排，不代替 core 干活。
+7. obstruction 必须输出字段级实质审查（schema/errors/consistency/attack_findings），空 clear 不放行。
 
 ## 3. Domain 输出约束
 

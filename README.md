@@ -7,6 +7,7 @@
 - 去除 ACK 机制（core/delivery/final ack 全部移除）
 - 改为 `SendMessage + mailbox` 推进
 - 保留原有门禁：团队级启动、obstruction 先审、gate clear 后 final synthesis
+- obstruction 升级为字段级实审（schema gate + consistency checks + attack findings）
 
 ## 核心流程
 
