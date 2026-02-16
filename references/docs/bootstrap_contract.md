@@ -100,6 +100,12 @@
 3. 若存在 `REVISE/REJECT`，先修正再复审
 4. 仅当 `OBSTRUCTION_GATE_CLEARED` 后，Lead 才能发 `FINAL_SYNTHESIS_REQUEST`
 
+Domain 文件读取约束（适用于 Swarm/Fallback）：
+
+- 先读 skill 内 `references/` 绝对路径
+- 仅绝对路径不可读时再回退 `references/...` 相对路径
+- 禁止先在当前项目工作目录搜索同名 `references/`
+
 ## 9) 失败分支（保留最小集合）
 
 - `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`: 首批被 Lead 逐个 Task 启动

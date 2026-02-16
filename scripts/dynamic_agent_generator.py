@@ -40,6 +40,7 @@ class DomainKnowledge:
     """领域知识数据结构"""
     domain: str
     domain_file_path: str
+    domain_file_resolved_path: str
     domain_file_hash: str
     fundamentals: str      # 100基本基石
     core_objects: str      # 14 Core Objects
@@ -123,11 +124,13 @@ class DynamicAgentGenerator:
 
         domain_file = self.resolve_domain_file(domain)
         domain_file_path = self.to_repo_relative_path(domain_file)
+        domain_file_resolved_path = str(domain_file.resolve())
         domain_file_hash = self.compute_sha256(normalized)
 
         return DomainKnowledge(
             domain=domain,
             domain_file_path=domain_file_path,
+            domain_file_resolved_path=domain_file_resolved_path,
             domain_file_hash=domain_file_hash,
             fundamentals=fundamentals,
             core_objects=core_objects,
@@ -187,14 +190,17 @@ class DynamicAgentGenerator:
 **你必须先读取领域文件，再分析。**
 
 - `domain_file_path`: `{knowledge.domain_file_path}`
+- `domain_file_resolved_path`: `{knowledge.domain_file_resolved_path}`
 - `expected_domain_file_hash`: `{knowledge.domain_file_hash}`
 - `schema_path`: `{schema_path}`
 
 执行步骤:
-1. 第一步必须 `read_file({knowledge.domain_file_path})`
-2. 分析时引用证据，填入 `evidence_refs`
-3. 输出 `domain_file_hash` 字段，必须与 `expected_domain_file_hash` 一致
-4. 不得输出缺字段 JSON。缺失 `domain_file_hash` 或 `kernel_loss` 视为无效结果
+1. 第一步必须优先读取 skill 内绝对路径：`read_file("{knowledge.domain_file_resolved_path}")`
+2. 若绝对路径不可读，再回退读取相对路径：`read_file("{knowledge.domain_file_path}")`
+3. 禁止先在当前项目工作目录（cwd）中搜索同名 `references/`
+4. 分析时引用证据，填入 `evidence_refs`
+5. 输出 `domain_file_hash` 字段，必须与 `expected_domain_file_hash` 一致
+6. 不得输出缺字段 JSON。缺失 `domain_file_hash` 或 `kernel_loss` 视为无效结果
 
 ---
 

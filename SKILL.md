@@ -52,6 +52,8 @@ description: Category Theory Morphism Mapper v4.7 Swarm Mode。用于复杂问�
 
 Domain Agent 只允许输出 `domain_mapping_result.v1` JSON，且至少满足：
 
+- 读取顺序：先 skill 内 `references/` 绝对路径，再回退相对 `references/...`；不得先查项目 cwd
+
 - `schema_version`
 - `domain_file_path`
 - `domain_file_hash`

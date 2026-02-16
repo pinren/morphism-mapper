@@ -17,14 +17,17 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + 双 ACK�
 
 - `CATEGORY_SKELETON`
 - `domain_file_path`: `{DOMAIN_FILE}`
+- `domain_file_resolved_path`: `{DOMAIN_FILE_RESOLVED}`（若提供）
 - `expected_domain_file_hash`: `{DOMAIN_FILE_HASH}`
 
 ## 执行顺序（必须）
 
-1. 先读取领域文件：`read_file({DOMAIN_FILE})`
-2. 基于文件内容构建映射 JSON
-3. 校验通过后双投递给 obstruction + synthesizer
-4. 等待双 ACK，未齐则重发一次并上报 Lead
+1. 若存在 `domain_file_resolved_path`，先读取：`read_file("{DOMAIN_FILE_RESOLVED}")`
+2. 若绝对路径不可读，再读取：`read_file("{DOMAIN_FILE}")`
+3. 禁止先在当前项目工作目录（cwd）中搜索同名 `references/`
+4. 基于文件内容构建映射 JSON
+5. 校验通过后双投递给 obstruction + synthesizer
+6. 等待双 ACK，未齐则重发一次并上报 Lead
 
 ## 必填输出字段
 

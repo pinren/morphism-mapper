@@ -95,6 +95,7 @@ schema: `assets/agents/schemas/domain_mapping_result.v1.json`
 
 关键必填字段：
 
+- 读取顺序：先 skill 内 `references/` 绝对路径，再回退相对 `references/...`（禁止先查项目 cwd）
 - `schema_version`
 - `domain_file_path`
 - `domain_file_hash`

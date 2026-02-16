@@ -63,6 +63,13 @@ def fallback_validate(data: Dict[str, Any]) -> List[str]:
     path = str(data.get("domain_file_path", ""))
     if not re.match(r"^references/(custom/)?[a-z0-9_]+_v2\.md$", path):
         errors.append("domain_file_path format invalid")
+    else:
+        resolved = (ROOT / path).resolve()
+        references_root = (ROOT / "references").resolve()
+        if not str(resolved).startswith(str(references_root)):
+            errors.append("domain_file_path must resolve under skill references/")
+        elif not resolved.exists():
+            errors.append("domain_file_path not found under skill references/")
 
     file_hash = str(data.get("domain_file_hash", ""))
     if not re.match(r"^[a-f0-9]{64}$", file_hash):

@@ -12,12 +12,14 @@ Domain Agent 的唯一交付物是 `domain_mapping_result.v1` JSON。
 
 ## 必做步骤
 
-1. 读取领域文件：`references/{domain}_v2.md` 或 `references/custom/{domain}_v2.md`
-2. 生成 `domain_file_hash`（sha256）
-3. 在 `evidence_refs` 中明确引用文件证据
-4. 完整输出 schema 必填字段
-5. 将同一 JSON 主体发送给 `obstruction-theorist` 与 `synthesizer`
-6. 等待双 ACK：`OBSTRUCTION_ACK_RECEIVED` + `SYNTHESIZER_ACK_RECEIVED`
+1. 优先读取 skill 内 `references/` 的绝对路径文件（而不是项目 cwd）
+2. 仅当绝对路径不可读时，回退读取 `references/{domain}_v2.md` 或 `references/custom/{domain}_v2.md`
+3. 禁止先在启动项目目录中搜索同名 `references/`
+4. 生成 `domain_file_hash`（sha256）
+5. 在 `evidence_refs` 中明确引用文件证据
+6. 完整输出 schema 必填字段
+7. 将同一 JSON 主体发送给 `obstruction-theorist` 与 `synthesizer`
+8. 等待双 ACK：`OBSTRUCTION_ACK_RECEIVED` + `SYNTHESIZER_ACK_RECEIVED`
 
 ## 必填字段
 

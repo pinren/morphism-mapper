@@ -99,10 +99,11 @@ Fallback 必须保持与 Swarm 相同的关键机制：
 
 每个域必须：
 
-1. 读取 `references/{domain}_v2.md` 或 `references/custom/{domain}_v2.md`
-2. 输出 `domain_mapping_result.v1` JSON
-3. 生成并记录双发送 + 双 ACK 事件
-4. 持久化 `domain_results/{domain}_round1.json`
+1. 优先读取 skill 内 `references/` 绝对路径（禁止先查项目 cwd）
+2. 仅在绝对路径不可读时，回退 `references/{domain}_v2.md` 或 `references/custom/{domain}_v2.md`
+3. 输出 `domain_mapping_result.v1` JSON
+4. 生成并记录双发送 + 双 ACK 事件
+5. 持久化 `domain_results/{domain}_round1.json`
 
 ### Step C: Obstruction Round 1（全集中审查）
 
