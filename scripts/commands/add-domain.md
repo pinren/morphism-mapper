@@ -146,7 +146,7 @@
 
 ### Step 5: 自动更新标签数据库
 
-**新增领域后，必须更新 `data/morphism_tags.json` 数据库**。
+**新增领域后，必须更新 `assets/morphism_tags.json` 数据库**。
 
 #### 方法1：自动提取（推荐）
 
@@ -164,16 +164,16 @@ python scripts/update_morphism_db.py yijing_thought
 
 脚本会自动：
 1. 从领域文件中提取14个Core Morphisms
-2. 添加到 `morphism_tags.json`
-3. 生成空的 `tags` 占位符（需要后续手动标注）
+2. 更新 `tag_relationships.domain_tag_mapping.<domain_name>`
+3. 基于领域描述自动推断 1-3 个标签（可人工微调）
 
 #### 方法2：手动更新
 
 如果自动脚本失败，手动更新：
 
-1. 打开 `data/morphism_tags.json`
-2. 在 `domains` 下新增领域条目
-3. 为每个Core Morphism添加 `tags` 字段（1-3个标签）
+1. 打开 `assets/morphism_tags.json`
+2. 在 `tag_relationships.domain_tag_mapping` 下新增领域条目
+3. 为该领域填写 1-3 个标签
 
 **标签选择**（16种）：
 - `feedback_regulation` - 反馈调节
@@ -195,17 +195,7 @@ python scripts/update_morphism_db.py yijing_thought
 
 **示例**：
 ```json
-"new_domain": {
-  "morphisms": [
-    {
-      "id": 1,
-      "name": "核心Morphism",
-      "dynamics": "动态描述",
-      "tags": ["feedback_regulation", "learning_adaptation"],
-      "annotation_method": "manual"
-    }
-  ]
-}
+"new_domain": ["feedback_regulation", "learning_adaptation"]
 ```
 
 **注意**：

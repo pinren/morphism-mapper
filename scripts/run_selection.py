@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import sys
-sys.path.insert(0, '/Users/pinren/projects/V/AgentTeam/.claude/skills/morphism-mapper/scripts')
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
 
 from domain_selector import DomainSelector
 
@@ -38,8 +41,8 @@ print("=== 领域选择结果 ===")
 print(f"\n匹配到的 Morphism Tags: {result.get('user_tags', [])}")
 print(f"\nTop 5 推荐领域:")
 for i, domain in enumerate(result['top_domains'][:5], 1):
-    rationale = domain.get('rationale', '无')
-    print(f"  {i}. {domain['domain']} (分数: {domain['score']:.3f}) - {rationale}")
+    reasoning = domain.get('reasoning', '无')
+    print(f"  {i}. {domain['domain']} (分数: {domain['score']:.3f}) - {reasoning}")
 
 # 运行 Tier Balance 选择
 tier_result = selector.tier_balance_selection(result['top_domains'])

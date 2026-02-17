@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import sys
-sys.path.insert(0, '/Users/pinren/projects/V/AgentTeam/.claude/skills/morphism-mapper/scripts')
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
 
 from dynamic_agent_generator import DynamicAgentGenerator
 

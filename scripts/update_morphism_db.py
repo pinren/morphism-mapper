@@ -1,116 +1,129 @@
 #!/usr/bin/env python3
-"""
-自动更新morphism_tags.json数据库
-当新增领域时，自动提取Core Morphisms并添加标签占位符
-"""
+"""自动更新 morphism_tags.json 的 domain_tag_mapping。"""
 
+from __future__ import annotations
+
+import argparse
 import json
 import re
 from pathlib import Path
+from typing import Dict, List
 
-def extract_morphisms_from_domain(domain_path):
-    """从领域文件中提取Core Morphisms"""
-    with open(domain_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # 查找Core Morphisms部分
-    pattern = r'## Core Morphisms \(14个\)(.*?)(?=##|\Z)'
-    match = re.search(pattern, content, re.DOTALL)
-    
-    if not match:
+ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = ROOT / "assets" / "morphism_tags.json"
+REFERENCES_DIR = ROOT / "references"
+
+
+def resolve_domain_file(domain_name: str) -> Path:
+    builtin = REFERENCES_DIR / f"{domain_name}_v2.md"
+    if builtin.exists():
+        return builtin
+    custom = REFERENCES_DIR / "custom" / f"{domain_name}_v2.md"
+    if custom.exists():
+        return custom
+    raise FileNotFoundError(f"领域文件不存在: {builtin} 或 {custom}")
+
+
+def extract_morphisms_from_domain(domain_path: Path) -> List[Dict[str, str]]:
+    """从领域文件中提取 Core Morphisms（name + dynamics）。"""
+    content = domain_path.read_text(encoding="utf-8")
+
+    sec_match = re.search(r"^## Core Morphisms.*$([\s\S]*?)(?=^##\s+|\Z)", content, re.MULTILINE)
+    if not sec_match:
         return []
-    
-    morphisms_section = match.group(1)
-    
-    # 提取每个Morphism
-    morph_pattern = r'- \*\*(.+?)\*\*:\s*(.+?)\n\s+- \*涉及\*:\s*(.+?)\n\s+- \*动态\*:\s*(.+?)(?=\n\s+- \*\*|$)'
-    matches = re.findall(morph_pattern, morphisms_section, re.DOTALL)
-    
-    morphisms = []
-    for i, (name, definition, involves, dynamics) in enumerate(matches, 1):
-        morphisms.append({
-            'id': i,
-            'name': name.strip(),
-            'dynamics': dynamics.strip(),
-            'tags': [],  # 空标签，需要手动标注
-            'annotation_method': 'pending'
-        })
-    
-    return morphisms
 
-def update_morphism_tags_db(domain_name, domain_path, db_path):
-    """更新morphism_tags.json数据库"""
-    
-    # 读取数据库
-    with open(db_path, 'r', encoding='utf-8') as f:
-        db = json.load(f)
-    
-    # 如果领域已存在，跳过
-    if domain_name in db['domains']:
-        print(f"领域 '{domain_name}' 已存在于数据库中")
-        return False
-    
-    # 提取Morphism
-    morphisms = extract_morphisms_from_domain(domain_path)
-    
-    if len(morphisms) != 14:
-        print(f"警告: 只提取到 {len(morphisms)} 个Morphism，预期14个")
-    
-    # 添加到数据库
-    db['domains'][domain_name] = {
-        'morphisms': morphisms
-    }
-    
-    # 更新metadata
-    db['metadata']['total_domains'] = len(db['domains'])
-    db['metadata']['total_morphisms'] = sum(len(d['morphisms']) for d in db['domains'].values())
-    
-    # 保存
-    with open(db_path, 'w', encoding='utf-8') as f:
-        json.dump(db, f, ensure_ascii=False, indent=2)
-    
-    print(f"✅ 已添加领域 '{domain_name}' 到数据库")
-    print(f"   - 提取Morphism: {len(morphisms)} 个")
-    print(f"   - 需要手动标注标签")
-    print(f"   - 数据库路径: {db_path}")
-    
-    return True
+    section = sec_match.group(1)
+    items: List[Dict[str, str]] = []
 
-def main():
-    """主函数"""
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("用法: python update_morphism_db.py <domain_name>")
-        print("示例: python update_morphism_db.py new_domain")
-        sys.exit(1)
-    
-    domain_name = sys.argv[1]
-    
-    # 路径设置
-    script_dir = Path(__file__).parent
-    domain_path = script_dir.parent / "references" / "custom" / f"{domain_name}_v2.md"
-    db_path = script_dir.parent / "data" / "morphism_tags.json"
-    
-    if not domain_path.exists():
-        print(f"错误: 领域文件不存在: {domain_path}")
-        print("请确保领域文件已创建在 references/custom/ 目录下")
-        sys.exit(1)
-    
-    if not db_path.exists():
-        print(f"错误: 数据库文件不存在: {db_path}")
-        sys.exit(1)
-    
-    # 更新数据库
-    success = update_morphism_tags_db(domain_name, domain_path, db_path)
-    
-    if success:
-        print("\n下一步:")
-        print("1. 打开 data/morphism_tags.json")
-        print(f"2. 找到 '{domain_name}' 领域")
-        print("3. 为每个Morphism的 'tags' 字段添加1-3个标签")
-        print("4. 将 'annotation_method' 改为 'manual'")
-        print("5. 保存文件，domain_selector.py会自动使用新领域")
+    for block in re.split(r"\n(?=-\s+\*\*)", section):
+        line_match = re.search(r"-\s+\*\*(.+?)\*\*:\s*(.+)", block)
+        if not line_match:
+            continue
+
+        name = line_match.group(1).strip()
+        first_desc = line_match.group(2).strip()
+
+        dyn_match = re.search(r"\*动态\*:\s*(.+)", block)
+        dynamics = dyn_match.group(1).strip() if dyn_match else first_desc
+
+        items.append({"name": name, "dynamics": dynamics})
+
+    return items
+
+
+def infer_domain_tags(
+    morphisms: List[Dict[str, str]],
+    tags_config: Dict[str, Dict],
+    top_k: int = 3,
+) -> List[str]:
+    """基于标签 indicators 从 Core Morphisms 推断领域标签。"""
+    scores: Dict[str, float] = {}
+
+    for morphism in morphisms:
+        text = f"{morphism.get('name', '')} {morphism.get('dynamics', '')}".lower()
+        for tag_id, cfg in tags_config.items():
+            indicators = cfg.get("indicators", [])
+            hit = sum(1 for kw in indicators if isinstance(kw, str) and kw and kw.lower() in text)
+            if hit:
+                scores[tag_id] = scores.get(tag_id, 0.0) + hit
+
+    if not scores:
+        return []
+
+    ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+    return [tag for tag, _ in ranked[:top_k]]
+
+
+def update_domain_mapping(domain_name: str, top_k: int) -> bool:
+    db = json.loads(DB_PATH.read_text(encoding="utf-8"))
+    tags_config = db.get("tags", {})
+    domain_map = db.setdefault("tag_relationships", {}).setdefault("domain_tag_mapping", {})
+
+    domain_file = resolve_domain_file(domain_name)
+    morphisms = extract_morphisms_from_domain(domain_file)
+
+    if not morphisms:
+        raise ValueError(f"未从 {domain_file} 提取到 Core Morphisms")
+
+    inferred_tags = infer_domain_tags(morphisms, tags_config, top_k=top_k)
+    if not inferred_tags:
+        raise ValueError(f"未能为领域 {domain_name} 推断标签，请检查领域文件描述")
+
+    old_tags = domain_map.get(domain_name, [])
+    changed = old_tags != inferred_tags
+    domain_map[domain_name] = inferred_tags
+
+    DB_PATH.write_text(json.dumps(db, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    print(f"✅ 已更新领域映射: {domain_name}")
+    print(f"   - 领域文件: {domain_file}")
+    print(f"   - 提取 Core Morphisms: {len(morphisms)}")
+    print(f"   - 推断标签: {inferred_tags}")
+    if old_tags:
+        print(f"   - 旧标签: {old_tags}")
+    print(f"   - 数据库: {DB_PATH}")
+
+    return changed
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="更新 morphism_tags.json 的 domain_tag_mapping")
+    parser.add_argument("domain_name", help="领域名（不含 _v2.md）")
+    parser.add_argument("--top-k", type=int, default=3, help="最多写入标签数量，默认3")
+    args = parser.parse_args()
+
+    try:
+        changed = update_domain_mapping(args.domain_name, top_k=args.top_k)
+    except Exception as exc:
+        print(f"错误: {exc}")
+        return 1
+
+    print("\n下一步:")
+    print("1. 打开 assets/morphism_tags.json")
+    print(f"2. 检查 tag_relationships.domain_tag_mapping.{args.domain_name}")
+    print("3. 如需人工微调，可直接修改标签列表")
+    return 0 if changed else 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

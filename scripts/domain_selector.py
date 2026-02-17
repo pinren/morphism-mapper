@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Domain Selector - 智能领域选择器 (v4.0)
+Domain Selector - 智能领域选择器 (v4.7)
 基于Morphism结构匹配的智能领域选择算法
-支持 v4.0 Tier Balance 和 complexity_tier
+支持 Tier Balance 和 complexity_tier
 """
 
 import json
@@ -51,7 +51,7 @@ class TierBalanceResult:
         }
 
 class DomainSelector:
-    """智能领域选择器 v4.0"""
+    """智能领域选择器 v4.7"""
 
     def __init__(
         self,
@@ -76,7 +76,7 @@ class DomainSelector:
         self.scoring_rules = self.tags_data.get("scoring_rules", {})
         self.complexity_thresholds = self.tags_data.get("complexity_thresholds", {})
 
-        # 加载 domain_agents.json (v4.0)
+        # 加载 domain_agents.json
         if agents_file is None:
             agents_file = str(script_dir / "assets" / "agents" / "config" / "domain_agents.json")
         self.agents_data = self._load_agents(agents_file)
@@ -641,7 +641,7 @@ class DomainSelector:
         ⚠️ 注意：Swarm 模式下自动调用 select_domains() + tier_balance_selection()，无需交互
         """
         print("=" * 60)
-        print("Domain Selector v4.0 - 智能领域选择器（全自动模式）")
+        print("Domain Selector v4.7 - 智能领域选择器（全自动模式）")
         print("=" * 60)
         print()
 
@@ -738,7 +738,7 @@ def main():
     elif len(sys.argv) > 1 and sys.argv[1] == "--tier-balance":
         # Tier Balance 演示模式
         print("=" * 60)
-        print("Tier Balance Selection Demo (v4.0)")
+        print("Tier Balance Selection Demo (v4.7)")
         print("=" * 60)
 
         # 模拟 Fast Mode 结果
@@ -793,7 +793,7 @@ def main():
 
     else:
         # 显示帮助
-        print("Domain Selector v4.0")
+        print("Domain Selector v4.7")
         print()
         print("用法:")
         print("  python domain_selector.py --interactive    启动交互模式")

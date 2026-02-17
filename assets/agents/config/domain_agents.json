@@ -21,7 +21,7 @@
      "tier_4_interpretive": {
        "name": "阐释级（意义建构）",
        "description": "人文社科理论，提供意义和文化视角",
-       "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought", "yijing_thought", "art_theory", "sociology"]
+       "domains": ["zhuangzi", "mythology", "anthropology", "religious_studies", "linguistics", "mao_zedong_thought", "yijing_thought", "art_theory", "sociology", "political_science"]
      }
   },
   "domains": {
@@ -535,6 +535,21 @@
         "last_used": null
       }
     },
+    "political_science": {
+      "domain_file": "references/custom/political_science_v2.md",
+      "modules": ["yoneda_probe", "limits_colimits", "adjoint_balancer"],
+      "persona": "agents/personas/political_science_persona.md",
+      "default_seed": false,
+      "complexity_tier": "tier_4_interpretive",
+      "tier_strength": 0.76,
+      "tags": ["state_competition", "institutional_dynamics", "power_transition", "policy_feedback"],
+      "metadata": {
+        "activation_count": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0.0,
+        "last_used": null
+      }
+    },
     "mao_zedong_thought": {
       "domain_file": "references/mao_zedong_thought_v2.md",
       "modules": ["yoneda_probe", "adjoint_balancer", "limits_colimits"],
@@ -566,8 +581,8 @@
   "minimal_viable_sets": {
     "social": ["game_theory", "network_theory", "social_capital"],
     "physical": ["thermodynamics", "control_systems", "complexity_science"],
-    "abstract": ["category_theory", "logic", "second_order_thinking"],
-    "practical": ["kaizen", "decision_theory", "antifragility"],
+    "abstract": ["information_theory", "second_order_thinking", "complexity_science"],
+    "practical": ["kaizen", "operations_research", "antifragility"],
     "default": ["complexity_science", "network_theory", "game_theory"]
   },
   "wildcard_candidates": [

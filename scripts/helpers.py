@@ -15,9 +15,10 @@ from dataclasses import dataclass
 from collections import defaultdict
 
 # Skill 基础路径
-SKILL_BASE = Path("/Users/pinren/projects/V/AgentTeam/.claude/skills/morphism-mapper")
+SKILL_BASE = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = SKILL_BASE / "scripts"
-REFERNCES_DIR = SKILL_BASE / "references"
+ASSETS_DIR = SKILL_BASE / "assets"
+REFERENCES_DIR = SKILL_BASE / "references"
 KNOWLEDGE_DIR = SKILL_BASE / "knowledge"
 
 # 临时文件路径
@@ -515,7 +516,7 @@ def apply_tier_balance(
         选中的领域列表
     """
     # 加载领域配置
-    config_file = SCRIPTS_DIR / "agents" / "config" / "domain_agents.json"
+    config_file = ASSETS_DIR / "agents" / "config" / "domain_agents.json"
     with open(config_file, "r", encoding="utf-8") as f:
         domain_config = json.load(f)
 
@@ -561,7 +562,7 @@ def select_wildcard_domain(seeded_domains: List[str]) -> str:
         Wildcard 领域名称
     """
     # 加载 wildcard 候选
-    config_file = SCRIPTS_DIR / "agents" / "config" / "domain_agents.json"
+    config_file = ASSETS_DIR / "agents" / "config" / "domain_agents.json"
     with open(config_file, "r", encoding="utf-8") as f:
         domain_config = json.load(f)
 

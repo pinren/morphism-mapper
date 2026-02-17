@@ -3,9 +3,12 @@
 Debug 模式领域选择 - 婆媳问题
 """
 import sys
-sys.path.insert(0, '/Users/pinren/projects/V/AgentTeam/.claude/skills/morphism-mapper/scripts')
+from pathlib import Path
 
-from domain_selector import DomainSelector, TierBalanceResult
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+from domain_selector import DomainSelector
 
 # 婆媳问题的范畴骨架
 category_skeleton = {
@@ -76,11 +79,12 @@ print("="*60)
 top_domains = result["top_domains"][:2]
 
 for i, domain in enumerate(top_domains, 1):
+    matched_tags = [m.get("tag", "") for m in domain.get("best_matches", []) if m.get("tag")]
     print(f"\n【领域 {i}】")
     print(f"选择的领域: {domain['domain']}")
-    print(f"置信度: {domain['confidence']:.2f}")
-    print(f"匹配标签: {', '.join(domain['matched_tags'])}")
-    print(f"推荐理由: {domain['rationale']}")
+    print(f"整体置信度: {result.get('confidence', 0):.2f}")
+    print(f"匹配标签: {', '.join(matched_tags) if matched_tags else '无'}")
+    print(f"推荐理由: {domain.get('reasoning', '无')}")
 
 # 输出用于启动 Agent 的信息
 print("\n" + "="*60)
