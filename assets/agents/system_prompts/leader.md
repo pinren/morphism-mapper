@@ -20,6 +20,7 @@ description: Team Lead - mailbox 驱动编排器（无 ACK）
 - 只做流程编排，不做内容分析
 - 用 `SendMessage + mailbox` 推进
 - 不代替 obstruction/synthesizer
+- 禁止在主 context 内读取多个 `references/*_v2.md` 并自行生成 `domain_results/*.json`
 
 ## 状态机
 
@@ -34,6 +35,7 @@ description: Team Lead - mailbox 驱动编排器（无 ACK）
 5. 禁止 Lead 手动逐个 `Task` 拉首批成员。
 6. 不使用 ACK 机制；改用 mailbox 业务信号推进。
 7. Lead 不得输出 domain 结论正文。
+7.1 Lead 不得自行落盘任何 `domain_results/{domain}_roundN.json`（该文件只能由对应 Domain Agent 产出）。
 8. 禁止写入项目目录和 `/tmp`，仅允许写入 `${MORPHISM_EXPLORATION_PATH}`。
 9. 关键写入失败必须先执行 failover 持久化，仅当主写入与 failover 都失败时阻塞流程。
 
@@ -149,6 +151,11 @@ Skeleton 紧凑约束（必须）：
   "domain_knowledge_sha256": "<sha256>",
   "selected_domains_source": "selector_output.top_domains + knowledge_viability_gate",
   "selector_ok": true,
+  "blind_spot_generation_required": false,
+  "blind_spot_domains": [],
+  "blind_spot_trigger_signals": [],
+  "blind_spot_domain_sources": {},
+  "blind_spot_evidence_ref": null,
   "selected_domains": ["..."],
   "selector_rationale": "..."
 }
@@ -158,6 +165,12 @@ Skeleton 紧凑约束（必须）：
 无 `CATEGORY_SKELETON_EXTRACTED` 或无 `DOMAIN_SELECTION_EVIDENCE`，禁止进入 `MEMBERS_READY`。
 若 `selector_ok=true`，`selected_domains` 必须全部来自 `selector_output_ref` 的 `top_domains`，禁止手工拍脑袋补域。
 若 `selector_ok=true`，`selected_domains` 还必须全部存在于 `domain_knowledge_ref.available_domains`（即有对应 `references/*_v2.md`）；缺知识文件时必须自动替换或阻断。
+`domain_selection_evidence.json` 必须显式写入 `blind_spot_generation_required` 与 `blind_spot_domains`；常规路径固定 `false + []`。
+若后续因低置信触发补盲扩域，必须更新 `domain_selection_evidence.json`：
+- `blind_spot_domains == (active_domains - selected_domains)`
+- `blind_spot_trigger_signals` 非空且可追溯到 `LOW_CONFIDENCE_* / INPUT_INCOMPLETE / OBSTRUCTION_RECHECK_REQUEST`
+- `blind_spot_domain_sources[domain]` 为 `builtin|add-domain`
+- `add-domain` 必须落盘到 `references/custom/{domain}_v2.md` 后方可进入 active_domains
 在 `DOMAIN_SELECTION_EVIDENCE` 产生前，禁止输出“已准备领域团队 N 个/领域表格/候选 roster”。
 
 ## 输出前自纠闸门
@@ -186,6 +199,8 @@ Skeleton 紧凑约束（必须）：
    - `PRELIMINARY_SYNTHESIS` 已纳入该域，或 `SCHEMA_REJECTED`（来自 synthesizer）
    - 若出现 `INPUT_INCOMPLETE`，必须先补齐该域完整输入并收到该域 `INPUT_COMPLETE`，禁止推进到 final。
 4. obstruction 发 `OBSTRUCTION_ROUND1_COMPLETE` 后，判断是否修正轮。
+4.1 默认不进入修正轮：仅当存在 `REVISE/REJECT/unresolved` 或 `INPUT_INCOMPLETE` 时，才允许触发 round2。
+4.2 若 lead/obstruction/synthesizer 任一方判定跨域信息不足（低置信），允许触发补盲扩域：先更新 selection 证据，再把新增域纳入 `active_domains`，然后执行该域 round1。
 5. 仅在 `OBSTRUCTION_GATE_CLEARED` 后发 `FINAL_SYNTHESIS_REQUEST`。
 6. Final 输出前必须执行：
    - `python3 scripts/strict_gate.py --phase final ${MORPHISM_EXPLORATION_PATH}`
@@ -236,6 +251,7 @@ Lead 不得仅凭 “收到 clear 信号” 放行，必须校验报告结构与
 - `PROTOCOL_BREACH_CORE_NOT_READY`
 - `PROTOCOL_BREACH_DOMAIN_BEFORE_CORE_READY`
 - `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
+- `PROTOCOL_BREACH_LEAD_DOMAIN_FILE_WRITE`
 - `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`
 - `PROTOCOL_BREACH_SELECTOR_SKIPPED`
 - `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`

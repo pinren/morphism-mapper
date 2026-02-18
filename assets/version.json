@@ -1,5 +1,5 @@
 {
-  "version": "4.8.1",
+  "version": "4.8.4",
   "release_date": "2026-02-18",
   "codename": "visualization-contract",
   "notes": [
@@ -8,6 +8,11 @@
     "领域文件读取 + 哈希审计",
     "强制 session_manifest.json + mailbox_events.ndjson",
     "禁止 legacy 主事件流 message_events.jsonl",
-    "同一 run 强制单目录（session_id=目录名）"
+    "同一 run 强制单目录（session_id=目录名）",
+    "禁止 bash/heredoc 内联写大 JSON",
+    "禁止 Lead 直接落盘 domain_results",
+    "默认单轮完成，round2 需触发证据",
+    "domain_selection_evidence 显式补盲状态字段",
+    "支持低置信触发的补盲扩域（builtin/add-domain）并强制证据链"
   ]
 }

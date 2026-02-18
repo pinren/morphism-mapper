@@ -74,6 +74,7 @@
 - Lead 逐个 `Task(...)` 拉首批
 - `Task(..., team_name, subagent_type)` 伪装团队启动
 - 先 core 后 domain 分批首发
+- Lead 在主 context 连续读取多个 `references/*_v2.md` 并直接写 `domain_results/*.json`
 
 ## 5.5) Skeleton + 领域选择门禁（必须）
 
@@ -112,6 +113,11 @@
   "domain_knowledge_sha256": "<sha256>",
   "selected_domains_source": "selector_output.top_domains + knowledge_viability_gate",
   "selector_ok": true,
+  "blind_spot_generation_required": false,
+  "blind_spot_domains": [],
+  "blind_spot_trigger_signals": [],
+  "blind_spot_domain_sources": {},
+  "blind_spot_evidence_ref": null,
   "selected_domains": ["..."],
   "selector_rationale": "..."
 }
@@ -131,6 +137,11 @@
 
 无证据直接选域，标记 `PROTOCOL_BREACH_SELECTOR_SKIPPED`。
 若 `selector_ok=true` 但缺失 `selector_input_ref/selector_output_ref/domain_catalog_ref/domain_knowledge_ref`，或 `selected_domains` 不在 selector 输出中，或所选域无对应 `references/*_v2.md`，视为违规。
+若触发补盲扩域（`blind_spot_generation_required=true`），必须满足：
+- `blind_spot_domains == (active_domains - selected_domains)`
+- `blind_spot_trigger_signals` 非空（来自低置信/输入不完整信号）
+- `blind_spot_domain_sources[domain] in {builtin, add-domain}`
+- `add-domain` 对应知识文件位于 `references/custom/{domain}_v2.md`
 在 `DOMAIN_SELECTION_EVIDENCE` 生成前，输出“已准备领域团队 N 个/领域清单表格”同样视为违规（预选域泄漏）。
 
 ## 6) Core 就绪（无 ACK）
@@ -199,6 +210,7 @@ Lead 放行前必须做报告验收：
 - `PROTOCOL_BREACH_CORE_NOT_READY`
 - `PROTOCOL_BREACH_DOMAIN_BEFORE_CORE_READY`
 - `PROTOCOL_BREACH_LEAD_SOLO_ANALYSIS`
+- `PROTOCOL_BREACH_LEAD_DOMAIN_FILE_WRITE`
 - `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`
 - `PROTOCOL_BREACH_SELECTOR_SKIPPED`
 - `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`

@@ -111,6 +111,18 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
   - `selected_domains_source=selector_output.top_domains + knowledge_viability_gate`
 - `selected_domains` 必须属于 `selector_output_ref.result.top_domains`，且属于 `domain_catalog_ref.domains`。
 - `selected_domains` 还必须属于 `domain_knowledge_ref.available_domains`（确保有对应领域知识文件）。
+- `blind_spot_generation_required` 必须显式写入；常规路径固定为 `false`，并要求：
+  - `blind_spot_domains=[]`
+  - `blind_spot_trigger_signals=[]`
+  - `blind_spot_domain_sources={}`
+  - `blind_spot_evidence_ref=null`
+- `selector_ok=true` 且存在可用知识文件时，禁止隐式补盲（不得把非 active domain 混入 `domain_results/*`）。
+- 若 `blind_spot_generation_required=true`，必须同时满足：
+  - `blind_spot_domains == (active_domains - selected_domains)`
+  - `blind_spot_trigger_signals` 非空，且值来自：`LOW_CONFIDENCE_LEAD|LOW_CONFIDENCE_OBSTRUCTION|LOW_CONFIDENCE_SYNTHESIZER|INPUT_INCOMPLETE|OBSTRUCTION_RECHECK_REQUEST`
+  - `blind_spot_domain_sources` 为对象，逐域标注 `builtin|add-domain`
+  - `blind_spot_evidence_ref` 指向有效 JSON 证据文件
+  - `add-domain` 来源的域，其知识文件必须位于 `references/custom/{domain}_v2.md`
 - 仅当 `selector_ok=false` 时允许手工选域，且必须包含：
   - `selector_error`
   - `manual_selection_reason`
@@ -131,6 +143,7 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 
 - `obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json`
 - `obstruction_feedbacks/OBSTRUCTION_GATE_CLEARED.json`
+- `domain_results/{domain}_round2.json` 仅在触发修正轮时允许出现（非必需）。
 
 时序硬约束（必须）：
 
@@ -138,6 +151,9 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 - `OBSTRUCTION_ROUND1_COMPLETE` 必须晚于全部 active domains 的 mapping 与 obstruction feedback 事件。
 - `OBSTRUCTION_GATE_CLEARED` 必须晚于 `OBSTRUCTION_ROUND1_COMPLETE`。
 - 文件时序上，`obstruction_feedbacks/{domain}_obstruction.json` 不得早于 `domain_results/{domain}_round1.json`。
+- 若出现 `domain_results/{domain}_round2.json`，必须同时满足：
+  - mailbox 中存在该域 `MAPPING_RESULT_ROUND2`
+  - 且至少存在一个触发证据：`INPUT_INCOMPLETE(domain)` 或 round1 审查结论 `REVISE/REJECT/unresolved`
 
 ## 5. 失败处理
 

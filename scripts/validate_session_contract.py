@@ -38,6 +38,7 @@ REQUIRED_EVENT_KEYS = {
 ALLOWED_RUN_MODE = {"swarm", "fallback", "hybrid"}
 ALLOWED_STATUS = {"RUNNING", "COMPLETED", "BLOCKED", "FAILED"}
 SESSION_ID_RE = re.compile(r"^(?P<run_id>\d{8}T\d{6}Z_[0-9a-f]{6})_(?P<slug>[A-Za-z0-9_-]+)$")
+DOMAIN_ROUND_RE = re.compile(r"^(?P<domain>[a-z0-9_]+)_round(?P<round>\d+)\.json$")
 
 
 def _err(msg: str) -> str:
@@ -166,6 +167,8 @@ def validate_domain_artifacts(root: Path) -> list[str]:
         out.append(_err("session_manifest.active_domains missing or empty"))
         return out
 
+    active_domain_set = {d for d in active_domains if isinstance(d, str) and d}
+
     for d in active_domains:
         if not isinstance(d, str) or not d:
             out.append(_err("session_manifest.active_domains contains invalid domain value"))
@@ -187,6 +190,21 @@ def validate_domain_artifacts(root: Path) -> list[str]:
                     )
             except OSError as e:
                 out.append(_warn(f"mtime check failed for {d}: {e}"))
+
+    domain_dir = root / "domain_results"
+    if domain_dir.exists():
+        for path in sorted(domain_dir.glob("*.json")):
+            m = DOMAIN_ROUND_RE.match(path.name)
+            if not m:
+                continue
+            domain = m.group("domain")
+            if domain not in active_domain_set:
+                out.append(
+                    _err(
+                        f"domain_results contains artifact for non-active domain: {path.name} "
+                        "(possible implicit blind-spot expansion)"
+                    )
+                )
 
     return out
 
@@ -225,6 +243,26 @@ def validate_launch_evidence(root: Path) -> list[str]:
 
 def validate_category_and_selection(root: Path) -> list[str]:
     out: list[str] = []
+    manifest = _load_manifest(root)
+    manifest_selected_domains: set[str] = set()
+    manifest_active_domains: set[str] = set()
+    if isinstance(manifest, dict):
+        raw_selected = manifest.get("selected_domains")
+        raw_active = manifest.get("active_domains")
+        if isinstance(raw_selected, list):
+            manifest_selected_domains = {d for d in raw_selected if isinstance(d, str) and d}
+        if isinstance(raw_active, list):
+            manifest_active_domains = {d for d in raw_active if isinstance(d, str) and d}
+        if manifest_selected_domains and manifest_active_domains:
+            missing = sorted(manifest_selected_domains - manifest_active_domains)
+            if missing:
+                out.append(
+                    _err(
+                        "session_manifest.selected_domains must be subset of active_domains: "
+                        + ",".join(missing)
+                    )
+                )
+
     skill_root = Path(__file__).resolve().parents[1]
     domain_catalog_cfg = skill_root / "assets" / "agents" / "config" / "domain_agents.json"
     allowed_domains: set[str] = set()
@@ -237,9 +275,18 @@ def validate_category_and_selection(root: Path) -> list[str]:
         except Exception as e:  # noqa: BLE001
             out.append(_warn(f"domain catalog parse failed: {e}"))
 
-    def has_domain_knowledge(domain: str) -> bool:
+    def resolve_domain_knowledge(domain: str) -> Path | None:
         refs = skill_root / "references"
-        return (refs / f"{domain}_v2.md").exists() or (refs / "custom" / f"{domain}_v2.md").exists()
+        base_path = refs / f"{domain}_v2.md"
+        custom_path = refs / "custom" / f"{domain}_v2.md"
+        if base_path.exists():
+            return base_path.resolve()
+        if custom_path.exists():
+            return custom_path.resolve()
+        return None
+
+    def has_domain_knowledge(domain: str) -> bool:
+        return resolve_domain_knowledge(domain) is not None
 
     skeleton_path = root / "category_skeleton.json"
     extraction_path = root / "category_extraction_evidence.json"
@@ -355,6 +402,129 @@ def validate_category_and_selection(root: Path) -> list[str]:
                 out.append(_err("domain_selection_evidence.selector_ok must be boolean"))
                 selector_ok = None
 
+            blind_spot_required = selection.get("blind_spot_generation_required")
+            blind_spot_domains = selection.get("blind_spot_domains")
+            blind_spot_trigger_signals = selection.get("blind_spot_trigger_signals")
+            blind_spot_domain_sources = selection.get("blind_spot_domain_sources")
+            blind_spot_evidence_ref = selection.get("blind_spot_evidence_ref")
+            blind_spot_reason = selection.get("blind_spot_reason")
+            if blind_spot_required is None:
+                out.append(_err("domain_selection_evidence.blind_spot_generation_required missing"))
+            elif not isinstance(blind_spot_required, bool):
+                out.append(_err("domain_selection_evidence.blind_spot_generation_required must be boolean"))
+            if blind_spot_domains is None:
+                out.append(_err("domain_selection_evidence.blind_spot_domains missing"))
+            elif not isinstance(blind_spot_domains, list):
+                out.append(_err("domain_selection_evidence.blind_spot_domains must be array"))
+            if blind_spot_trigger_signals is None:
+                out.append(_err("domain_selection_evidence.blind_spot_trigger_signals missing"))
+            elif not isinstance(blind_spot_trigger_signals, list):
+                out.append(_err("domain_selection_evidence.blind_spot_trigger_signals must be array"))
+            if blind_spot_domain_sources is None:
+                out.append(_err("domain_selection_evidence.blind_spot_domain_sources missing"))
+            elif not isinstance(blind_spot_domain_sources, dict):
+                out.append(_err("domain_selection_evidence.blind_spot_domain_sources must be object"))
+            if blind_spot_required is False and isinstance(blind_spot_domains, list) and blind_spot_domains:
+                out.append(
+                    _err(
+                        "domain_selection_evidence.blind_spot_domains must be empty when "
+                        "blind_spot_generation_required=false"
+                    )
+                )
+            if (
+                blind_spot_required is False
+                and isinstance(blind_spot_trigger_signals, list)
+                and blind_spot_trigger_signals
+            ):
+                out.append(
+                    _err(
+                        "domain_selection_evidence.blind_spot_trigger_signals must be empty when "
+                        "blind_spot_generation_required=false"
+                    )
+                )
+            if (
+                blind_spot_required is False
+                and isinstance(blind_spot_domain_sources, dict)
+                and blind_spot_domain_sources
+            ):
+                out.append(
+                    _err(
+                        "domain_selection_evidence.blind_spot_domain_sources must be empty when "
+                        "blind_spot_generation_required=false"
+                    )
+                )
+            if blind_spot_required is False and blind_spot_evidence_ref not in (None, ""):
+                out.append(
+                    _err(
+                        "domain_selection_evidence.blind_spot_evidence_ref must be null/empty when "
+                        "blind_spot_generation_required=false"
+                    )
+                )
+            if blind_spot_required is True:
+                if not isinstance(blind_spot_domains, list) or not blind_spot_domains:
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.blind_spot_domains must be non-empty "
+                            "when blind_spot_generation_required=true"
+                        )
+                    )
+                if not isinstance(blind_spot_trigger_signals, list) or not blind_spot_trigger_signals:
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.blind_spot_trigger_signals must be non-empty "
+                            "when blind_spot_generation_required=true"
+                        )
+                    )
+                else:
+                    allowed_triggers = {
+                        "LOW_CONFIDENCE_LEAD",
+                        "LOW_CONFIDENCE_OBSTRUCTION",
+                        "LOW_CONFIDENCE_SYNTHESIZER",
+                        "INPUT_INCOMPLETE",
+                        "OBSTRUCTION_RECHECK_REQUEST",
+                    }
+                    invalid = [
+                        sig
+                        for sig in blind_spot_trigger_signals
+                        if not isinstance(sig, str) or sig not in allowed_triggers
+                    ]
+                    if invalid:
+                        out.append(
+                            _err(
+                                "domain_selection_evidence.blind_spot_trigger_signals has invalid values: "
+                                + ",".join(str(v) for v in invalid)
+                            )
+                        )
+                if not isinstance(blind_spot_domain_sources, dict) or not blind_spot_domain_sources:
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.blind_spot_domain_sources must be non-empty object "
+                            "when blind_spot_generation_required=true"
+                        )
+                    )
+                if not isinstance(blind_spot_evidence_ref, str) or not blind_spot_evidence_ref:
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.blind_spot_evidence_ref must be non-empty when "
+                            "blind_spot_generation_required=true"
+                        )
+                    )
+                else:
+                    eref = (root / blind_spot_evidence_ref).resolve()
+                    if not eref.exists():
+                        out.append(
+                            _err(
+                                "domain_selection_evidence.blind_spot_evidence_ref target not found"
+                            )
+                        )
+                if not isinstance(blind_spot_reason, str) or not blind_spot_reason.strip():
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.blind_spot_reason must be non-empty when "
+                            "blind_spot_generation_required=true"
+                        )
+                    )
+
             if selector_ok is False:
                 selector_error = selection.get("selector_error")
                 manual_reason = selection.get("manual_selection_reason")
@@ -465,6 +635,72 @@ def validate_category_and_selection(root: Path) -> list[str]:
 
             if isinstance(selected_domains, list) and selected_domains:
                 selected_domain_list = [d for d in selected_domains if isinstance(d, str) and d]
+                selected_domain_set = set(selected_domain_list)
+                if manifest_selected_domains and selected_domain_set != manifest_selected_domains:
+                    out.append(
+                        _err(
+                            "domain_selection_evidence.selected_domains must match session_manifest.selected_domains"
+                        )
+                    )
+                if manifest_active_domains:
+                    expansion_domains = manifest_active_domains - selected_domain_set
+                    if blind_spot_required is False and expansion_domains:
+                        out.append(
+                            _err(
+                                "active_domains includes extra domains but blind_spot_generation_required=false: "
+                                + ",".join(sorted(expansion_domains))
+                            )
+                        )
+                    if blind_spot_required is True:
+                        blind_set = (
+                            {d for d in blind_spot_domains if isinstance(d, str) and d}
+                            if isinstance(blind_spot_domains, list)
+                            else set()
+                        )
+                        if blind_set != expansion_domains:
+                            out.append(
+                                _err(
+                                    "blind_spot_domains must exactly equal "
+                                    "(active_domains - selected_domains)"
+                                )
+                            )
+                        overlap = blind_set & selected_domain_set
+                        if overlap:
+                            out.append(
+                                _err(
+                                    "blind_spot_domains must not overlap selected_domains: "
+                                    + ",".join(sorted(overlap))
+                                )
+                            )
+                        if isinstance(blind_spot_domain_sources, dict):
+                            for domain in sorted(blind_set):
+                                source = blind_spot_domain_sources.get(domain)
+                                if source not in {"builtin", "add-domain"}:
+                                    out.append(
+                                        _err(
+                                            f"blind spot domain source invalid for {domain}: {source}"
+                                        )
+                                    )
+                                    continue
+                                knowledge_path = resolve_domain_knowledge(domain)
+                                if knowledge_path is None:
+                                    out.append(
+                                        _err(
+                                            f"blind spot domain missing knowledge file in references: {domain}"
+                                        )
+                                    )
+                                    continue
+                                if source == "add-domain":
+                                    custom_root = (skill_root / "references" / "custom").resolve()
+                                    try:
+                                        knowledge_path.relative_to(custom_root)
+                                    except ValueError:
+                                        out.append(
+                                            _err(
+                                                f"blind spot add-domain must resolve under references/custom: {domain}"
+                                            )
+                                        )
+
                 if selector_ok is True and not selector_output_domains:
                     out.append(_err("selector_ok=true but selector_output domains missing"))
                 if selector_output_domains:
@@ -608,6 +844,93 @@ def _iter_event_lines(p: Path) -> Iterable[tuple[int, str]]:
             if not s:
                 continue
             yield i, s
+
+
+def validate_revision_round_policy(root: Path) -> list[str]:
+    out: list[str] = []
+    manifest = _load_manifest(root)
+    if not manifest:
+        return out
+
+    active_domains = manifest.get("active_domains")
+    if not isinstance(active_domains, list):
+        return out
+    active_domain_set = {d for d in active_domains if isinstance(d, str) and d}
+
+    domain_dir = root / "domain_results"
+    round2_domains: dict[str, Path] = {}
+    if domain_dir.exists():
+        for path in sorted(domain_dir.glob("*.json")):
+            m = DOMAIN_ROUND_RE.match(path.name)
+            if not m:
+                continue
+            round_n = int(m.group("round"))
+            if round_n >= 2:
+                round2_domains[m.group("domain")] = path
+
+    if not round2_domains:
+        return out
+
+    mailbox = root / "mailbox_events.ndjson"
+    input_incomplete_domains: set[str] = set()
+    mapping_round2_domains: set[str] = set()
+    if mailbox.exists():
+        for idx, line in _iter_event_lines(mailbox):
+            try:
+                event = json.loads(line)
+            except Exception as e:  # noqa: BLE001
+                out.append(_err(f"mailbox_events.ndjson line {idx} invalid JSON: {e}"))
+                continue
+            signal = str(event.get("signal") or "")
+            domain = event.get("domain")
+            if not isinstance(domain, str) or not domain:
+                continue
+            if signal == "INPUT_INCOMPLETE":
+                input_incomplete_domains.add(domain)
+            if signal == "MAPPING_RESULT_ROUND2":
+                mapping_round2_domains.add(domain)
+
+    revise_domains: set[str] = set()
+    summary_path = root / "obstruction_feedbacks" / "OBSTRUCTION_ROUND1_SUMMARY.json"
+    if summary_path.exists():
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            verdicts = summary.get("domain_verdicts")
+            if isinstance(verdicts, dict):
+                for domain, verdict in verdicts.items():
+                    if isinstance(domain, str) and str(verdict).upper() in {"REVISE", "REJECT"}:
+                        revise_domains.add(domain)
+            unresolved = summary.get("unresolved_domains")
+            if isinstance(unresolved, list):
+                for domain in unresolved:
+                    if isinstance(domain, str) and domain:
+                        revise_domains.add(domain)
+        except Exception as e:  # noqa: BLE001
+            out.append(_err(f"obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json invalid JSON: {e}"))
+
+    trigger_domains = revise_domains | input_incomplete_domains
+    for domain, path in sorted(round2_domains.items()):
+        if active_domain_set and domain not in active_domain_set:
+            out.append(
+                _err(
+                    f"unexpected round2 artifact for non-active domain: {path.name}"
+                )
+            )
+        if domain not in trigger_domains:
+            out.append(
+                _err(
+                    f"unexpected round2 artifact without trigger evidence: {path.name} "
+                    "(need REVISE/REJECT/unresolved or INPUT_INCOMPLETE for this domain)"
+                )
+            )
+        if domain not in mapping_round2_domains:
+            out.append(
+                _err(
+                    f"round2 artifact exists but mailbox lacks MAPPING_RESULT_ROUND2 signal: {path.name}"
+                )
+            )
+
+    return out
 
 
 def validate_events(root: Path) -> list[str]:
@@ -784,6 +1107,7 @@ def main() -> int:
     results.extend(validate_domain_artifacts(root))
     results.extend(validate_launch_evidence(root))
     results.extend(validate_category_and_selection(root))
+    results.extend(validate_revision_round_policy(root))
     results.extend(validate_synthesis_artifact(root))
     results.extend(validate_events(root))
 

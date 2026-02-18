@@ -179,7 +179,7 @@ def durable_write_json(filepath: str, obj: dict, artifact_type: str) -> dict:
 - `${MORPHISM_EXPLORATION_PATH}/domain_selection_evidence.json`
 - `${MORPHISM_EXPLORATION_PATH}/launch_evidence.json`（fallback 写入等价字段）
 - `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`
-- `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round2.json`（如触发修正轮）
+- `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round2.json`（仅在触发修正轮时出现）
 - `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstruction.json`
 - `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json`
 - `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_GATE_CLEARED.json`
@@ -197,6 +197,22 @@ def durable_write_json(filepath: str, obj: dict, artifact_type: str) -> dict:
 禁止（不再作为主事件流）：
 
 - `${MORPHISM_EXPLORATION_PATH}/logs/message_events.jsonl`
+
+补充约束（默认路径）：
+
+- 默认单轮完成：若 round1 全部通过且无 `INPUT_INCOMPLETE`，禁止生成任何 `round2` 文件。
+- `domain_selection_evidence.json` 必须显式包含：
+  - `blind_spot_generation_required`
+  - `blind_spot_domains`
+  - `blind_spot_trigger_signals`
+  - `blind_spot_domain_sources`
+  - `blind_spot_evidence_ref`
+- 常规（无补盲）运行中应为：`blind_spot_generation_required=false` 且 `blind_spot_domains=[]`。
+- 若触发补盲扩域：必须满足
+  - `blind_spot_domains == (active_domains - selected_domains)`
+  - `blind_spot_trigger_signals` 非空（由 lead/obstruction/synthesizer 低置信或输入不完整触发）
+  - `blind_spot_domain_sources[domain]` 标注 `builtin|add-domain`
+  - `add-domain` 域知识文件位于 `references/custom/{domain}_v2.md`
 
 ---
 

@@ -58,6 +58,13 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 
 ## 落盘协议（防 JSON 断裂）
 
+工具约束（必须）：
+
+- 禁止使用 `bash` 工具写入大 JSON（包括 `cat > ... << 'EOF'`、`echo '...' > file`、`printf` 拼接）。
+- 禁止任何 heredoc 方式直接内联完整 `domain_mapping_result`。
+- 仅允许使用 `write`（或等价结构化写入工具）将**单行 `result_json`**写入目标文件。
+- 若运行环境没有 `write`，必须先上报 `PERSISTENCE_TOOL_UNAVAILABLE`，禁止退回 `bash heredoc`。
+
 1. 先在内存构造对象 `result_obj`，不要手写拼接 JSON 字符串。
 2. 使用序列化器一次性生成 `result_json`（压缩格式，单行）并立刻本地反序列化校验。
 2.1 `result_json` 长度上限：`<= 6000` 字符。超过上限必须先压缩文本字段再主写入。

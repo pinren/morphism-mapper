@@ -73,12 +73,10 @@ def _discover_domain_candidates(
     return selected_files, errors
 
 
-def _validate_domain_filenames(files: List[Path], allow_legacy: bool) -> List[str]:
+def _validate_domain_filenames(files: List[Path]) -> List[str]:
     errors: List[str] = []
     for path in files:
         if DOMAIN_ROUND_RE.match(path.name):
-            continue
-        if allow_legacy and DOMAIN_LEGACY_RE.match(path.name):
             continue
         errors.append(
             f"[ERROR] invalid domain filename (must be *_roundN.json): {path.name}"
@@ -133,11 +131,6 @@ def main() -> int:
         dest="files",
         help="Validate specific domain result file(s). Repeatable.",
     )
-    ap.add_argument(
-        "--allow-legacy-name",
-        action="store_true",
-        help="Allow legacy domain_results/<domain>.json file names in domain phase.",
-    )
     args = ap.parse_args()
 
     if not args.session_path:
@@ -163,7 +156,7 @@ def main() -> int:
         if discovery_errors:
             return 1
 
-        filename_errors = _validate_domain_filenames(domain_files, args.allow_legacy_name)
+        filename_errors = _validate_domain_filenames(domain_files)
         for err in filename_errors:
             print(err)
         if filename_errors:
