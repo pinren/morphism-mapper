@@ -361,10 +361,13 @@ class DynamicAgentGenerator:
   - `动态对应关系`
 - `evidence_refs.quote_or_summary` 必须是当前领域文件中的具体内容（可摘要），不能复用模板词
 - `objects_map/morphisms_map/theorems_used` 必须绑定当前问题实体，不得是抽象空壳
+- 旧版字段组合 `exploration_id + domain_round + mapping_version` 禁止出现；出现即视为旧模板污染，必须重生 JSON
 
 写入与落盘规则（防止 write 工具 JSON 断裂）:
 - 先构造 `result_obj`，禁止手工拼接大段 JSON 字符串
 - 先序列化再校验：`result_json = JSON.stringify(result_obj)` 或等价序列化；随后必须能被 JSON 反序列化
+- `result_json` 长度上限 `<= 6000` 字符；超过上限必须先压缩文本字段再主写入
+- write 工具参数本身必须是单行 JSON（不要把 pretty-print 多行 JSON 塞进 `content`）
 - 持久化时写入单行 `result_json`，路径为 `${{MORPHISM_EXPLORATION_PATH}}/domain_results/{domain}_round{{n}}.json`
 - 若出现 `JSON parsing failed` / `Unterminated string`：
   1) 先缩短超长文本字段后重试主写入（`quote_or_summary<=300字`，`rationale/dynamics/mapping_hint_application<=220字`）

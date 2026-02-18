@@ -90,6 +90,8 @@ Leader 每次关键状态变化都要落盘，至少包括：
 执行策略：
 
 1. 主写入：单行 JSON（先序列化再反序列化校验）。
+1.1 写入 `mailbox_events.ndjson` 时每行必须是紧凑单行 JSON，禁止换行嵌套。
+1.2 单次 `content` 建议上限：`<= 5000` 字符；超限先压缩 `summary/details`。
 2. 主写入失败：写入 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/*.envelope.json` + chunk 文件。
 3. failover 也失败：才标记 `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE` 并阻塞流程。
 
@@ -160,7 +162,9 @@ Lead 不得仅凭 “收到 clear 信号” 放行，必须校验报告结构与
    - `conditions_for_final_synthesis` 非空数组
 3. 占位符兜底检查（必须）：
    - 若任一域输出仍含模板词（如 `定理名称/映射依据/引用或摘要/Domain A Object`），必须视为未清关
-4. 若不满足上述任一项：
+4. 旧版 schema 兜底检查（必须）：
+   - 若任一域仍输出 `exploration_id + domain_round + mapping_version` 组合，必须视为旧模板污染并打回重算
+5. 若不满足上述任一项：
    - 发送 `OBSTRUCTION_RECHECK_REQUEST`
    - 保持 `RUNNING`，禁止触发 `FINAL_SYNTHESIS_REQUEST`
    - 标记 `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`

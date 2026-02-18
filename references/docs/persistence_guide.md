@@ -111,6 +111,7 @@ def ensure_persistence_ready(problem_slug: str) -> str:
 2. 不得静默丢弃，必须留下可追溯落盘结果（主文件或 failover 包）
 3. 写入失败不可自动切换到 `/tmp` 或内存模式
 4. 仅当主写入与 failover 写入都失败时，才允许阻塞流程
+5. 所有 write 调用必须使用单行压缩 JSON；单次 payload 建议 `<= 6000` 字符
 
 ```python
 import json
@@ -129,6 +130,9 @@ def durable_write_json(filepath: str, obj: dict, artifact_type: str) -> dict:
 
     # 主路径：单行 JSON，减小 write 参数解析失败概率
     payload = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    if len(payload) > 6000:
+        # 先由业务侧压缩字段，再进入写入；这里仍允许进入 failover
+        pass
     json.loads(payload)  # 先做反序列化校验
 
     try:

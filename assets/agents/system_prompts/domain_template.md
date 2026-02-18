@@ -57,6 +57,8 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 
 1. 先在内存构造对象 `result_obj`，不要手写拼接 JSON 字符串。
 2. 使用序列化器一次性生成 `result_json`（压缩格式，单行）并立刻本地反序列化校验。
+2.1 `result_json` 长度上限：`<= 6000` 字符。超过上限必须先压缩文本字段再主写入。
+2.2 write 工具参数本身必须是单行 JSON，不允许把多行 pretty JSON 直接塞入 `content`。
 3. 仅在校验通过后调用写入工具：
    - `filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round{n}.json`
    - `content: result_json`
@@ -71,6 +73,9 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
    - 若主写入仍失败，必须写入 failover 包：`${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`
    - failover 包至少包含：`artifact_type/original_target/payload_sha256/chunk_files/primary_error`
    - 仅当主写入与 failover 都失败时，才允许中止并上报
+
+示例（仅示意）：
+`write({"filepath":"${MORPHISM_EXPLORATION_PATH}/domain_results/${domain}_round1.json","content":"{\"schema_version\":\"domain_mapping_result.v1\",...}"})`
 
 ## 占位符门禁（提交前必须通过）
 
@@ -90,6 +95,7 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 
 - `evidence_refs.quote_or_summary` 必须包含来自对应领域文件的具体信息，不能是空泛占位词
 - `objects_map/morphisms_map/theorems_used` 必须体现当前问题上下文（至少出现一次核心问题中的关键实体）
+- 禁止输出旧版字段组合：`exploration_id + domain_round + mapping_version`（检测到即判定为旧模板，必须重生成为 `domain_mapping_result.v1`）
 
 ## 禁止
 

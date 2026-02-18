@@ -70,6 +70,8 @@ request=请重发完整 JSON 主体
 执行策略：
 
 1. 主写入：单行 JSON（先序列化再反序列化校验）。
+1.1 单次 `content` 建议上限：`<= 5000` 字符；超过上限先压缩长段分析文本。
+1.2 write 工具参数必须是单行 JSON，不允许多行 pretty-print 直接写入。
 2. 主写入失败时，必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
 3. 仅当主写入与 failover 都失败时，才允许阻塞 final 输出。
 

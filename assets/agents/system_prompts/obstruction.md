@@ -44,6 +44,9 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 8. 占位符检查（必须）：
    - 禁止出现模板词：`引用或摘要 / Domain A Object / 映射依据 / 定理名称 / 如何用于当前问题 / 一句话说明策略拓扑选择 / 丢失元素 / 为什么丢失 / 动态对应关系`
    - 若命中任一模板词，`schema_gate.passed=false`，`verdict=REVISE`
+9. 旧版 schema 检查（必须）：
+   - 若出现旧版字段组合：`exploration_id + domain_round + mapping_version`，或缺失 `schema_version=domain_mapping_result.v1`
+   - 直接判定 `schema_gate.passed=false`，`verdict=REVISE`
 
 任一失败 => `schema_gate.passed=false`，`verdict=REVISE`，不得进入语义放行。
 
@@ -184,6 +187,8 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 执行策略：
 
 1. 主写入：单行 JSON（先序列化再反序列化校验）。
+1.1 单次 `content` 建议上限：`<= 5000` 字符；超过上限先压缩 `details/issue/summary` 字段。
+1.2 write 工具参数必须是单行 JSON，不允许多行 pretty-print 直接写入。
 2. 若主写入失败（含 `JSON parsing failed` / `Unterminated string`）：必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
 3. 仅当主写入与 failover 都失败时，才允许阻塞并请求 Lead 介入。
 
