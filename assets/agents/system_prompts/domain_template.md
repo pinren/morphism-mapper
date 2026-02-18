@@ -1,6 +1,6 @@
 ---
 prompt_type: domain_agent
-version: 4.7
+version: 4.8
 description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 驱动，无 ACK）
 ---
 
@@ -48,6 +48,48 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 - `evidence_refs` 覆盖 `Fundamentals/Core Morphisms/Theorems`
 - `kernel_loss` 必须是对象（非标量）
 - `strategy_topology` 不可缺失
+- 每轮输出必须持久化到 `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round{n}.json`
+- 每轮输出后必须追加事件到 `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`
+- 禁止写入项目目录与 `/tmp`，禁止仅内存保留
+- 字段长度上限：`quote_or_summary <= 300` 字，`rationale/dynamics/mapping_hint_application <= 220` 字（防止写入载荷过大）
+
+## 落盘协议（防 JSON 断裂）
+
+1. 先在内存构造对象 `result_obj`，不要手写拼接 JSON 字符串。
+2. 使用序列化器一次性生成 `result_json`（压缩格式，单行）并立刻本地反序列化校验。
+3. 仅在校验通过后调用写入工具：
+   - `filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round{n}.json`
+   - `content: result_json`
+3.1 写入成功后追加标准事件行到 `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`：
+   - `signal: MAPPING_RESULT_ROUND{n}`
+   - `actor: domain`
+   - `domain: {domain}`
+   - `payload_ref: domain_results/{domain}_round{n}.json`
+   - `summary: <一句话结果摘要>`
+4. 若写入工具报 `JSON parsing failed` 或 `Unterminated string`：
+   - 先压缩过长字段（按上方长度上限）并重新序列化重试主写入
+   - 若主写入仍失败，必须写入 failover 包：`${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`
+   - failover 包至少包含：`artifact_type/original_target/payload_sha256/chunk_files/primary_error`
+   - 仅当主写入与 failover 都失败时，才允许中止并上报
+
+## 占位符门禁（提交前必须通过）
+
+禁止把模板示例文本原样作为正式结果提交。以下字样任意出现都视为无效输出，必须重写：
+
+- `引用或摘要`
+- `Domain A Object`
+- `映射依据`
+- `定理名称`
+- `如何用于当前问题`
+- `一句话说明策略拓扑选择`
+- `丢失元素`
+- `为什么丢失`
+- `动态对应关系`
+
+额外要求：
+
+- `evidence_refs.quote_or_summary` 必须包含来自对应领域文件的具体信息，不能是空泛占位词
+- `objects_map/morphisms_map/theorems_used` 必须体现当前问题上下文（至少出现一次核心问题中的关键实体）
 
 ## 禁止
 

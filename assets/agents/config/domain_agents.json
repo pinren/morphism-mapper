@@ -28,7 +28,6 @@
     "thermodynamics": {
       "domain_file": "references/thermodynamics_v2.md",
       "modules": ["yoneda_probe", "natural_transformation", "limits_colimits"],
-      "persona": "agents/personas/thermodynamics_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_1_axiomatic",
       "tier_strength": 0.95,
@@ -43,7 +42,6 @@
     "information_theory": {
       "domain_file": "references/information_theory_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/information_theory_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.85,
@@ -58,7 +56,6 @@
     "complexity_science": {
       "domain_file": "references/complexity_science_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/complexity_science_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_1_axiomatic",
       "tier_strength": 0.90,
@@ -73,7 +70,6 @@
     "control_systems": {
       "domain_file": "references/control_systems_v2.md",
       "modules": ["yoneda_probe", "natural_transformation", "limits_colimits"],
-      "persona": "agents/personas/control_systems_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.88,
@@ -88,7 +84,6 @@
     "game_theory": {
       "domain_file": "references/game_theory_v2.md",
       "modules": ["yoneda_probe", "adjoint_balancer", "limits_colimits"],
-      "persona": "agents/personas/game_theory_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.82,
@@ -103,7 +98,6 @@
     "evolutionary_biology": {
       "domain_file": "references/evolutionary_biology_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/evolutionary_biology_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_1_axiomatic",
       "tier_strength": 0.92,
@@ -118,7 +112,6 @@
     "network_theory": {
       "domain_file": "references/network_theory_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/network_theory_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.80,
@@ -133,7 +126,6 @@
     "antifragility": {
       "domain_file": "references/antifragility_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/antifragility_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.85,
@@ -148,7 +140,6 @@
     "innovation_theory": {
       "domain_file": "references/innovation_theory_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/innovation_theory_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.78,
@@ -163,7 +154,6 @@
     "kaizen": {
       "domain_file": "references/kaizen_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/kaizen_persona.md",
       "default_seed": true,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.88,
@@ -178,7 +168,6 @@
     "behavioral_economics": {
       "domain_file": "references/behavioral_economics_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/behavioral_economics_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.75,
@@ -193,7 +182,6 @@
     "neuroscience": {
       "domain_file": "references/neuroscience_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/neuroscience_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.78,
@@ -208,7 +196,6 @@
     "distributed_systems": {
       "domain_file": "references/distributed_systems_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/distributed_systems_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.72,
@@ -223,7 +210,6 @@
     "ecology": {
       "domain_file": "references/ecology_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/ecology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.80,
@@ -238,7 +224,6 @@
     "immunology": {
       "domain_file": "references/immunology_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/immunology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.75,
@@ -253,7 +238,6 @@
     "incentive_design": {
       "domain_file": "references/incentive_design_v2.md",
       "modules": ["yoneda_probe", "adjoint_balancer"],
-      "persona": "agents/personas/incentive_design_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.82,
@@ -268,7 +252,6 @@
     "linguistics": {
       "domain_file": "references/linguistics_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/linguistics_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.70,
@@ -283,7 +266,6 @@
     "military_strategy": {
       "domain_file": "references/military_strategy_v2.md",
       "modules": ["yoneda_probe", "adjoint_balancer"],
-      "persona": "agents/personas/military_strategy_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.85,
@@ -298,7 +280,6 @@
     "mythology": {
       "domain_file": "references/mythology_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/mythology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.65,
@@ -313,7 +294,6 @@
     "operations_research": {
       "domain_file": "references/operations_research_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/operations_research_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.78,
@@ -328,7 +308,6 @@
     "quantum_mechanics": {
       "domain_file": "references/quantum_mechanics_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/quantum_mechanics_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_1_axiomatic",
       "tier_strength": 0.70,
@@ -343,7 +322,6 @@
     "second_order_thinking": {
       "domain_file": "references/second_order_thinking_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/second_order_thinking_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.82,
@@ -358,7 +336,6 @@
     "social_capital": {
       "domain_file": "references/social_capital_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/social_capital_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.75,
@@ -373,7 +350,6 @@
     "zhuangzi": {
       "domain_file": "references/zhuangzi_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/zhuangzi_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.88,
@@ -388,7 +364,6 @@
     "anthropology": {
       "domain_file": "references/anthropology_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/anthropology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.72,
@@ -403,7 +378,6 @@
     "religious_studies": {
       "domain_file": "references/religious_studies_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/religious_studies_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.68,
@@ -418,7 +392,6 @@
     "yijing_thought": {
       "domain_file": "references/yijing_thought_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/yijing_thought_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.82,
@@ -433,7 +406,6 @@
     "traditional_chinese_medicine": {
       "domain_file": "references/traditional_chinese_medicine_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/traditional_chinese_medicine_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.75,
@@ -448,7 +420,6 @@
     "military_logistics": {
       "domain_file": "references/military_logistics_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/military_logistics_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.78,
@@ -463,7 +434,6 @@
     "organizational_behavior": {
       "domain_file": "references/organizational_behavior_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/organizational_behavior_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_3_practical",
       "tier_strength": 0.76,
@@ -478,7 +448,6 @@
     "art_theory": {
       "domain_file": "references/art_theory_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/art_theory_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.73,
@@ -493,7 +462,6 @@
     "geopolitics": {
       "domain_file": "references/geopolitics_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/geopolitics_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.78,
@@ -508,7 +476,6 @@
     "psychology": {
       "domain_file": "references/psychology_v2.md",
       "modules": ["yoneda_probe", "natural_transformation"],
-      "persona": "agents/personas/psychology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.80,
@@ -523,7 +490,6 @@
     "sociology": {
       "domain_file": "references/sociology_v2.md",
       "modules": ["yoneda_probe", "limits_colimits"],
-      "persona": "agents/personas/sociology_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.72,
@@ -538,7 +504,6 @@
     "political_science": {
       "domain_file": "references/custom/political_science_v2.md",
       "modules": ["yoneda_probe", "limits_colimits", "adjoint_balancer"],
-      "persona": "agents/personas/political_science_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_4_interpretive",
       "tier_strength": 0.76,
@@ -553,7 +518,6 @@
     "mao_zedong_thought": {
       "domain_file": "references/mao_zedong_thought_v2.md",
       "modules": ["yoneda_probe", "adjoint_balancer", "limits_colimits"],
-      "persona": "agents/personas/mao_zedong_thought_persona.md",
       "default_seed": false,
       "complexity_tier": "tier_2_application",
       "tier_strength": 0.88,

@@ -10,7 +10,7 @@
     "执行 Phase 4: Limit 计算（提取跨域共识）",
     "执行 Phase 4: Colimit 计算（整合互补洞察）",
     "处理 Koan Break（渐进降级）",
-    "保存探索日志（exploration_history/YYYYMMDD-exploration.md）"
+    "保存探索日志（${MORPHISM_EXPLORATION_PATH}/final_reports/）"
   ],
   "inputs": {
     "domain_agent_outputs": "所有 Domain Agents 的映射结果",
@@ -103,7 +103,7 @@
     "final_output_to": "用户"
   },
   "knowledge_management": {
-    "log_directory": "exploration_history/",
+    "log_directory": "${MORPHISM_EXPLORATION_PATH}/final_reports/",
     "log_format": "YYYYMMDD-exploration.md",
     "gap_analysis": {
       "enabled": true,

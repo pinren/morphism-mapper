@@ -1,10 +1,13 @@
 {
-  "version": "4.7.0",
-  "release_date": "2026-02-15",
-  "codename": "protocol-unification",
+  "version": "4.8.1",
+  "release_date": "2026-02-18",
+  "codename": "visualization-contract",
   "notes": [
     "Bootstrap Contract 单一真相",
     "Domain Agent 严格 JSON Schema",
-    "领域文件读取 + 哈希审计"
+    "领域文件读取 + 哈希审计",
+    "强制 session_manifest.json + mailbox_events.ndjson",
+    "禁止 legacy 主事件流 message_events.jsonl",
+    "同一 run 强制单目录（session_id=目录名）"
   ]
 }

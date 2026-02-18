@@ -30,7 +30,9 @@ Usage:
 import re
 import json
 import hashlib
+import os
 from pathlib import Path
+from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 
@@ -64,6 +66,30 @@ class DynamicAgentGenerator:
             self.references_dir = script_dir / "references"
         else:
             self.references_dir = Path(references_dir)
+
+    def _resolve_generated_prompts_dir(self) -> Path:
+        """
+        解析运行时生成目录。
+        默认写入 MORPHISM_EXPLORATION_PATH；若未设置则创建 ~/.morphism_mapper/explorations 会话目录。
+        """
+        exploration_path = os.environ.get("MORPHISM_EXPLORATION_PATH")
+        if exploration_path:
+            base_path = Path(exploration_path).expanduser().resolve()
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_path = (
+                Path.home() / ".morphism_mapper" / "explorations" / f"{timestamp}_dynamic_agent_generator"
+            ).resolve()
+            os.environ["MORPHISM_EXPLORATION_PATH"] = str(base_path)
+            os.environ["MORPHISM_PERSISTENCE_MODE"] = "production"
+
+        output_path = base_path / "artifacts" / "generated_prompts"
+        output_path.mkdir(parents=True, exist_ok=True)
+        return output_path
+
+    def _generation_prompt_file(self, domain: str) -> Path:
+        """补盲领域生成提示词的持久化路径。"""
+        return self._resolve_generated_prompts_dir() / f".{domain}_generation_prompt.txt"
 
     def resolve_domain_file(self, domain: str) -> Path:
         """解析领域文件绝对路径"""
@@ -322,6 +348,31 @@ class DynamicAgentGenerator:
 - ❌ 缺失 `"strategy_topology"`
 - ❌ `evidence_refs` 缺失 `Fundamentals/Core Morphisms/Theorems` 任一 section
 
+占位符门禁（必须）:
+- 以下字样如果出现在最终 JSON，视为无效输出，禁止发送：
+  - `引用或摘要`
+  - `Domain A Object`
+  - `映射依据`
+  - `定理名称`
+  - `如何用于当前问题`
+  - `一句话说明策略拓扑选择`
+  - `丢失元素`
+  - `为什么丢失`
+  - `动态对应关系`
+- `evidence_refs.quote_or_summary` 必须是当前领域文件中的具体内容（可摘要），不能复用模板词
+- `objects_map/morphisms_map/theorems_used` 必须绑定当前问题实体，不得是抽象空壳
+
+写入与落盘规则（防止 write 工具 JSON 断裂）:
+- 先构造 `result_obj`，禁止手工拼接大段 JSON 字符串
+- 先序列化再校验：`result_json = JSON.stringify(result_obj)` 或等价序列化；随后必须能被 JSON 反序列化
+- 持久化时写入单行 `result_json`，路径为 `${{MORPHISM_EXPLORATION_PATH}}/domain_results/{domain}_round{{n}}.json`
+- 若出现 `JSON parsing failed` / `Unterminated string`：
+  1) 先缩短超长文本字段后重试主写入（`quote_or_summary<=300字`，`rationale/dynamics/mapping_hint_application<=220字`）
+  2) 若主写入仍失败，必须写入 failover 包到 `${{MORPHISM_EXPLORATION_PATH}}/artifacts/failover/`
+  3) failover 包至少包含：`artifact_type/original_target/payload_sha256/chunk_files/primary_error`
+  4) 仅当主写入与 failover 都失败时，才上报阻塞
+- 禁止通过手工补引号、补转义方式“修字符串”后直接发送
+
 ---
 
 ## SendMessage 协议（强制）
@@ -579,9 +630,8 @@ mailbox 驱动（无 ACK）:
 请生成完整的领域知识文件内容。
 """
 
-        # 保存生成提示词到临时文件（供 Team Lead 使用）
-        prompt_file = output_file.parent / f".{domain}_generation_prompt.txt"
-        prompt_file.parent.mkdir(parents=True, exist_ok=True)
+        # 保存生成提示词到探索目录（供 Team Lead 使用）
+        prompt_file = self._generation_prompt_file(domain)
         with open(prompt_file, 'w', encoding='utf-8') as f:
             f.write(generation_prompt)
 
@@ -613,8 +663,8 @@ mailbox 驱动（无 ACK）:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        # 删除临时提示词文件
-        prompt_file = output_file.parent / f".{domain}_generation_prompt.txt"
+        # 删除探索目录中的临时提示词文件
+        prompt_file = self._generation_prompt_file(domain)
         if prompt_file.exists():
             prompt_file.unlink()
 
@@ -651,7 +701,7 @@ mailbox 驱动（无 ACK）:
 
                 if not exists and auto_create:
                     # 读取生成提示词
-                    prompt_file = Path(path_or_prompt).parent / f".{domain}_generation_prompt.txt"
+                    prompt_file = self._generation_prompt_file(domain)
                     if prompt_file.exists():
                         with open(prompt_file, 'r', encoding='utf-8') as f:
                             generation_prompt = f.read()
@@ -703,10 +753,9 @@ mailbox 驱动（无 ACK）:
             生成的文件路径列表
         """
         if output_dir is None:
-            script_dir = Path(__file__).parent
-            output_path = script_dir / "generated_prompts"
+            output_path = self._resolve_generated_prompts_dir()
         else:
-            output_path = Path(output_dir)
+            output_path = Path(output_dir).expanduser().resolve()
         output_path.mkdir(parents=True, exist_ok=True)
 
         # 清理旧文件（session 临时数据）

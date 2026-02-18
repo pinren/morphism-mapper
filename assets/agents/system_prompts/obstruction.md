@@ -41,6 +41,9 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 6. `strategy_topology`：
    - 必须包含 6 字段：`topology_type/core_action/resource_flow/feedback_loop/time_dynamics/agent_type`
 7. `topology_reasoning` 非空；`confidence in [0,1]`
+8. 占位符检查（必须）：
+   - 禁止出现模板词：`引用或摘要 / Domain A Object / 映射依据 / 定理名称 / 如何用于当前问题 / 一句话说明策略拓扑选择 / 丢失元素 / 为什么丢失 / 动态对应关系`
+   - 若命中任一模板词，`schema_gate.passed=false`，`verdict=REVISE`
 
 任一失败 => `schema_gate.passed=false`，`verdict=REVISE`，不得进入语义放行。
 
@@ -86,6 +89,10 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
     "schema_gate": {
       "passed": true,
       "errors": []
+    },
+    "placeholder_gate": {
+      "passed": true,
+      "findings": []
     },
     "consistency_checks": [
       {
@@ -151,12 +158,42 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 ## 判定规则（必须）
 
 - `REJECT`: schema 不通过且关键字段缺失/冲突不可修复
-- `REVISE`: schema 通过但一致性或攻击发现中高风险问题
+- `REVISE`: schema 通过但出现占位符问题，或一致性/攻击发现中高风险问题
 - `PASS`: schema 通过且仅低风险问题，不影响整合
+
+## 持久化职责（必须）
+
+你输出的每条核心结果都必须持久化：
+
+- 每域审查结果 -> `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstruction.json`
+- Round1 汇总 -> `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json`
+- 清关结果 -> `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_GATE_CLEARED.json`
+- 事件聚合 -> `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`（必须）
+- 过程日志 -> `${MORPHISM_EXPLORATION_PATH}/logs/obstruction_events.jsonl`（可选调试）
+
+`mailbox_events.ndjson` 事件字段必须为：
+
+- `timestamp`
+- `signal`（例如 `OBSTRUCTION_FEEDBACK/OBSTRUCTION_ROUND1_COMPLETE/OBSTRUCTION_GATE_CLEARED`）
+- `actor=obstruction`
+- `target`
+- `domain`
+- `payload_ref`
+- `summary`
+
+执行策略：
+
+1. 主写入：单行 JSON（先序列化再反序列化校验）。
+2. 若主写入失败（含 `JSON parsing failed` / `Unterminated string`）：必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
+3. 仅当主写入与 failover 都失败时，才允许阻塞并请求 Lead 介入。
 
 ## 禁止
 
 - 只发“PASS/clear”而不给结构化证据
 - 跳过 schema gate
+- 发现占位符仍给 PASS
 - 放行缺 `domain_file_hash` 或缺 section 覆盖结果
 - 仅凭语气判断，不给字段级依据
+- 跳过持久化：每次审查结果必须落盘到 `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/`
+- 写入项目目录或 `/tmp`
+- 主写入失败后跳过 failover 直接继续放行

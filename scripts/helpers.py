@@ -6,7 +6,8 @@ Agent Team 集成辅助函数
 """
 
 import json
-import subprocess
+import os
+import re
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -18,12 +19,163 @@ from collections import defaultdict
 SKILL_BASE = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = SKILL_BASE / "scripts"
 ASSETS_DIR = SKILL_BASE / "assets"
-REFERENCES_DIR = SKILL_BASE / "references"
-KNOWLEDGE_DIR = SKILL_BASE / "knowledge"
 
-# 临时文件路径
-TEMP_DIR = Path("/tmp")
-MORPHISM_TEMP = TEMP_DIR / "morphism_swarm"
+# 统一持久化目录
+MORPHISM_BASE = Path.home() / ".morphism_mapper"
+MORPHISM_EXPLORATIONS = MORPHISM_BASE / "explorations"
+RUN_REGISTRY_FILE = MORPHISM_EXPLORATIONS / "run_registry.json"
+REQUIRED_EXPLORATION_DIRS = (
+    "domain_results",
+    "obstruction_feedbacks",
+    "final_reports",
+    "logs",
+    "artifacts",
+)
+RUN_ID_RE = re.compile(r"^\d{8}T\d{6}Z_[0-9a-f]{6}$")
+
+
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "_", value.strip()).strip("_")
+    return slug or "session"
+
+
+def _is_within(base: Path, target: Path) -> bool:
+    try:
+        target.relative_to(base)
+        return True
+    except ValueError:
+        return False
+
+
+def _ensure_required_dirs(exploration_path: Path) -> None:
+    for dirname in REQUIRED_EXPLORATION_DIRS:
+        (exploration_path / dirname).mkdir(parents=True, exist_ok=True)
+
+
+def _append_exploration_index(exploration_path: Path) -> None:
+    index_file = MORPHISM_EXPLORATIONS / "index.json"
+    entries: List[Dict[str, str]] = []
+    if index_file.exists():
+        try:
+            entries = json.loads(index_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            entries = []
+    entries.append(
+        {
+            "timestamp": datetime.now().isoformat(),
+            "exploration_path": str(exploration_path),
+        }
+    )
+    index_file.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _load_run_registry() -> Dict[str, str]:
+    if not RUN_REGISTRY_FILE.exists():
+        return {}
+    try:
+        data = json.loads(RUN_REGISTRY_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    # 仅保留字符串映射，避免污染
+    return {str(k): str(v) for k, v in data.items()}
+
+
+def _save_run_registry(registry: Dict[str, str]) -> None:
+    RUN_REGISTRY_FILE.write_text(
+        json.dumps(registry, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _lookup_run_path(run_id: str) -> Optional[Path]:
+    registry = _load_run_registry()
+    mapped = registry.get(run_id)
+    if not mapped:
+        return None
+    return Path(mapped).expanduser().resolve()
+
+
+def _register_run_path(run_id: str, exploration_path: Path) -> None:
+    registry = _load_run_registry()
+    registry[run_id] = str(exploration_path)
+    _save_run_registry(registry)
+
+
+def _generate_run_id() -> str:
+    return datetime.utcnow().strftime("%Y%m%dT%H%M%SZ") + "_" + os.urandom(3).hex()
+
+
+def _resolve_or_create_run_path(base: Path, run_id: str, problem_slug: str) -> Path:
+    existing = _lookup_run_path(run_id)
+    if existing is not None:
+        if not existing.exists():
+            raise RuntimeError(
+                f"Run registry points to missing path for run_id={run_id}: {existing}"
+            )
+        if not _is_within(base, existing):
+            raise RuntimeError(
+                f"Run registry path outside exploration base for run_id={run_id}: {existing}"
+            )
+        _ensure_required_dirs(existing)
+        return existing
+
+    slug = os.environ.get("MORPHISM_SESSION_SLUG") or _slugify(problem_slug)
+    exploration_path = (base / f"{run_id}_{slug}").resolve()
+    if exploration_path.exists() and not exploration_path.is_dir():
+        raise RuntimeError(f"Exploration path exists but not directory: {exploration_path}")
+    exploration_path.mkdir(parents=True, exist_ok=True)
+    _ensure_required_dirs(exploration_path)
+    _append_exploration_index(exploration_path)
+    _update_latest_symlink(exploration_path)
+    _register_run_path(run_id, exploration_path)
+    return exploration_path
+
+
+def _update_latest_symlink(exploration_path: Path) -> None:
+    latest = MORPHISM_EXPLORATIONS / "latest"
+    try:
+        if latest.exists() or latest.is_symlink():
+            latest.unlink()
+        latest.symlink_to(exploration_path, target_is_directory=True)
+    except OSError:
+        return
+
+
+def ensure_exploration_path(problem_slug: str = "session") -> Path:
+    """
+    初始化并返回探索目录。
+    """
+    MORPHISM_EXPLORATIONS.mkdir(parents=True, exist_ok=True)
+    base = MORPHISM_EXPLORATIONS.resolve()
+
+    configured_path = os.environ.get("MORPHISM_EXPLORATION_PATH")
+    if configured_path:
+        exploration_path = Path(configured_path).expanduser().resolve()
+        if not _is_within(base, exploration_path):
+            raise RuntimeError(
+                f"Illegal MORPHISM_EXPLORATION_PATH outside {base}: {exploration_path}"
+            )
+        _ensure_required_dirs(exploration_path)
+        run_id = os.environ.get("MORPHISM_RUN_ID")
+        if run_id and RUN_ID_RE.match(run_id):
+            _register_run_path(run_id, exploration_path)
+        return exploration_path
+
+    run_id = os.environ.get("MORPHISM_RUN_ID")
+    if run_id and not RUN_ID_RE.match(run_id):
+        raise RuntimeError(
+            f"Invalid MORPHISM_RUN_ID format: {run_id}. Expected YYYYMMDDTHHMMSSZ_xxxxxx"
+        )
+    if not run_id:
+        run_id = _generate_run_id()
+    exploration_path = _resolve_or_create_run_path(base, run_id, problem_slug)
+
+    os.environ["MORPHISM_EXPLORATION_PATH"] = str(exploration_path)
+    os.environ["MORPHISM_RUN_ID"] = run_id
+    os.environ["MORPHISM_PERSISTENCE_MODE"] = "production"
+    return exploration_path
 
 
 # ============================================================================
@@ -191,11 +343,12 @@ def save_fingerprint_clusters(
     Returns:
         保存的文件路径
     """
-    MORPHISM_TEMP.mkdir(exist_ok=True)
-    (MORPHISM_TEMP / "fingerprints").mkdir(exist_ok=True)
+    exploration_path = ensure_exploration_path(exploration_id)
+    fingerprint_dir = exploration_path / "artifacts" / "fingerprints"
+    fingerprint_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    cluster_file = MORPHISM_TEMP / "fingerprints" / f"{exploration_id}_{timestamp}.json"
+    cluster_file = fingerprint_dir / f"{exploration_id}_{timestamp}.json"
 
     # 序列化（将 dataclass 转为 dict）
     serializable_clusters = []
@@ -321,9 +474,11 @@ def save_broadcast_message(broadcast: Dict[str, Any]) -> Path:
     Returns:
         保存的文件路径
     """
-    MORPHISM_TEMP.mkdir(exist_ok=True)
+    exploration_path = ensure_exploration_path("broadcast")
+    log_dir = exploration_path / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    broadcast_file = MORPHISM_TEMP / f"broadcast_{timestamp}.json"
+    broadcast_file = log_dir / f"broadcast_{timestamp}.json"
 
     with open(broadcast_file, "w", encoding="utf-8") as f:
         json.dump(broadcast, f, ensure_ascii=False, indent=2)
@@ -341,13 +496,17 @@ def load_domain_agent_results(domain: str) -> Optional[Dict[str, Any]]:
     Returns:
         Domain Agent 结果字典，如果文件不存在返回 None
     """
-    result_file = MORPHISM_TEMP / f"results" / f"{domain}.json"
-
-    if not result_file.exists():
-        return None
-
-    with open(result_file, "r", encoding="utf-8") as f:
-        return json.load(f)
+    exploration_path = ensure_exploration_path(domain)
+    candidates = [
+        exploration_path / "domain_results" / f"{domain}_round2.json",
+        exploration_path / "domain_results" / f"{domain}_round1.json",
+        exploration_path / "domain_results" / f"{domain}.json",
+    ]
+    for result_file in candidates:
+        if result_file.exists():
+            with open(result_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+    return None
 
 
 def load_all_domain_results(domains: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -397,13 +556,10 @@ def create_exploration_report(
     Returns:
         报告文件路径
     """
-    # 确保目录存在
-    KNOWLEDGE_DIR.mkdir(exist_ok=True)
-    (KNOWLEDGE_DIR / "exploration_history").mkdir(exist_ok=True)
-
-    # 生成文件名
-    today = datetime.now().strftime("%Y%m%d")
-    report_file = KNOWLEDGE_DIR / "exploration_history" / f"{today}-exploration.md"
+    exploration_path = ensure_exploration_path(exploration_id)
+    report_dir = exploration_path / "final_reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_file = report_dir / "exploration_report.md"
 
     # 构建 Markdown 报告
     report_lines = [
@@ -528,6 +684,18 @@ def apply_tier_balance(
             "tier_3": 1,  # 实践领域
         }
 
+    # tier 兼容映射：v4.7 使用 tier_1_axiomatic / tier_2_application / ...
+    def normalize_tier(tier_name: str) -> str:
+        if tier_name.startswith("tier_1"):
+            return "tier_1"
+        if tier_name.startswith("tier_2"):
+            return "tier_2"
+        if tier_name.startswith("tier_3"):
+            return "tier_3"
+        if tier_name.startswith("tier_4"):
+            return "tier_4"
+        return tier_name
+
     # 按层级分组
     tier_groups = {
         "tier_1": [],
@@ -538,7 +706,8 @@ def apply_tier_balance(
 
     for domain_info in top_domains:
         domain = domain_info["domain"]
-        tier = domain_config["domains"].get(domain, {}).get("complexity_tier", "tier_2")
+        raw_tier = domain_config["domains"].get(domain, {}).get("complexity_tier", "tier_2_application")
+        tier = normalize_tier(raw_tier)
         if tier in tier_groups:
             tier_groups[tier].append(domain)
 
@@ -547,6 +716,10 @@ def apply_tier_balance(
     for tier, count in tier_config.items():
         if tier in tier_groups:
             selected.extend(tier_groups[tier][:count])
+
+    # 兜底：若 tier 配置导致空结果，则保留 top_domains 顺序选前 5
+    if not selected:
+        selected = [d["domain"] for d in top_domains[:5]]
 
     return selected
 

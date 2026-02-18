@@ -1,11 +1,33 @@
 #!/usr/bin/env python3
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from dynamic_agent_generator import DynamicAgentGenerator
+
+
+def resolve_prompt_output_dir() -> Path:
+    """
+    统一写入探索目录，避免使用 /tmp 或项目目录。
+    """
+    configured = os.environ.get("MORPHISM_EXPLORATION_PATH")
+    if configured:
+        exploration_path = Path(configured).expanduser().resolve()
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        exploration_path = (
+            Path.home() / ".morphism_mapper" / "explorations" / f"{timestamp}_generate_agents"
+        ).resolve()
+        os.environ["MORPHISM_EXPLORATION_PATH"] = str(exploration_path)
+        os.environ["MORPHISM_PERSISTENCE_MODE"] = "production"
+
+    output_dir = exploration_path / "artifacts" / "generated_prompts"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
 
 # 范畴骨架
 category_skeleton = {
@@ -34,6 +56,7 @@ selected_domains = ['game_theory', 'thermodynamics', 'control_systems']
 
 print("=== 生成 Domain Agents ===")
 print(f"选中领域: {selected_domains}")
+output_dir = resolve_prompt_output_dir()
 
 # 初始化生成器
 generator = DynamicAgentGenerator()
@@ -51,7 +74,7 @@ for domain, prompt in prompts.items():
         print(f"  {domain}: 需要补盲生成")
     else:
         # 保存 prompt 到文件
-        prompt_file = f"/tmp/{domain}_agent_prompt.txt"
+        prompt_file = output_dir / f"{domain}_agent_prompt.txt"
         with open(prompt_file, 'w', encoding='utf-8') as f:
             f.write(prompt)
         print(f"  {domain}: Prompt 已生成 ({len(prompt)} 字符) -> {prompt_file}")

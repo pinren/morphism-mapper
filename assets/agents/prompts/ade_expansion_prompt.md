@@ -219,6 +219,15 @@ filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{your_domain}_round{round}
 content: <完整JSON内容>
 ```
 
+**防写入失败规则（必须）**:
+- 不要手写拼接 JSON 字符串；先构造对象再序列化
+- 写入前必须先做 JSON 反序列化校验（确保无断裂字符串）
+- 建议写入压缩单行 JSON，避免长文本换行导致工具参数解析失败
+- 字段长度建议上限：`quote_or_summary <= 300` 字，`rationale/dynamics <= 220` 字
+- 若出现 `JSON parsing failed` 或 `Unterminated string`，先缩短字段并重试主写入
+- 若主写入仍失败，必须写入 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/` 的 envelope+chunk
+- 仅当主写入与 failover 都失败时，才允许中止并上报
+
 **通信** (必须):
 ```python
 SendMessage(

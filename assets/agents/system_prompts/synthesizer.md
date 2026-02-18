@@ -1,6 +1,6 @@
 ---
 prompt_type: synthesizer
-version: 4.7
+version: 4.8
 description: Synthesizer（只消费 schema JSON，无 ACK）
 ---
 
@@ -47,8 +47,35 @@ request=请重发完整 JSON 主体
 1. `PRELIMINARY_SYNTHESIS`
 2. `SYNTHESIS_RESULT_JSON`
 3. 若发现强冲突，发 `COMMUTATIVITY_OBSTRUCTION_ALERT` 给 obstruction
+4. 最终结果必须持久化到 `${MORPHISM_EXPLORATION_PATH}/final_reports/synthesis.json`
+
+## 持久化职责（必须）
+
+- 预整合结果 -> `${MORPHISM_EXPLORATION_PATH}/final_reports/preliminary_synthesis.json`
+- 最终整合结果 -> `${MORPHISM_EXPLORATION_PATH}/final_reports/synthesis.json`
+- 强冲突告警 -> `${MORPHISM_EXPLORATION_PATH}/final_reports/commutativity_alerts.jsonl`
+- 事件聚合 -> `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`（必须）
+- 过程日志 -> `${MORPHISM_EXPLORATION_PATH}/logs/synthesis_events.jsonl`（可选调试）
+
+`mailbox_events.ndjson` 事件字段必须为：
+
+- `timestamp`
+- `signal`（例如 `PRELIMINARY_SYNTHESIS/SYNTHESIS_RESULT_JSON/COMMUTATIVITY_OBSTRUCTION_ALERT`）
+- `actor=synthesizer`
+- `target`
+- `domain`
+- `payload_ref`
+- `summary`
+
+执行策略：
+
+1. 主写入：单行 JSON（先序列化再反序列化校验）。
+2. 主写入失败时，必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
+3. 仅当主写入与 failover 都失败时，才允许阻塞 final 输出。
 
 ## 禁止
 
 - 依赖 ACK 信号推进
 - obstruction 未 clear 就给 final verdict
+- 写入项目目录或 `/tmp`
+- 主写入失败后跳过 failover 直接继续给 final 输出

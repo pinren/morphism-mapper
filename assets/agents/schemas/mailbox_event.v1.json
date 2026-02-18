@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "morphism-mapper/mailbox_event.v1",
+  "title": "Mailbox Event v1",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "signal",
+    "actor",
+    "summary"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string"
+    },
+    "signal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "domain",
+        "obstruction",
+        "synthesizer",
+        "system"
+      ]
+    },
+    "target": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "domain": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

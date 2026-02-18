@@ -3,15 +3,23 @@
 本文件定义 Morphism Mapper 的最小启动协议。  
 目标：去掉 ACK 机制，改为 `SendMessage + mailbox` 驱动。
 
+可视化契约（硬要求）：
+
+- 必须遵循 `references/docs/visualization_contract.md`
+- 新 session 必须产出 `session_manifest.json` + `mailbox_events.ndjson`
+- 禁止把 `logs/message_events.jsonl` 当主事件流
+- 同一 run 只能使用一个 `${MORPHISM_EXPLORATION_PATH}`，目录名必须等于 `session_id`
+
 ## 1) 状态机
 
-`INIT -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> CORE_READY -> RUNNING -> (可选) FALLBACK`
+`INIT -> PERSISTENCE_READY -> TEAM_PROBED -> TEAM_READY -> MEMBERS_READY -> CORE_READY -> RUNNING -> (可选) FALLBACK`
 
 ## 2) 状态职责
 
 | 状态 | 允许动作 | 禁止动作 |
 |---|---|---|
-| `INIT` | `TeamCreate(team_name=...)` | 直接分析、直接拉成员 |
+| `INIT` | 执行持久化前置检查 | 直接分析、直接拉成员 |
+| `PERSISTENCE_READY` | `TeamCreate(team_name=...)` | 使用项目目录或 `/tmp` 作为主持久化目录 |
 | `TEAM_PROBED` | 解析 TeamCreate 返回 | 跳过分支 |
 | `TEAM_READY` | 先跑 `scripts/domain_selector.py`（或等价调用）并产出 `DOMAIN_SELECTION_EVIDENCE`，再构建首批 roster | 手工拍脑袋选域；Lead 逐个手动拉首批成员 |
 | `MEMBERS_READY` | 一次团队级首批启动 | 拆分首发 |
@@ -19,7 +27,30 @@
 | `RUNNING` | 仅 `SendMessage` + mailbox 轮询推进 | Lead 代替 core 干活 |
 | `FALLBACK` | 走 `simulation_mode_guide.md` | 继续 Team 流程 |
 
-## 3) TeamCreate 分支
+## 3) 持久化前置门禁（必须）
+
+在调用 `TeamCreate` 前，Lead 必须先完成持久化初始化并记录：
+
+```json
+{
+  "signal": "PERSISTENCE_READY",
+  "persistence_mode": "production",
+  "exploration_path": "/home/<user>/.morphism_mapper/explorations/<session_id>",
+  "writable": true
+}
+```
+
+硬约束：
+
+- `exploration_path` 必须在 `~/.morphism_mapper/explorations/` 下
+- `<session_id>` 格式必须是 `YYYYMMDDTHHMMSSZ_xxxxxx_slug`
+- `MORPHISM_RUN_ID` 格式必须是 `YYYYMMDDTHHMMSSZ_xxxxxx`
+- 同一 `MORPHISM_RUN_ID` 必须映射到唯一 `exploration_path`
+- 禁止使用项目目录（cwd/workspace）和 `/tmp`
+- 任一关键目录创建失败时必须阻塞流程，标记 `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE`
+- 主写入失败时必须执行 failover 持久化（`artifacts/failover`），仅当主+failover 都失败才阻塞
+
+## 4) TeamCreate 分支
 
 1. 成功 -> `TEAM_READY`
 2. `Already leading team XXX` -> `TEAM_READY`（复用 `XXX`）
@@ -30,7 +61,7 @@
 - `TeamCreate` 是唯一必需显式入口。
 - 禁止基于“工具名是否出现”做可用性推断。
 
-## 4) 团队级启动语义
+## 5) 团队级启动语义
 
 团队级首批启动以行为证据判定，不依赖固定工具名：
 
@@ -44,7 +75,7 @@
 - `Task(..., team_name, subagent_type)` 伪装团队启动
 - 先 core 后 domain 分批首发
 
-## 4.5) 领域选择门禁（必须）
+## 5.5) 领域选择门禁（必须）
 
 在 `TEAM_READY` 阶段，Lead 必须先执行领域选择器并输出证据，再允许进入 `MEMBERS_READY`。
 
@@ -74,7 +105,7 @@
 
 无证据直接选域，标记 `PROTOCOL_BREACH_SELECTOR_SKIPPED`。
 
-## 5) Core 就绪（无 ACK）
+## 6) Core 就绪（无 ACK）
 
 去掉 `*_ACK`。改为 mailbox 业务信号：
 
@@ -83,7 +114,7 @@
 
 两条信号齐全后才允许进入 `RUNNING`。
 
-## 6) Domain 交付（无 ACK）
+## 7) Domain 交付（无 ACK）
 
 每个 domain 仍需双投递：
 
@@ -95,7 +126,7 @@
 - obstruction 对该域产出 `OBSTRUCTION_FEEDBACK`
 - synthesizer 将该域纳入 `PRELIMINARY_SYNTHESIS` 或发 `SCHEMA_REJECTED`
 
-## 7) Obstruction -> Synthesizer 时序
+## 8) Obstruction -> Synthesizer 时序
 
 1. Domain round1 双投递
 2. obstruction 完成首轮并发 `OBSTRUCTION_ROUND1_COMPLETE`
@@ -112,7 +143,7 @@ Lead 放行前必须做报告验收：
 
 任一不满足：禁止 final synthesis，标记 `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`。
 
-## 8) 最小 LAUNCH_EVIDENCE
+## 9) 最小 LAUNCH_EVIDENCE
 
 ```json
 {
@@ -128,7 +159,7 @@ Lead 放行前必须做报告验收：
 }
 ```
 
-## 9) 违规码（最小集）
+## 10) 违规码（最小集）
 
 - `PROTOCOL_BREACH_INITIAL_TASK_LAUNCH`
 - `PROTOCOL_BREACH_INVALID_FALLBACK_REASON`
@@ -139,15 +170,20 @@ Lead 放行前必须做报告验收：
 - `PROTOCOL_BLOCKED_TEAM_LAUNCH_UNAVAILABLE`
 - `PROTOCOL_BREACH_SELECTOR_SKIPPED`
 - `PROTOCOL_BREACH_WEAK_OBSTRUCTION_REPORT`
+- `PROTOCOL_BREACH_PERSISTENCE_NOT_READY`
+- `PROTOCOL_BREACH_ILLEGAL_PERSISTENCE_PATH`
+- `PROTOCOL_BREACH_PERSISTENCE_FAILOVER_SKIPPED`
+- `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE`
 
-## 10) 一页执行清单
+## 11) 一页执行清单
 
-1. TeamCreate
-2. 运行 domain selector 并产出 `DOMAIN_SELECTION_EVIDENCE`
-3. 构建首批 roster
-4. 团队级首批启动
-5. core 发 pipeline ready 信号
-6. 广播 `CATEGORY_SKELETON`
-7. domain 双投递
-8. obstruction round1 / gate
-9. final synthesis
+1. 产出 `PERSISTENCE_READY`
+2. TeamCreate
+3. 运行 domain selector 并产出 `DOMAIN_SELECTION_EVIDENCE`
+4. 构建首批 roster
+5. 团队级首批启动
+6. core 发 pipeline ready 信号
+7. 广播 `CATEGORY_SKELETON`
+8. domain 双投递
+9. obstruction round1 / gate
+10. final synthesis

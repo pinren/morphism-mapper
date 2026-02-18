@@ -1,259 +1,208 @@
 # Persistence Guide (持久化指南)
 
-**Morphism Mapper v4.5+ 强制持久化与权限管理规范**
+**Morphism Mapper v5.0 强约束持久化规范（Swarm/Fallback 同标准）**
 
-## 核心架构
+补充：可视化输出契约见 `references/docs/visualization_contract.md`。
 
-- **按问题组织**: `~/.morphism_mapper/explorations/{timestamp}_{problem_slug}/`
-- **自动索引**: 所有探索自动记录在 `~/.morphism_mapper/explorations/index.json`
-- **软链接**: `~/.morphism_mapper/explorations/latest` 指向最新探索
+## 1. 单一主持久化策略
+
+Morphism Mapper 只允许一种生产持久化模式：
+
+- 根目录：`~/.morphism_mapper/explorations/`
+- 单次探索目录：`~/.morphism_mapper/explorations/{session_id}/`
+- `session_id` 格式：`YYYYMMDDTHHMMSSZ_xxxxxx_slug`
+- 索引文件：`~/.morphism_mapper/explorations/index.json`
+- run 注册表：`~/.morphism_mapper/explorations/run_registry.json`（`run_id -> exploration_path`）
+- 最新软链接：`~/.morphism_mapper/explorations/latest`
+
+运行约束：
+
+- Lead 在 run 启动时生成 `MORPHISM_RUN_ID`（格式 `YYYYMMDDTHHMMSSZ_xxxxxx`）。
+- 目录创建后，`run_registry.json` 固化 `MORPHISM_RUN_ID -> exploration_path` 映射。
+- 同一 run 后续调用必须复用该映射，不允许新建第二目录。
+
+禁止：
+
+- 写入项目目录（cwd/workspace）作为主持久化路径
+- 使用 `/tmp` 作为主持久化路径
+- memory-only 或 temporary 模式继续生产流程
 
 ---
 
-## 🚨 强制执行规则
+## 2. 启动前硬门禁（必须）
 
-### 规则 1: 写入权限前置检查
+在任何分析开始前（包括 Swarm 和 Fallback），Lead 必须先完成：
 
-**在启动任何分析之前，Team Lead 必须执行以下检查**:
+```json
+{
+  "signal": "PERSISTENCE_READY",
+  "persistence_mode": "production",
+  "exploration_path": "/home/<user>/.morphism_mapper/explorations/<session_id>",
+  "writable": true
+}
+```
+
+若失败：
+
+- 立即阻塞流程并报错
+- 标记 `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE`
+- 不允许进入 TeamCreate 之后的任何分析阶段
+
+---
+
+## 3. 参考实现（前置检查 + 初始化）
 
 ```python
+import json
 import os
+from pathlib import Path
+from datetime import datetime
 
-def check_persistence_prerequisites():
-    """
-    检查持久化前提条件
-    Returns: (bool, str) - (是否通过, 错误信息)
-    """
-    base_path = os.path.expanduser("~/.morphism_mapper")
-    
-    # 1. 检查目录是否存在或可创建
-    try:
-        os.makedirs(base_path, exist_ok=True)
-    except PermissionError:
-        return False, f"❌ 无法创建目录 {base_path}：权限被拒绝"
-    except Exception as e:
-        return False, f"❌ 无法创建目录 {base_path}：{str(e)}"
-    
-    # 2. 检查写入权限
-    test_file = os.path.join(base_path, ".write_test")
-    try:
-        with open(test_file, 'w') as f:
-            f.write("test")
-        os.remove(test_file)
-    except PermissionError:
-        return False, f"❌ 没有写入权限：{base_path}"
-    except Exception as e:
-        return False, f"❌ 写入测试失败：{str(e)}"
-    
-    return True, "✅ 持久化权限检查通过"
+def ensure_persistence_ready(problem_slug: str) -> str:
+    base = Path.home() / ".morphism_mapper" / "explorations"
+    base.mkdir(parents=True, exist_ok=True)
 
-# 在 Step 0 执行
-passed, message = check_persistence_prerequisites()
-if not passed:
-    # 必须向用户申请权限，不能继续
-    request_user_permission(message)
+    run_id = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ") + "_abc123"
+    session_id = f"{run_id}_{problem_slug}"
+    exploration = base / session_id
+    exploration.mkdir(parents=True, exist_ok=False)
+
+    required_dirs = [
+        "domain_results",
+        "obstruction_feedbacks",
+        "final_reports",
+        "logs",
+        "artifacts",
+    ]
+    for d in required_dirs:
+        (exploration / d).mkdir(parents=True, exist_ok=True)
+
+    test_file = exploration / ".write_test"
+    test_file.write_text("ok", encoding="utf-8")
+    test_file.unlink(missing_ok=True)
+
+    index_file = base / "index.json"
+    index = []
+    if index_file.exists():
+        index = json.loads(index_file.read_text(encoding="utf-8"))
+    index.append({
+        "timestamp": datetime.now().isoformat(),
+        "exploration_path": str(exploration)
+    })
+    index_file.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    latest = base / "latest"
+    if latest.exists() or latest.is_symlink():
+        latest.unlink()
+    latest.symlink_to(exploration, target_is_directory=True)
+
+    os.environ["MORPHISM_EXPLORATION_PATH"] = str(exploration)
+    os.environ["MORPHISM_PERSISTENCE_MODE"] = "production"
+    return str(exploration)
 ```
 
-### 规则 2: 按需申请写入权限
+---
 
-**如果权限检查失败，必须停止分析并向用户申请权限**:
+## 4. 持久化执行策略（必须）
 
-```markdown
-⚠️ **权限申请通知**
+所有关键产物写入必须满足：
 
-Morphism Mapper 需要写入权限以保存分析结果。这是 v4.5+ 的强制要求。
-
-**需要访问的目录**:
-- `~/.morphism_mapper/explorations/` - 保存所有探索记录
-- `~/.morphism_mapper/explorations/index.json` - 探索索引
-
-**为什么需要写入权限**:
-1. **多轮迭代依赖**: Round 2 需要读取 Round 1 的结果
-2. **历史追踪**: 支持回顾和对比多次分析
-3. **质量保证**: Obstruction Theorist 需要审查历史输出
-4. **审计合规**: 所有分析过程可追溯
-
-**可选方案**:
-- **方案 A**: 授予 `~/.morphism_mapper/` 目录的写入权限（推荐）
-- **方案 B**: 指定自定义路径，需提供该路径的写入权限
-- **方案 C**: 使用临时模式（不推荐，功能受限，无法多轮迭代）
-
-请授权或选择方案，分析将在获得权限后继续。
-```
-
-### 规则 3: 临时模式降级（仅应急）
-
-**如果用户拒绝授权，可以进入临时模式，但功能受限**:
+1. 路径前缀为 `${MORPHISM_EXPLORATION_PATH}/`
+2. 不得静默丢弃，必须留下可追溯落盘结果（主文件或 failover 包）
+3. 写入失败不可自动切换到 `/tmp` 或内存模式
+4. 仅当主写入与 failover 写入都失败时，才允许阻塞流程
 
 ```python
-class PersistenceMode:
-    FULL = "full"           # 完整持久化（推荐）
-    TEMPORARY = "temporary" # 临时模式（功能受限）
-    MEMORY_ONLY = "memory"  # 仅内存（单轮，不推荐）
+import json
+import hashlib
+from pathlib import Path
 
-def set_persistence_mode(mode: PersistenceMode):
+def durable_write_json(filepath: str, obj: dict, artifact_type: str) -> dict:
     """
-    设置持久化模式
+    返回:
+      {"status": "PRIMARY_OK" | "DEGRADED_CHUNKED", "path": "..."}
     """
-    if mode == PersistenceMode.FULL:
-        os.environ["MORPHISM_PERSISTENCE_MODE"] = "full"
-        os.environ["MORPHISM_EXPLORATION_PATH"] = create_exploration_dir(problem)
-    elif mode == PersistenceMode.TEMPORARY:
-        os.environ["MORPHISM_PERSISTENCE_MODE"] = "temporary"
-        # 使用 /tmp，但用户会被警告
-        temp_path = f"/tmp/morphism_mapper_{timestamp}"
-        os.environ["MORPHISM_EXPLORATION_PATH"] = temp_path
-        print("⚠️ 警告：使用临时模式，分析结果将在会话结束后丢失")
-        print("⚠️ 限制：无法执行多轮迭代（Round 2 需要 Round 1 的历史文件）")
-    elif mode == PersistenceMode.MEMORY_ONLY:
-        os.environ["MORPHISM_PERSISTENCE_MODE"] = "memory"
-        print("🚨 警告：使用内存模式，仅限单轮分析")
-        print("🚨 Obstruction Theorist 将无法审查历史输出")
+    target = Path(filepath).expanduser().resolve()
+    root = Path(os.environ["MORPHISM_EXPLORATION_PATH"]).expanduser().resolve()
+    if not str(target).startswith(str(root) + os.sep):
+        raise RuntimeError(f"Illegal persistence path: {target}")
+
+    # 主路径：单行 JSON，减小 write 参数解析失败概率
+    payload = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    json.loads(payload)  # 先做反序列化校验
+
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(payload, encoding="utf-8")
+        return {"status": "PRIMARY_OK", "path": str(target)}
+    except Exception as e:
+        # failover：分块持久化，保证“总有东西落盘”
+        fail_root = root / "artifacts" / "failover"
+        fail_root.mkdir(parents=True, exist_ok=True)
+        sha = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        chunks = [payload[i:i+4000] for i in range(0, len(payload), 4000)]
+        chunk_files = []
+        for idx, chunk in enumerate(chunks):
+            cpath = fail_root / f"{artifact_type}.{sha}.part{idx:04d}.jsonl"
+            cpath.write_text(chunk, encoding="utf-8")
+            chunk_files.append(str(cpath))
+        envelope = {
+            "status": "DEGRADED_CHUNKED",
+            "artifact_type": artifact_type,
+            "original_target": str(target),
+            "payload_sha256": sha,
+            "chunk_count": len(chunk_files),
+            "chunk_files": chunk_files,
+            "primary_error": str(e),
+        }
+        env_path = fail_root / f"{artifact_type}.{sha}.envelope.json"
+        env_path.write_text(json.dumps(envelope, ensure_ascii=False, indent=2), encoding="utf-8")
+        return {"status": "DEGRADED_CHUNKED", "path": str(env_path)}
 ```
 
 ---
 
-## 📋 权限检查清单
+## 5. 全 Agent 最小持久化清单（可视化契约，统一）
 
-**Team Lead 必须在分析开始前确认**:
+必需（缺失即协议违规）：
 
-- [ ] **目录权限**: `~/.morphism_mapper/` 目录可创建/可写入
-- [ ] **子目录权限**: `explorations/`、`domain_results/` 等子目录可创建
-- [ ] **文件权限**: 可以创建和修改 `.json` 文件
-- [ ] **索引更新**: 可以更新 `index.json` 索引文件
-- [ ] **软链接**: 可以创建/更新 `latest` 软链接（非 Windows）
+- `${MORPHISM_EXPLORATION_PATH}/session_manifest.json`
+- `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`
+- `${MORPHISM_EXPLORATION_PATH}/metadata.json`
+- `${MORPHISM_EXPLORATION_PATH}/category_skeleton.json`
+- `${MORPHISM_EXPLORATION_PATH}/domain_selection_evidence.json`
+- `${MORPHISM_EXPLORATION_PATH}/launch_evidence.json`（fallback 写入等价字段）
+- `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`
+- `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round2.json`（如触发修正轮）
+- `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstruction.json`
+- `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json`
+- `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/OBSTRUCTION_GATE_CLEARED.json`
+- `${MORPHISM_EXPLORATION_PATH}/final_reports/preliminary_synthesis.json`
+- `${MORPHISM_EXPLORATION_PATH}/final_reports/synthesis.json`
 
----
+可选调试：
 
-## 失败恢复机制与合规
+- `${MORPHISM_EXPLORATION_PATH}/logs/lead_events.jsonl`
+- `${MORPHISM_EXPLORATION_PATH}/logs/persistence_events.jsonl`
+- `${MORPHISM_EXPLORATION_PATH}/logs/obstruction_events.jsonl`
+- `${MORPHISM_EXPLORATION_PATH}/logs/synthesis_events.jsonl`
+- `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/*.envelope.json`（仅主写入失败时）
 
-### 失败恢复
+禁止（不再作为主事件流）：
 
-**如果写入过程中失败，必须优雅降级**:
-
-```python
-def safe_write_file(filepath: str, content: str, max_retries: int = 3):
-    """
-    安全写入文件，失败时提供恢复选项
-    """
-    for attempt in range(max_retries):
-        try:
-            # 确保目录存在
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            
-            # 写入文件
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(content)
-            
-            print(f"✅ 已保存: {filepath}")
-            return True
-            
-        except PermissionError as e:
-            print(f"❌ 写入失败 (尝试 {attempt + 1}/{max_retries}): {e}")
-            if attempt == max_retries - 1:
-                # 最终失败，提供备选方案
-                print("\n⚠️ 无法持久化，备选方案：")
-                print(f"1. 手动创建目录: mkdir -p {os.path.dirname(filepath)}")
-                print(f"2. 更改路径权限: chmod 755 {os.path.dirname(filepath)}")
-                print(f"3. 使用内存模式继续（功能受限）")
-                return False
-        except Exception as e:
-            print(f"❌ 意外错误: {e}")
-            return False
-```
-
-### 🚫 禁止行为 (Critical Violations)
-
-以下行为在 v4.5.2+ 中被视为严重违规：
-
-| 违规行为 | 风险等级 | 后果 |
-|---------|---------|------|
-| **跳过权限检查直接分析** | 🔴 Critical | 可能导致 Round 2 无法读取 Round 1 结果 |
-| **在内存中缓存而不写入** | 🔴 Critical | 进程重启后所有分析丢失 |
-| **用户拒绝授权后仍强制继续** | 🟡 High | 用户体验差，分析质量无法保证 |
-| **使用 `/tmp` 而不告知用户** | 🟡 High | 临时文件可能被清理，用户不知情 |
-| **写入失败时静默忽略** | 🔴 Critical | 用户误以为已保存，实际未持久化 |
+- `${MORPHISM_EXPLORATION_PATH}/logs/message_events.jsonl`
 
 ---
 
-## 各 Agent 的持久化责任
+## 6. Critical 违规项
 
-### 1. Domain Agent (ROUND 1)
-
-**输出要求**:
-```yaml
-# MAPPING_RESULT_ROUND1必须包含：
-domain: "domain_name"
-timestamp: "ISO 8601格式"
-round: 1
-problem: "原始问题"
-category_skeleton:
-  objects: [...]
-  morphisms: [...]
-concept_mapping: {...}
-insights: [...]
-verification_proof: {...}
-confidence_assessment: {...}
-```
-
-**保存指令**:
-```
-===SAVE_TO_FILE===
-filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json
-content: <完整JSON内容>
-```
-
-### 2. Obstruction Theorist
-
-**输入**: 读取 `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`
-
-**输出要求**:
-```json
-{
-  "obstruction_id": "{domain}_round1",
-  "theorist": "obstruction-theorist",
-  "agent_target": "{domain}",
-  "attack_matrix": { ... },
-  "feedback": {
-    "status": "REQUIRES_REVISION | PASS",
-    "critical_issues": [...],
-    "revision_requirements": [...]
-  },
-  "diagnosis": "30字风险预警",
-  "risk_tags": [...]
-}
-```
-
-**保存指令**:
-```
-===SAVE_TO_FILE===
-filepath: ${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstruction.json
-```
-
-### 3. Domain Agent (ROUND 2)
-
-**输入**（必须读取）:
-1. 自己的第一轮输出: `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`
-2. Obstruction反馈: `${MORPHISM_EXPLORATION_PATH}/obstruction_feedbacks/{domain}_obstruction.json`
-
-**输出要求**:
-```json
-{
-  "round": 2,
-  "obstruction_response": {
-    "addressed_issues": [...],
-    "defense_strategy": "..."
-  },
-  "refined_mapping": { ... },
-  "proposal": {
-    "title": "...",
-    "steps": [...]
-  }
-}
-```
-
-**保存指令**:
-```
-===SAVE_TO_FILE===
-filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round2.json
-```
+| 违规行为 | 违规码 | 处理 |
+|---|---|---|
+| 未产出 `PERSISTENCE_READY` 就继续 | `PROTOCOL_BREACH_PERSISTENCE_NOT_READY` | 立即中止 |
+| 写入项目目录或 `/tmp` | `PROTOCOL_BREACH_ILLEGAL_PERSISTENCE_PATH` | 立即中止 |
+| 主写入失败后不做 failover | `PROTOCOL_BREACH_PERSISTENCE_FAILOVER_SKIPPED` | 立即中止 |
+| 主写入+failover 都失败仍继续 | `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE` | 立即中止 |
+| 仅保存在内存中 | `PROTOCOL_BREACH_PERSISTENCE_NOT_READY` | 立即中止 |
+| 缺失 `session_manifest.json` 或 `mailbox_events.ndjson` | `PROTOCOL_BREACH_VISUALIZATION_ARTIFACT_MISSING` | 立即中止 |
+| 使用 `logs/message_events.jsonl` 作为主事件流 | `PROTOCOL_BREACH_LEGACY_EVENT_STREAM` | 立即中止 |
+| 同一 run 产生多个探索目录 | `PROTOCOL_BREACH_RUN_DIRECTORY_SPLIT` | 立即中止 |

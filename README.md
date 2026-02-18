@@ -8,16 +8,21 @@
 - 改为 `SendMessage + mailbox` 推进
 - 保留原有门禁：团队级启动、obstruction 先审、gate clear 后 final synthesis
 - obstruction 升级为字段级实审（schema gate + consistency checks + attack findings）
+- Swarm/Fallback 统一持久化硬门禁：必须先产出 `PERSISTENCE_READY`，并写入 `~/.morphism_mapper/explorations/...`
+- 持久化策略升级为“主写入 + failover 分块包”，覆盖 leader/domain/obstruction/synthesizer
+- 可视化契约硬门禁：必须产出 `session_manifest.json` + `mailbox_events.ndjson`（禁止以 legacy 日志作为主事件源）
+- run 目录唯一性：同一 run 只允许一个 `${MORPHISM_EXPLORATION_PATH}`，目录名必须等于 `session_id`（`YYYYMMDDTHHMMSSZ_xxxxxx_slug`）
 
 ## 核心流程
 
-1. `TeamCreate`
-2. 运行 `domain_selector.py` 产出 `DOMAIN_SELECTION_EVIDENCE`
-3. 团队级首批启动（core + selected domains）
-4. core 在 mailbox 发布就绪信号
-5. domain 双投递 JSON（给 obstruction + synthesizer）
-6. obstruction round1 / gate clear
-7. final synthesis
+1. 先通过持久化门禁（`PERSISTENCE_READY`）
+2. `TeamCreate`
+3. 运行 `domain_selector.py` 产出 `DOMAIN_SELECTION_EVIDENCE`
+4. 团队级首批启动（core + selected domains）
+5. core 在 mailbox 发布就绪信号
+6. domain 双投递 JSON（给 obstruction + synthesizer）
+7. obstruction round1 / gate clear
+8. final synthesis
 
 ## 现在怎么判定“流程在推进”
 
@@ -43,7 +48,11 @@
 - `SKILL.md`
 - `references/docs/bootstrap_contract.md`
 - `references/docs/simulation_mode_guide.md`
+- `references/docs/visualization_contract.md`
 - `assets/agents/system_prompts/leader.md`
 - `assets/agents/system_prompts/domain_template.md`
 - `assets/agents/system_prompts/obstruction.md`
 - `assets/agents/system_prompts/synthesizer.md`
+- `assets/agents/schemas/session_manifest.v1.json`
+- `assets/agents/schemas/mailbox_event.v1.json`
+- `scripts/validate_session_contract.py`

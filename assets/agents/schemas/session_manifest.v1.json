@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "morphism-mapper/session_manifest.v1",
+  "title": "Session Manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session_id",
+    "run_mode",
+    "topic",
+    "timestamp_start",
+    "selected_domains",
+    "active_domains",
+    "status",
+    "artifact_version"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "session_manifest.v1"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_mode": {
+      "type": "string",
+      "enum": [
+        "swarm",
+        "fallback",
+        "hybrid"
+      ]
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp_start": {
+      "type": "string"
+    },
+    "timestamp_end": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "selected_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "wildcard_domain": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RUNNING",
+        "COMPLETED",
+        "BLOCKED",
+        "FAILED"
+      ]
+    },
+    "artifact_version": {
+      "type": "string",
+      "const": "1.1"
+    }
+  },
+  "additionalProperties": true
+}
