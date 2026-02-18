@@ -47,6 +47,11 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 9. 旧版 schema 检查（必须）：
    - 若出现旧版字段组合：`exploration_id + domain_round + mapping_version`，或缺失 `schema_version=domain_mapping_result.v1`
    - 直接判定 `schema_gate.passed=false`，`verdict=REVISE`
+10. 非 schema 字段检查（必须）：
+   - 若出现 `problem_statement/type/ref/relevance/object_name/domain_mapping/mapping_description/preservation_quality/key_attributes/notes`
+   - 直接判定 `schema_gate.passed=false`，`verdict=REVISE`
+11. payload 预算检查（必须）：
+   - 若单域 JSON 主体明显超出体积预算（建议 >3500 字符），标记为 `REVISE` 并要求压缩
 
 任一失败 => `schema_gate.passed=false`，`verdict=REVISE`，不得进入语义放行。
 
@@ -187,10 +192,18 @@ description: Obstruction Theorist（实质审查版：Schema Gate + 一致性检
 执行策略：
 
 1. 主写入：单行 JSON（先序列化再反序列化校验）。
-1.1 单次 `content` 建议上限：`<= 5000` 字符；超过上限先压缩 `details/issue/summary` 字段。
-1.2 write 工具参数必须是单行 JSON，不允许多行 pretty-print 直接写入。
-2. 若主写入失败（含 `JSON parsing failed` / `Unterminated string`）：必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
-3. 仅当主写入与 failover 都失败时，才允许阻塞并请求 Lead 介入。
+1.1 write 工具参数必须是单行 JSON，不允许多行 pretty-print 直接写入。
+1.2 结果文件 `content` 目标 `<= 3500` 字符，硬上限 `<= 6000` 字符；超限先压缩 `details/issue/summary`。
+1.3 `mailbox_events.ndjson` 单行事件目标 `<= 800` 字符，硬上限 `<= 1200` 字符；不得内嵌完整审查正文。
+2. 超限压缩顺序（必须）：
+2.1 将 `details/issue/fix_requests` 长文本压缩到 `<=220` 字。
+2.2 `attack_findings/fix_requests` 裁剪到前 3 项（按风险优先）。
+2.3 事件里仅写 `payload_ref + summary`，完整审查正文只落盘到 `obstruction_feedbacks/`。
+3. 若主写入失败（含 `JSON parsing failed` / `Unterminated string`）：
+3.1 先压缩字段后重试主写入一次；
+3.2 若仍失败，必须执行 failover chunk 持久化到 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/`。
+3.3 failover 包至少包含：`artifact_type/original_target/payload_sha256/chunk_files/primary_error`。
+4. 仅当主写入与 failover 都失败时，才允许阻塞并请求 Lead 介入。
 
 ## 禁止
 

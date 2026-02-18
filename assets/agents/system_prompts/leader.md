@@ -91,9 +91,14 @@ Leader 每次关键状态变化都要落盘，至少包括：
 
 1. 主写入：单行 JSON（先序列化再反序列化校验）。
 1.1 写入 `mailbox_events.ndjson` 时每行必须是紧凑单行 JSON，禁止换行嵌套。
-1.2 单次 `content` 建议上限：`<= 5000` 字符；超限先压缩 `summary/details`。
-2. 主写入失败：写入 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/*.envelope.json` + chunk 文件。
-3. failover 也失败：才标记 `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE` 并阻塞流程。
+1.2 结果文件 `content` 目标 `<= 3500` 字符，硬上限 `<= 6000` 字符；超限先压缩 `summary/details` 与冗余列表。
+1.3 `mailbox_events.ndjson` 单行事件目标 `<= 800` 字符，硬上限 `<= 1200` 字符；禁止内嵌完整 payload。
+2. 超限压缩顺序（必须）：
+2.1 先压缩长字段（`summary/details<=220` 字）；
+2.2 再裁剪非关键列表到前 3 项；
+2.3 若仍超限，仅在事件中保留 `payload_ref + summary`，完整正文写入独立文件。
+3. 主写入失败（含 `JSON parsing failed` / `Unterminated string`）：写入 `${MORPHISM_EXPLORATION_PATH}/artifacts/failover/*.envelope.json` + chunk 文件。
+4. failover 也失败：才标记 `PROTOCOL_BLOCKED_PERSISTENCE_UNAVAILABLE` 并阻塞流程。
 
 ## TeamCreate 分支
 

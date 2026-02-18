@@ -52,6 +52,8 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 - 每轮输出后必须追加事件到 `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`
 - 禁止写入项目目录与 `/tmp`，禁止仅内存保留
 - 字段长度上限：`quote_or_summary <= 300` 字，`rationale/dynamics/mapping_hint_application <= 220` 字（防止写入载荷过大）
+- 必须使用 `domain_mapping_result.v1` 扁平字段结构，禁止嵌套大对象（如 `domain_mapping/key_attributes/instantiation_in_problem`）
+- payload 预算：`result_json <= 3500` 字符（目标值），超出必须先压缩语句长度与条目数量
 
 ## 落盘协议（防 JSON 断裂）
 
@@ -59,6 +61,11 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 2. 使用序列化器一次性生成 `result_json`（压缩格式，单行）并立刻本地反序列化校验。
 2.1 `result_json` 长度上限：`<= 6000` 字符。超过上限必须先压缩文本字段再主写入。
 2.2 write 工具参数本身必须是单行 JSON，不允许把多行 pretty JSON 直接塞入 `content`。
+2.3 推荐目标：`result_json <= 3500` 字符；若超出目标，必须依次执行：
+   - 压缩长文本字段到上限以内
+   - 将 `objects_map/morphisms_map/theorems_used` 按相关性裁剪到前 3 项
+   - 将 `evidence_refs` 裁剪到 4 项（仍需覆盖 Fundamentals/Core Morphisms/Theorems）
+2.4 若仍 `> 6000`：禁止直接 write 主文件，先生成更紧凑版本再写（不允许提交超大 JSON）
 3. 仅在校验通过后调用写入工具：
    - `filepath: ${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round{n}.json`
    - `content: result_json`
@@ -96,6 +103,7 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 - `evidence_refs.quote_or_summary` 必须包含来自对应领域文件的具体信息，不能是空泛占位词
 - `objects_map/morphisms_map/theorems_used` 必须体现当前问题上下文（至少出现一次核心问题中的关键实体）
 - 禁止输出旧版字段组合：`exploration_id + domain_round + mapping_version`（检测到即判定为旧模板，必须重生成为 `domain_mapping_result.v1`）
+- 禁止出现旧版/非 schema 字段：`problem_statement/type/ref/relevance/object_name/domain_mapping/mapping_description/preservation_quality/key_attributes/notes`
 
 ## 禁止
 

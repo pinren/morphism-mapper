@@ -111,7 +111,8 @@ def ensure_persistence_ready(problem_slug: str) -> str:
 2. 不得静默丢弃，必须留下可追溯落盘结果（主文件或 failover 包）
 3. 写入失败不可自动切换到 `/tmp` 或内存模式
 4. 仅当主写入与 failover 写入都失败时，才允许阻塞流程
-5. 所有 write 调用必须使用单行压缩 JSON；单次 payload 建议 `<= 6000` 字符
+5. 所有 write 调用必须使用单行压缩 JSON；结果文件 payload 目标 `<= 3500`，硬上限 `<= 6000` 字符
+6. `mailbox_events.ndjson` 每行目标 `<= 800`、硬上限 `<= 1200` 字符；禁止内嵌完整正文，只允许 `payload_ref + summary`
 
 ```python
 import json
