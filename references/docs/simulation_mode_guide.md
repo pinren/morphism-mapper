@@ -33,12 +33,21 @@
 1.3 通过 `MORPHISM_RUN_ID` 绑定目录，所有 agent 进程必须复用同一个 `MORPHISM_RUN_ID`
 2. Lead 产出 `${MORPHISM_EXPLORATION_PATH}/metadata.json` + `${MORPHISM_EXPLORATION_PATH}/category_skeleton.json`
 2.1 Lead 同步产出 `${MORPHISM_EXPLORATION_PATH}/session_manifest.json`（`run_mode=fallback`）
-3. 运行 `scripts/domain_selector.py`（或 `helpers.call_domain_selector`）并记录 `DOMAIN_SELECTION_EVIDENCE`
-4. Domain round1 双投递（obstruction + synthesizer）
-5. obstruction round1 审查并输出 `OBSTRUCTION_ROUND1_COMPLETE`
-6. 必要时修正轮
-7. obstruction 发 `OBSTRUCTION_GATE_CLEARED`
-8. synthesizer 输出 `SYNTHESIS_RESULT_JSON`
+3. 先提取并落盘 `${MORPHISM_EXPLORATION_PATH}/category_skeleton.json` + `${MORPHISM_EXPLORATION_PATH}/category_extraction_evidence.json`
+3.1 必须写入 `CATEGORY_SKELETON_EXTRACTED` 事件到 `mailbox_events.ndjson`
+4. 运行 `scripts/domain_selector.py`（或 `helpers.call_domain_selector`）并记录 `DOMAIN_SELECTION_EVIDENCE`（必须引用 `category_skeleton_ref`，并落盘 `selector_input_ref/selector_output_ref/domain_catalog_ref/domain_knowledge_ref`）
+4.1 若 selector 结果中含无知识文件领域（无 `references/*_v2.md`），必须在该步自动替换为可用领域；禁止直接进入空对空分析
+5. Domain round1 双投递（obstruction + synthesizer）
+5.1 每个 domain round 落盘后立刻执行：
+    - `python3 scripts/strict_gate.py --phase domain ${MORPHISM_EXPLORATION_PATH} --domain <domain>`
+    - 返回非 0 则必须阻塞并发起修正轮
+6. obstruction round1 审查并输出 `OBSTRUCTION_ROUND1_COMPLETE`
+7. 必要时修正轮
+8. obstruction 发 `OBSTRUCTION_GATE_CLEARED`
+9. synthesizer 输出 `SYNTHESIS_RESULT_JSON`
+9.1 Final 前必须执行：
+    - `python3 scripts/strict_gate.py --phase final ${MORPHISM_EXPLORATION_PATH}`
+    - 返回非 0 则禁止宣布完成
 
 ## 5. mailbox 驱动
 

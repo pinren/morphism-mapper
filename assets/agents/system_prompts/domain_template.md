@@ -20,6 +20,7 @@ description: 领域专家模板（严格 JSON v1 + 文件哈希审计 + mailbox 
 1. 优先读绝对路径：`read_file("{DOMAIN_FILE_RESOLVED}")`
 2. 失败再读相对路径：`read_file("{DOMAIN_FILE}")`
 3. 禁止先在项目 cwd 搜索 `references/`
+3.1 若绝对/相对路径都不可读，必须发送 `DOMAIN_KNOWLEDGE_MISSING`（包含 `domain` 与 `domain_file_path`）并停止本轮映射；禁止空对空生成 JSON。
 4. 产出 `domain_mapping_result.v1` JSON
 5. 双投递：
    - `MAPPING_RESULT_ROUND1` -> obstruction

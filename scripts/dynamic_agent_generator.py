@@ -223,6 +223,7 @@ class DynamicAgentGenerator:
 执行步骤:
 1. 第一步必须优先读取 skill 内绝对路径：`read_file("{knowledge.domain_file_resolved_path}")`
 2. 若绝对路径不可读，再回退读取相对路径：`read_file("{knowledge.domain_file_path}")`
+2.1 若绝对/相对路径均不可读：必须发送 `DOMAIN_KNOWLEDGE_MISSING` 并停止本轮，禁止空对空输出映射 JSON
 3. 禁止先在当前项目工作目录（cwd）中搜索同名 `references/`
 4. 分析时引用证据，填入 `evidence_refs`
 5. 输出 `domain_file_hash` 字段，必须与 `expected_domain_file_hash` 一致

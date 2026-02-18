@@ -29,7 +29,7 @@ description: Team Lead - mailbox 驱动编排器（无 ACK）
 
 1. 先完成持久化门禁，产出 `PERSISTENCE_READY`，再进入 TeamCreate。
 2. `TeamCreate` 仅在 `PERSISTENCE_READY` 之后允许执行。
-3. 先运行 `domain_selector.py` 产出 `DOMAIN_SELECTION_EVIDENCE`，再构建 selected domains。
+3. 先提取并落盘 `CATEGORY_SKELETON`（含 `CATEGORY_SKELETON_EXTRACTED` 证据），再运行 `domain_selector.py` 产出 `DOMAIN_SELECTION_EVIDENCE`。
 4. 首批必须团队级一次启动（core + selected domains）。
 5. 禁止 Lead 手动逐个 `Task` 拉首批成员。
 6. 不使用 ACK 机制；改用 mailbox 业务信号推进。
@@ -110,7 +110,29 @@ Leader 每次关键状态变化都要落盘，至少包括：
 
 在 `TEAM_READY` 中必须先执行：
 
-- `scripts/domain_selector.py`（或 `helpers.call_domain_selector`）
+- `scripts/prepare_domain_selection.py --topic "<problem>"`（强制默认路径，一步完成 skeleton 提取 + 选域）
+- 禁止手写大段 `category_skeleton` JSON 直接 `write`；仅当脚本不可用时才允许显式两步兜底。
+
+Skeleton 紧凑约束（必须）：
+
+- 仅允许根字段：`objects/morphisms/tags/核心问题`
+- `objects <= 12`，`morphisms <= 16`
+- 禁止在 skeleton 中写嵌套大对象（如 `attributes/key_issues/metadata/details`）
+- 单文件 payload 目标 `<= 3500`，硬上限 `<= 6000`
+- write 参数必须单行 JSON，不允许把 pretty-print 多行大 JSON 直接塞进 `content`
+
+最小 skeleton 提取证据：
+
+```json
+{
+  "signal": "CATEGORY_SKELETON_EXTRACTED",
+  "extraction_method": "scripts/prepare_domain_selection.py|equivalent",
+  "category_skeleton_ref": "category_skeleton.json",
+  "category_skeleton_sha256": "<sha256>",
+  "objects_count": 1,
+  "morphisms_count": 1
+}
+```
 
 并产出：
 
@@ -118,6 +140,14 @@ Leader 每次关键状态变化都要落盘，至少包括：
 {
   "signal": "DOMAIN_SELECTION_EVIDENCE",
   "selector_method": "scripts/domain_selector.py|helpers.call_domain_selector",
+  "category_skeleton_ref": "category_skeleton.json",
+  "selector_input_ref": "artifacts/domain_selection/selector_input.json",
+  "selector_output_ref": "artifacts/domain_selection/selector_output.json",
+  "domain_catalog_ref": "artifacts/domain_selection/domain_catalog_snapshot.json",
+  "domain_catalog_sha256": "<sha256>",
+  "domain_knowledge_ref": "artifacts/domain_selection/domain_knowledge_snapshot.json",
+  "domain_knowledge_sha256": "<sha256>",
+  "selected_domains_source": "selector_output.top_domains + knowledge_viability_gate",
   "selector_ok": true,
   "selected_domains": ["..."],
   "selector_rationale": "..."
@@ -125,7 +155,10 @@ Leader 每次关键状态变化都要落盘，至少包括：
 ```
 
 若 selector 执行失败，才允许手工选域，但必须附 `selector_error` 原文。
-无该证据禁止进入 `MEMBERS_READY`。
+无 `CATEGORY_SKELETON_EXTRACTED` 或无 `DOMAIN_SELECTION_EVIDENCE`，禁止进入 `MEMBERS_READY`。
+若 `selector_ok=true`，`selected_domains` 必须全部来自 `selector_output_ref` 的 `top_domains`，禁止手工拍脑袋补域。
+若 `selector_ok=true`，`selected_domains` 还必须全部存在于 `domain_knowledge_ref.available_domains`（即有对应 `references/*_v2.md`）；缺知识文件时必须自动替换或阻断。
+在 `DOMAIN_SELECTION_EVIDENCE` 产生前，禁止输出“已准备领域团队 N 个/领域表格/候选 roster”。
 
 ## 输出前自纠闸门
 
@@ -145,14 +178,19 @@ Leader 每次关键状态变化都要落盘，至少包括：
 ## RUNNING 编排
 
 1. 广播 `CATEGORY_SKELETON` 给全部 domain。
-2. 观察 mailbox 中每域是否出现：
+2. 每个 domain 产出后必须执行一次硬门禁：
+   - `python3 scripts/strict_gate.py --phase domain ${MORPHISM_EXPLORATION_PATH} --domain <domain>`
+   - 若失败，必须发送修正请求并阻止该域进入 obstruction clear 统计。
+3. 观察 mailbox 中每域是否出现：
    - `OBSTRUCTION_FEEDBACK`（来自 obstruction）
    - `PRELIMINARY_SYNTHESIS` 已纳入该域，或 `SCHEMA_REJECTED`（来自 synthesizer）
-3. obstruction 发 `OBSTRUCTION_ROUND1_COMPLETE` 后，判断是否修正轮。
-4. 仅在 `OBSTRUCTION_GATE_CLEARED` 后发 `FINAL_SYNTHESIS_REQUEST`。
-5. Final 输出前必须执行：
-   - `python3 scripts/validate_session_contract.py ${MORPHISM_EXPLORATION_PATH}`
+   - 若出现 `INPUT_INCOMPLETE`，必须先补齐该域完整输入并收到该域 `INPUT_COMPLETE`，禁止推进到 final。
+4. obstruction 发 `OBSTRUCTION_ROUND1_COMPLETE` 后，判断是否修正轮。
+5. 仅在 `OBSTRUCTION_GATE_CLEARED` 后发 `FINAL_SYNTHESIS_REQUEST`。
+6. Final 输出前必须执行：
+   - `python3 scripts/strict_gate.py --phase final ${MORPHISM_EXPLORATION_PATH}`
    - 校验失败时禁止宣布完成，必须先补齐缺失 artifacts。
+7. Lead 不得接受“基于部分 domain 文件先综合”的说法；任何截断读取必须先修复并看到 `INPUT_COMPLETE(content_sha256)` 再整合。
 
 ## Obstruction 报告验收（Lead 必做）
 

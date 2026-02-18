@@ -13,22 +13,26 @@ description: Category Theory Morphism Mapper v4.8 Swarm Mode（no-ack）。用�
 2. 严格按可视化契约落盘：必须产出 `session_manifest.json` + `mailbox_events.ndjson`（禁止 legacy 事件主路径）
 3. 同一 run 只允许一个持久化目录：`session_id` 必须等于目录名，格式 `YYYYMMDDTHHMMSSZ_xxxxxx_slug`
 4. `TeamCreate`
-5. 运行 `scripts/domain_selector.py`（或 `helpers.call_domain_selector`）并产出 `DOMAIN_SELECTION_EVIDENCE`
-6. 构建首批 roster（core + selected domains）
-7. 团队级首批启动
-8. 等 core mailbox 就绪信号：
+5. 先提取并落盘 `CATEGORY_SKELETON`（推荐 `scripts/prepare_domain_selection.py`）
+6. 再运行选域并产出 `DOMAIN_SELECTION_EVIDENCE`
+7. 构建首批 roster（core + selected domains）
+8. 团队级首批启动
+9. 等 core mailbox 就绪信号：
    - `OBSTRUCTION_PIPELINE_READY`
    - `SYNTHESIS_PIPELINE_READY`
-9. 广播 `CATEGORY_SKELETON`
-10. domain 双投递（obstruction + synthesizer）
-11. obstruction `OBSTRUCTION_ROUND1_COMPLETE`
-12. `OBSTRUCTION_GATE_CLEARED` 后请求 final synthesis
-13. final 交付前执行 `scripts/validate_session_contract.py ${MORPHISM_EXPLORATION_PATH}` 并通过
+10. 广播 `CATEGORY_SKELETON`
+11. domain 双投递（obstruction + synthesizer）
+12. obstruction `OBSTRUCTION_ROUND1_COMPLETE`
+13. `OBSTRUCTION_GATE_CLEARED` 后请求 final synthesis
+14. final 交付前执行 `scripts/strict_gate.py --phase final ${MORPHISM_EXPLORATION_PATH}` 并通过
 
 ## 2. 规则
 
 1. TeamCreate 成功后禁止非法 fallback。
-2. 未产出 `DOMAIN_SELECTION_EVIDENCE` 前，禁止进入首批启动。
+2. 未产出 `CATEGORY_SKELETON_EXTRACTED` 与 `DOMAIN_SELECTION_EVIDENCE` 前，禁止进入首批启动。
+2.1 若 `DOMAIN_SELECTION_EVIDENCE.selector_ok=true`，`selected_domains` 必须来自 selector 输出证据链（`selector_input_ref/selector_output_ref/domain_catalog_ref`）。
+2.2 未产出 `DOMAIN_SELECTION_EVIDENCE` 前，禁止输出“已准备领域团队 N 个/领域表格/候选 roster”。
+2.3 `selected_domains` 必须都存在领域知识文件（`references/*_v2.md` 或 `references/custom/*_v2.md`）；不存在时必须自动替换或阻断，不得空对空继续。
 3. 首批禁止 Lead 手动逐个 Task 启动。
 4. `Task(..., team_name, subagent_type)` 不是团队级首批启动。
 5. 流程推进不使用 ACK，不做 ACK 超时重发闭环。
@@ -66,4 +70,6 @@ Lead 通过消息出现推进，而非 ACK：
 - `assets/agents/schemas/domain_mapping_result.v1.json`
 - `assets/agents/schemas/session_manifest.v1.json`
 - `assets/agents/schemas/mailbox_event.v1.json`
+- `scripts/prepare_domain_selection.py`
+- `scripts/strict_gate.py`
 - `scripts/validate_session_contract.py`

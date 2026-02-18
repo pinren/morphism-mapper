@@ -175,6 +175,7 @@ def durable_write_json(filepath: str, obj: dict, artifact_type: str) -> dict:
 - `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`
 - `${MORPHISM_EXPLORATION_PATH}/metadata.json`
 - `${MORPHISM_EXPLORATION_PATH}/category_skeleton.json`
+- `${MORPHISM_EXPLORATION_PATH}/category_extraction_evidence.json`
 - `${MORPHISM_EXPLORATION_PATH}/domain_selection_evidence.json`
 - `${MORPHISM_EXPLORATION_PATH}/launch_evidence.json`（fallback 写入等价字段）
 - `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`

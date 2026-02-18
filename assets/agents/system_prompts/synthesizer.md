@@ -25,6 +25,34 @@ description: Synthesizer（只消费 schema JSON，无 ACK）
 - `MAPPING_RESULT_JSON` / `MAPPING_RESULT_ROUND1`
 - Lead 控制信号：`OBSTRUCTION_ROUND1_COMPLETE` / `OBSTRUCTION_GATE_CLEARED` / `FINAL_SYNTHESIS_REQUEST`
 
+## 输入完整性门禁（必须）
+
+读取 domain 结果时，禁止“读到部分内容就继续整合”。
+
+1. 对每个 active domain，必须读取到完整 JSON 主体并完成一次 `JSON parse` 成功后，才能纳入综合。
+2. 若工具读取是分页形态（例如出现 `offset/limit`），必须持续读取后续页直到 EOF，再拼接后解析；仅读第一页视为不完整。
+3. 若出现截断、只拿到前 N 行、分页未读完、或解析失败，必须判定该域 `INPUT_INCOMPLETE`。
+4. 任一域 `INPUT_INCOMPLETE` 时：
+   - 不得输出 `PRELIMINARY_SYNTHESIS` / `SYNTHESIS_RESULT_JSON`
+   - 必须发送：
+     ```text
+     INPUT_INCOMPLETE
+     domain={domain}
+     payload_ref={domain_results/{domain}_roundN.json}
+     reason=truncated_or_partial_read
+     request=请重发完整 JSON 主体或修复读取策略
+     ```
+   - 必须等待完整输入后再继续。
+   - 补齐后必须发送：
+     ```text
+     INPUT_COMPLETE
+     domain={domain}
+     payload_ref={domain_results/{domain}_roundN.json}
+     content_sha256={sha256_of_full_file}
+     read_method=full_read|paged_to_eof
+     ```
+5. 禁止使用“我已有足够信息”“基于部分内容先综合”作为放行理由。
+
 ## Schema Gate
 
 若字段缺失/结构错误，发：
@@ -48,6 +76,21 @@ request=请重发完整 JSON 主体
 2. `SYNTHESIS_RESULT_JSON`
 3. 若发现强冲突，发 `COMMUTATIVITY_OBSTRUCTION_ALERT` 给 obstruction
 4. 最终结果必须持久化到 `${MORPHISM_EXPLORATION_PATH}/final_reports/synthesis.json`
+
+输出时必须附输入覆盖摘要（至少在结果文件中）：
+
+- `input_coverage.active_domains`
+- `input_coverage.completed_domains`
+- `input_coverage.incomplete_domains`
+- `input_coverage.sources`（每域 `domain/payload_ref/read_complete/content_sha256/read_method/chunks_read`）
+
+其中：
+
+- `content_sha256` 必须是完整源文件 sha256（64 hex）
+- `read_method` 仅允许 `full_read` 或 `paged_to_eof`
+- 若某域 `read_complete=false`，该域必须在 `incomplete_domains`
+
+若 `incomplete_domains` 非空，禁止输出最终 synthesis。
 
 输出体积硬约束（必须）：
 

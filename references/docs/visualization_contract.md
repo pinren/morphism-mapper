@@ -23,6 +23,7 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 - `${MORPHISM_EXPLORATION_PATH}/mailbox_events.ndjson`
 - `${MORPHISM_EXPLORATION_PATH}/metadata.json`
 - `${MORPHISM_EXPLORATION_PATH}/category_skeleton.json`
+- `${MORPHISM_EXPLORATION_PATH}/category_extraction_evidence.json`
 - `${MORPHISM_EXPLORATION_PATH}/domain_selection_evidence.json`
 - `${MORPHISM_EXPLORATION_PATH}/launch_evidence.json`（fallback 也必须写）
 - `${MORPHISM_EXPLORATION_PATH}/domain_results/{domain}_round1.json`（必要时 round2+）
@@ -93,8 +94,33 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 - 必须有 `timestamp` 和 `signal`。
 - 不允许仅使用 `event/message` 旧字段。
 - 若原始事件来自其他格式，必须在落盘前归一为本结构。
+- 必须出现 `CATEGORY_SKELETON_EXTRACTED` 且早于 `DOMAIN_SELECTION_EVIDENCE`。
 
 ## 4.1 Domain/Obstruction 同构完整性
+
+`domain_selection_evidence.json` 证明链（必须）：
+
+- `selector_ok=true` 时，必须包含：
+  - `selector_method`（且包含 `domain_selector.py`）
+  - `selector_input_ref`
+  - `selector_output_ref`
+  - `domain_catalog_ref`
+  - `domain_catalog_sha256`
+  - `domain_knowledge_ref`
+  - `domain_knowledge_sha256`
+  - `selected_domains_source=selector_output.top_domains + knowledge_viability_gate`
+- `selected_domains` 必须属于 `selector_output_ref.result.top_domains`，且属于 `domain_catalog_ref.domains`。
+- `selected_domains` 还必须属于 `domain_knowledge_ref.available_domains`（确保有对应领域知识文件）。
+- 仅当 `selector_ok=false` 时允许手工选域，且必须包含：
+  - `selector_error`
+  - `manual_selection_reason`
+
+`category_skeleton.json` 紧凑约束（必须）：
+
+- 根字段仅允许：`objects/morphisms/tags/核心问题`
+- `objects<=12`，`morphisms<=16`
+- 禁止在 objects/morphisms 中嵌套大对象（`attributes/details/metadata/key_issues` 等）
+- payload 硬上限 `<=6000` 字符
 
 以 `session_manifest.active_domains` 为准，逐域必须存在：
 
@@ -105,6 +131,13 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 
 - `obstruction_feedbacks/OBSTRUCTION_ROUND1_SUMMARY.json`
 - `obstruction_feedbacks/OBSTRUCTION_GATE_CLEARED.json`
+
+时序硬约束（必须）：
+
+- 对每个 `domain`，`MAPPING_RESULT_ROUND*` 事件必须先于该域 `OBSTRUCTION_FEEDBACK`。
+- `OBSTRUCTION_ROUND1_COMPLETE` 必须晚于全部 active domains 的 mapping 与 obstruction feedback 事件。
+- `OBSTRUCTION_GATE_CLEARED` 必须晚于 `OBSTRUCTION_ROUND1_COMPLETE`。
+- 文件时序上，`obstruction_feedbacks/{domain}_obstruction.json` 不得早于 `domain_results/{domain}_round1.json`。
 
 ## 5. 失败处理
 
@@ -118,10 +151,16 @@ Swarm 与 Fallback **必须生成同一套文件路径**；不得因模式不同
 执行：
 
 ```bash
-python3 scripts/validate_session_contract.py "${MORPHISM_EXPLORATION_PATH}"
+python3 scripts/strict_gate.py --phase final "${MORPHISM_EXPLORATION_PATH}"
 ```
 
 要求：
 
 - 退出码必须为 `0`
 - 出现任意 `[ERROR]` 视为未达标，不得宣布会话完成
+
+调试时可单独运行：
+
+```bash
+python3 scripts/validate_session_contract.py "${MORPHISM_EXPLORATION_PATH}"
+```
